@@ -7,7 +7,6 @@ import { getDexInfoByPool, getSwapPercent, onScroll, useShadow } from 'component
 import {
   Shadow,
   StyledContainer,
-  StyledDot,
   StyledExchange,
   StyledExchangeStatic,
   StyledHop,
@@ -55,7 +54,7 @@ const RouteRow = ({ route, chainId, backgroundColor }: RouteRowProps) => {
   }, [route])
 
   return (
-    <StyledWrap ref={shadowRef} backgroundColor={backgroundColor}>
+    <StyledWrap ref={shadowRef} style={{ backgroundColor }}>
       <ScrollContainer innerRef={scrollRef} vertical={false} onScroll={handleShadow}>
         <StyledHops length={route?.subRoutes?.length} ref={contentRef}>
           {route.subRoutes.map((subRoute, index, arr) => {
@@ -185,8 +184,7 @@ const Routing = ({
           {hasRoutes ? (
             <div>
               <StyledRoutes>
-                <StyledDot />
-                <StyledDot out />
+
                 {tradeComposition.map(route => (
                   <StyledRoute key={route.id}>
                     <StyledPercent>{getSwapPercent(route.swapPercentage, tradeComposition.length)}</StyledPercent>

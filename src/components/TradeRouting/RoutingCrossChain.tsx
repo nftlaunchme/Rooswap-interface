@@ -8,7 +8,6 @@ import { onScroll, useShadow } from 'components/TradeRouting/helpers'
 import {
   Shadow,
   StyledContainer,
-  StyledDot,
   StyledExchangeStatic,
   StyledHop,
   StyledHopChevronRight,
@@ -56,7 +55,7 @@ const RouteRowCrossChain = ({
   }, [routes])
 
   return (
-    <StyledWrap ref={shadowRef} backgroundColor={backgroundColor}>
+    <StyledWrap ref={shadowRef} style={{ backgroundColor }}>
       <ScrollContainer innerRef={scrollRef} vertical={false} onScroll={handleShadow}>
         <StyledHops length={routes.length} ref={contentRef}>
           {routes.map((subRoute, index, arr) => {
@@ -157,8 +156,7 @@ const RoutingCrossChain = () => {
 
           {hasRoutes ? (
             <StyledRoutes>
-              <StyledDot />
-              <StyledDot out />
+
               <StyledRoute>
                 <StyledPercent>100%</StyledPercent>
                 <StyledRouteLine />

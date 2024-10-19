@@ -5,7 +5,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Flex, Text } from 'rebass'
 import styled from 'styled-components'
 
-import { ReactComponent as RoutingIcon } from 'assets/svg/routing-icon.svg'
+import { ReactComponent as RooIcon } from './roosvg.svg'
 import Banner from 'components/Banner'
 import { SwitchLocaleLink } from 'components/SwitchLocaleLink'
 import { TutorialIds } from 'components/Tutorial/TutorialSwap/constant'
@@ -77,13 +77,22 @@ export const SwitchLocaleLinkWrapper = styled.div`
 `}
 `
 
-export const RoutingIconWrapper = styled(RoutingIcon)`
+export const RooIconWrapper = styled(RooIcon)`
   height: 27px;
   width: 27px;
   margin-right: 10px;
   path {
     fill: ${({ theme }) => theme.subText} !important;
   }
+`
+
+export const FuturisticText = styled(Text)`
+  font-size: 20px;
+  font-weight: 500;
+  color: #ffffff; /* White text */
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 5px rgba(1, 7, 37, 0.7), 0 0 10px rgba(1, 7, 37, 0.5);
 `
 
 export default function Swap() {
@@ -106,8 +115,17 @@ export default function Swap() {
 
     if (inputCurrency || outputCurrency) {
       if (pathname.includes(APP_PATHS.LIMIT))
-        navigate(`${APP_PATHS.LIMIT}/${NETWORKS_INFO[chainId].route}/${inputCurrency || ''}-to-${outputCurrency || ''}`)
-      else navigate(`/swap/${NETWORKS_INFO[chainId].route}/${inputCurrency || ''}-to-${outputCurrency || ''}`)
+        navigate(
+          `${APP_PATHS.LIMIT}/${NETWORKS_INFO[chainId].route}/${inputCurrency || ''}-to-${
+            outputCurrency || ''
+          }`
+        )
+      else
+        navigate(
+          `/swap/${NETWORKS_INFO[chainId].route}/${inputCurrency || ''}-to-${
+            outputCurrency || ''
+          }`
+        )
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, chainId, navigate])
@@ -122,7 +140,7 @@ export default function Swap() {
 
   const getDefaultTab = useCallback(
     () => (isSwapPage ? TAB.SWAP : isLimitPage ? TAB.LIMIT : TAB.CROSS_CHAIN),
-    [isSwapPage, isLimitPage],
+    [isSwapPage, isLimitPage]
   )
 
   const [activeTab, setActiveTab] = useState<TAB>(getDefaultTab())
@@ -142,7 +160,13 @@ export default function Swap() {
   }, [getDefaultTab])
 
   const tradeRouteComposition = useMemo(() => {
-    return getTradeComposition(chainId, routeSummary?.parsedAmountIn, undefined, routeSummary?.route, defaultTokens)
+    return getTradeComposition(
+      chainId,
+      routeSummary?.parsedAmountIn,
+      undefined,
+      routeSummary?.route,
+      defaultTokens
+    )
   }, [chainId, defaultTokens, routeSummary])
 
   const onBackToSwapTab = () => setActiveTab(getDefaultTab())
@@ -168,7 +192,9 @@ export default function Swap() {
                   onOpenGasToken={() => setActiveTab(TAB.GAS_TOKEN)}
                 />
               )}
-              {activeTab === TAB.INFO && <TokenInfoTab currencies={currencies} onBack={onBackToSwapTab} />}
+              {activeTab === TAB.INFO && (
+                <TokenInfoTab currencies={currencies} onBack={onBackToSwapTab} />
+              )}
               {activeTab === TAB.SETTINGS && (
                 <SettingsPanel
                   isCrossChainPage={isCrossChainPage}
@@ -182,7 +208,9 @@ export default function Swap() {
               )}
               {activeTab === TAB.LIMIT && <LimitOrder />}
               {isCrossChainPage && <CrossChain visible={activeTab === TAB.CROSS_CHAIN} />}
-              {activeTab === TAB.GAS_TOKEN && <GasTokenSetting onBack={() => setActiveTab(TAB.SWAP)} />}
+              {activeTab === TAB.GAS_TOKEN && (
+                <GasTokenSetting onBack={() => setActiveTab(TAB.SWAP)} />
+              )}
             </AppBodyWrapped>
             {isCrossChainPage && <CrossChainLink isBridge />}
           </SwapFormWrapper>
@@ -192,10 +220,10 @@ export default function Swap() {
               <RoutesWrapper isOpenChart={false}>
                 <Flex flexDirection="column" width="100%">
                   <Flex alignItems={'center'}>
-                    <RoutingIconWrapper />
-                    <Text fontSize={20} fontWeight={500} color={theme.subText}>
-                      <Trans>Your trade route</Trans>
-                    </Text>
+                    <RooIconWrapper />
+                    <FuturisticText>
+                      <Trans>Your Trade Roo-te</Trans>
+                    </FuturisticText>
                   </Flex>
                   <Suspense
                     fallback={

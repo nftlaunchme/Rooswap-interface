@@ -1,86 +1,81 @@
 import { Trans } from '@lingui/macro'
-import { RefObject, useEffect } from 'react'
+import { RefObject } from 'react'
 import { Info, X } from 'react-feather'
 import { useMedia } from 'react-use'
 import AutoSizer from 'react-virtualized-auto-sizer'
 import { FixedSizeList } from 'react-window'
-import InfiniteLoader from 'react-window-infinite-loader'
 import { Flex, Text } from 'rebass'
-import { useAckPrivateAnnouncementsMutation } from 'services/announcement'
-import styled, { CSSProperties, css } from 'styled-components'
+import styled, { DefaultTheme } from 'styled-components'
 
-import AnnouncementItem from 'components/Announcement/AnnoucementItem'
-import MenuMoreAction from 'components/Announcement/MoreAction'
-import InboxItem from 'components/Announcement/PrivateAnnoucement'
-import { formatNumberOfUnread } from 'components/Announcement/helper'
-import { Announcement, PrivateAnnouncement } from 'components/Announcement/type'
 import Column from 'components/Column'
 import NotificationIcon from 'components/Icons/NotificationIcon'
 import { RowBetween } from 'components/Row'
-import { useActiveWeb3React } from 'hooks'
-import useMixpanel, { MIXPANEL_TYPE } from 'hooks/useMixpanel'
 import useTheme from 'hooks/useTheme'
 import { MEDIA_WIDTHS } from 'theme'
 
 const Wrapper = styled.div`
-  width: 380px;
+  width: 400px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  height: 70vh;
-  padding-top: 20px;
-  ${({ theme }) => theme.mediaWidth.upToMedium`
+  gap: 24px;
+  height: 80vh;
+  padding: 24px;
+  background-color: #021D5E;
+  border-radius: 16px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+
+  ${({ theme }: { theme: DefaultTheme }) => theme.mediaWidth.upToMedium`
     width: 100%;
-    min-width: 380px;
+    min-width: 320px;
   `};
-  ${({ theme }) => theme.mediaWidth.upToSmall`
+
+  ${({ theme }: { theme: DefaultTheme }) => theme.mediaWidth.upToSmall`
     width: 100%;
-    height: unset;
+    height: 100vh;
+    border-radius: 0;
+    padding: 20px;
   `};
 `
+
 const Container = styled.div`
-  gap: 12px;
-  padding-left: 16px;
   display: flex;
   flex-direction: column;
-  padding-right: 16px;
+  gap: 20px;
 `
 
 const TabItem = styled.div<{ active: boolean }>`
   flex: 1;
-  background-color: ${({ theme }) => theme.buttonBlack};
-  border-radius: 20px;
-  padding: 6px 0px;
+  background-color: ${({ active }) => (active ? '#FFFFFF' : 'transparent')};
+  border-radius: 12px;
+  padding: 16px;
   text-align: center;
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 16px;
   display: flex;
   justify-content: center;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
   cursor: pointer;
-  color: ${({ theme }) => theme.subText};
-  ${({ active }) =>
-    active &&
-    css`
-      background-color: ${({ theme }) => theme.tabActive};
-      color: ${({ theme }) => theme.text};
-    `};
+  color: ${({ active }) => (active ? '#021D5E' : '#FFFFFF')};
+  transition: all 0.3s ease-in-out;
+
+  &:hover {
+    background-color: ${({ active }) => (active ? '#FFFFFF' : 'rgba(255, 255, 255, 0.1)')};
+  }
 `
 
 const Title = styled.div`
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 28px;
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
+  color: #FFFFFF;
 `
 
 const TabWrapper = styled.div`
-  background-color: ${({ theme }) => theme.buttonBlack};
-  border-radius: 20px;
   display: flex;
-  padding: 4px;
-  gap: 10px;
+  gap: 16px;
   justify-content: space-between;
 `
 
@@ -90,205 +85,150 @@ const ListAnnouncement = styled.div`
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
-  border-radius: 0px 0px 12px 12px;
+  border-radius: 16px;
+
   .scrollbar {
     &::-webkit-scrollbar {
       display: block;
-      width: 4px;
+      width: 8px;
     }
+    
     &::-webkit-scrollbar-thumb {
-      background: ${({ theme }) => theme.border};
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
     }
   }
-  ${({ theme }) => theme.mediaWidth.upToSmall`
+  
+  ${({ theme }: { theme: DefaultTheme }) => theme.mediaWidth.upToSmall`
     border-radius: 0;
   `};
+` 
+
+const AnnouncementItem = styled.div`
+  padding: 20px;
+  background-color: #FFFFFF;
+  color: #021D5E;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
 `
 
-const Badge = styled.div`
-  border-radius: 16px;
-  background-color: ${({ theme }) => theme.primary};
-  color: ${({ theme }) => theme.textReverse};
-  padding: 0px 4px;
-  font-weight: 500;
-  min-width: 20px;
-  text-align: center;
+const AnnouncementTitle = styled(Text)`
+  font-weight: 700;
+  font-size: 18px;
 `
+
+const AnnouncementDescription = styled(Text)`
+  font-size: 16px;
+  margin-top: 12px;
+`
+
 export enum Tab {
   INBOX,
-  ANNOUNCEMENT,
 }
 
 type Props = {
-  numberOfUnread: number
-  totalAnnouncement: number
-  announcements: Announcement[] | PrivateAnnouncement[]
-  isMyInboxTab: boolean
-  onSetTab: (tab: Tab) => void
-  refreshAnnouncement: () => void
-  loadMoreAnnouncements: () => void
   toggleNotificationCenter: () => void
+  isMyInboxTab: boolean
+  onSetTab: (tab: Tab) => void  
   showDetailAnnouncement: (index: number) => void
   scrollRef: RefObject<HTMLDivElement>
 }
 
 export default function AnnouncementView({
-  numberOfUnread,
-  announcements,
-  totalAnnouncement,
-  refreshAnnouncement,
-  loadMoreAnnouncements,
   toggleNotificationCenter,
-  isMyInboxTab,
+  isMyInboxTab,  
   onSetTab,
   showDetailAnnouncement,
   scrollRef,
 }: Props) {
-  const { account } = useActiveWeb3React()
-
   const theme = useTheme()
-
-  const [ackAnnouncement] = useAckPrivateAnnouncementsMutation()
   const isMobile = useMedia(`(max-width: ${MEDIA_WIDTHS.upToMedium}px)`)
-  const { mixpanelHandler } = useMixpanel()
 
-  const onReadPrivateAnnouncement = (item: PrivateAnnouncement, statusMessage: string) => {
-    if (!account) return
-    mixpanelHandler(MIXPANEL_TYPE.ANNOUNCEMENT_CLICK_INBOX_MESSAGE, {
-      message_status: statusMessage,
-      message_type: item.templateType,
-    })
-    if (item.isRead) {
-      toggleNotificationCenter()
-      return
-    }
-    ackAnnouncement({ action: 'read', ids: [item.id] })
-      .then(() => {
-        refreshAnnouncement()
-        toggleNotificationCenter()
-      })
-      .catch(err => {
-        console.error('ack noti error', err)
-      })
-  }
+  // Hardcoded announcement 
+  const announcements = [
+    {
+      id: 1,
+      templateBody: {
+        name: 'Introducing Limit Orders',
+        description: 'We are thrilled to announce the launch of Limit Orders on our DEX!',
+      },  
+      isRead: false,
+    },
+    {
+      id: 2,
+      templateBody: {
+        name: 'Roo is back!',
+        description: 'We have added support for several new tokens on our exchange.',  
+      },
+      isRead: true,
+    },
+  ]
 
-  const onReadAnnouncement = (item: Announcement, index: number) => {
+  const onReadAnnouncement = (index: number) => {
+    console.log(`Notification clicked: ${announcements[index].templateBody.name}`)
     toggleNotificationCenter()
-    const { templateBody } = item
-    showDetailAnnouncement(index)
-    mixpanelHandler(MIXPANEL_TYPE.ANNOUNCEMENT_CLICK_ANNOUNCEMENT_MESSAGE, {
-      message_title: templateBody.name,
-    })
   }
-
-  const clearAll = () => {
-    if (!announcements.length || !account) return
-    ackAnnouncement({ action: 'clear-all' })
-      .then(() => {
-        refreshAnnouncement()
-      })
-      .catch(err => {
-        console.error('ack noti error', err)
-      })
-    mixpanelHandler(MIXPANEL_TYPE.ANNOUNCEMENT_CLICK_CLEAR_ALL_INBOXES, {
-      total_message_count: totalAnnouncement,
-    })
-  }
-
-  const hasMore = announcements.length !== totalAnnouncement
-  const isItemLoaded = (index: number) => !hasMore || index < announcements.length
-  const itemCount = hasMore ? announcements.length + 1 : announcements.length
 
   const tabComponent = (
     <TabWrapper>
       <TabItem active={isMyInboxTab} onClick={() => onSetTab(Tab.INBOX)}>
         <Trans>My Inbox</Trans>
-        {numberOfUnread > 0 && account && <Badge>{formatNumberOfUnread(numberOfUnread)}</Badge>}
-      </TabItem>
-      <TabItem active={!isMyInboxTab} onClick={() => onSetTab(Tab.ANNOUNCEMENT)}>
-        <Trans>General</Trans>
       </TabItem>
     </TabWrapper>
   )
 
-  const showClearAll = account && isMyInboxTab && announcements.length > 0
-
-  const node = scrollRef?.current
-  useEffect(() => {
-    if (!node?.classList.contains('scrollbar')) {
-      node?.classList.add('scrollbar')
-    }
-  }, [node])
-
   return (
     <Wrapper>
       <Container>
-        <RowBetween gap="10px" height="28px">
+        <RowBetween>
           <Title>
-            <NotificationIcon size={18} />
-            <Trans>Notifications</Trans>
+            <NotificationIcon size={28} color="#FFFFFF" />
+            <Trans>Notifications</Trans>  
           </Title>
-          <Flex style={{ gap: '20px', alignItems: 'center' }}>
-            <MenuMoreAction
-              showClearAll={Boolean(showClearAll)}
-              clearAll={clearAll}
-              toggleModal={toggleNotificationCenter}
-            />
-            {isMobile && <X color={theme.subText} onClick={toggleNotificationCenter} cursor="pointer" />}
-          </Flex>
+          {isMobile && <X color="#FFFFFF" size={28} onClick={toggleNotificationCenter} cursor="pointer" />}
         </RowBetween>
 
         {tabComponent}
       </Container>
 
       {announcements.length ? (
-        <ListAnnouncement>
+        <ListAnnouncement className="scrollbar">
           <AutoSizer>
             {({ height, width }) => (
-              <InfiniteLoader isItemLoaded={isItemLoaded} itemCount={itemCount} loadMoreItems={loadMoreAnnouncements}>
-                {({ onItemsRendered, ref }) => (
-                  <FixedSizeList
-                    outerRef={scrollRef}
-                    height={height}
-                    width={width}
-                    itemCount={itemCount}
-                    itemSize={isMyInboxTab ? 120 : 126}
-                    onItemsRendered={onItemsRendered}
-                    ref={ref}
-                  >
-                    {({ index, style }: { index: number; style: CSSProperties }) => {
-                      if (!isItemLoaded(index)) {
-                        return null
-                      }
-                      const item = announcements[index]
-                      return isMyInboxTab ? (
-                        <InboxItem
-                          style={style}
-                          key={item.id}
-                          announcement={item as PrivateAnnouncement}
-                          onRead={onReadPrivateAnnouncement}
-                        />
-                      ) : (
-                        <AnnouncementItem
-                          key={item.id}
-                          style={style}
-                          announcement={item as Announcement}
-                          onRead={() => onReadAnnouncement(item as Announcement, index)}
-                        />
-                      )
-                    }}
-                  </FixedSizeList>
-                )}
-              </InfiniteLoader>
+              <FixedSizeList
+                outerRef={scrollRef}
+                height={height}
+                width={width}
+                itemCount={announcements.length}
+                itemSize={120}
+              >
+                {({ index, style }) => {
+                  const item = announcements[index]
+                  return (
+                    <AnnouncementItem key={item.id} style={style} onClick={() => onReadAnnouncement(index)}>
+                      <AnnouncementTitle>{item.templateBody.name}</AnnouncementTitle>
+                      <AnnouncementDescription>{item.templateBody.description}</AnnouncementDescription>
+                    </AnnouncementItem>
+                  )
+                }}
+              </FixedSizeList>  
             )}
           </AutoSizer>
         </ListAnnouncement>
       ) : (
-        <Column style={{ alignItems: 'center', margin: '24px 0px 32px 0px' }} gap="8px">
-          <Info color={theme.subText} size={27} />
-          <Text color={theme.subText} textAlign="center">
+        <Column style={{ alignItems: 'center', margin: '64px 0' }} gap="16px">
+          <Info color="#FFFFFF" size={36} />  
+          <Text color="#FFFFFF" textAlign="center" fontSize="18px">
             <Trans>No notifications found</Trans>
-          </Text>
+          </Text>  
         </Column>
       )}
     </Wrapper>
