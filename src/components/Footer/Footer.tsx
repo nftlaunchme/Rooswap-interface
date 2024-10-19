@@ -1,51 +1,41 @@
 import { Trans, t } from '@lingui/macro'
+import React from 'react'
 import { useMedia } from 'react-use'
 import { Flex, Text } from 'rebass'
 import styled from 'styled-components'
 
 import ChainSecurity from 'assets/svg/chainsecurity.svg'
-import { Telegram } from 'components/Icons'
 import Discord from 'components/Icons/Discord'
 import PoweredByIconDark from 'components/Icons/PoweredByIconDark'
 import TwitterIcon from 'components/Icons/TwitterIcon'
 import InfoHelper from 'components/InfoHelper'
-import { KYBER_NETWORK_DISCORD_URL, KYBER_NETWORK_TWITTER_URL } from 'constants/index'
-import useTheme from 'hooks/useTheme'
 import { ExternalLink, ExternalLinkNoLineHeight } from 'theme'
 
-const FooterWrapper = styled.div`
-  background: ${({ theme }) => theme.buttonGray + '33'};
-  width: 100%;
+const colors = {
+  background: '#010725',
+  text: '#ffffff',
+  subText: '#7F7F7F',
+  primary: '#0328EE',
+}
 
-  ${({ theme }) => theme.mediaWidth.upToLarge`
-    margin-bottom: 4rem;
-  `};
+const FooterWrapper = styled.div`
+  background: ${colors.background};
+  width: 100%;
+  padding: 24px 0;
 `
 
 const FooterContent = styled.div`
   display: flex;
   justify-content: space-between;
-  margin: auto;
   align-items: center;
   width: 100%;
-  padding: 16px;
-  flex-direction: column-reverse;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
 
-  @media only screen and (min-width: 768px) {
-    flex-direction: row;
-    padding: 16px 16px;
-  }
-
-  @media only screen and (min-width: 1000px) {
-    padding: 16px 32px;
-  }
-
-  @media only screen and (min-width: 1366px) {
-    padding: 16px 215px;
-  }
-
-  @media only screen and (min-width: 1500px) {
-    padding: 16px 252px;
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 24px;
   }
 `
 
@@ -53,48 +43,56 @@ const InfoWrapper = styled.div`
   display: flex;
   gap: 16px;
   font-size: 12px;
-  color: ${({ theme }) => theme.subText + '33'};
-  ${({ theme }) => theme.mediaWidth.upToSmall`
-    margin-top: 16px;
+  color: ${colors.subText};
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
     gap: 24px;
-  `};
+  }
 `
 
 const Separator = styled.div`
   width: 1px;
-  background: ${({ theme }) => theme.border};
-  ${({ theme }) => theme.mediaWidth.upToSmall`
-    display: none
-  `}
+  background: ${colors.subText};
+  @media (max-width: 768px) {
+    display: none;
+  }
 `
 
 const Item = styled.div`
   display: flex;
   align-items: center;
-  color: ${({ theme }) => theme.subText};
-  ${({ theme }) => theme.mediaWidth.upToSmall`
+  color: ${colors.subText};
+
+  @media (max-width: 768px) {
     flex-direction: column;
     gap: 12px;
-  `};
+  }
+`
+
+const CopyrightText = styled(Text)`
+  color: ${colors.subText};
+  font-size: 14px;
+  margin-top: 16px;
+`
+
+const SocialLinks = styled(Flex)`
+  gap: 24px;
 `
 
 export const FooterSocialLink = () => {
-  const theme = useTheme()
   return (
-    <Flex alignItems="center" justifyContent="center" sx={{ gap: '24px' }}>
-      <ExternalLinkNoLineHeight href="https://t.me/kybernetwork">
-        <Telegram size={16} color={theme.subText} />
+    <SocialLinks>
+      <ExternalLinkNoLineHeight href="https://twitter.com/RooFinance">
+        <TwitterIcon color={colors.subText} width={20} height={20} />
       </ExternalLinkNoLineHeight>
-      <ExternalLinkNoLineHeight href={KYBER_NETWORK_TWITTER_URL}>
-        <TwitterIcon color={theme.subText} />
+      <ExternalLinkNoLineHeight href="https://discord.gg/AMQB6ZWKfa">
+        <Discord width={20} height={20} color={colors.subText} />
       </ExternalLinkNoLineHeight>
-      <ExternalLinkNoLineHeight href={KYBER_NETWORK_DISCORD_URL}>
-        <Discord width={16} height={12} color={theme.subText} />
-      </ExternalLinkNoLineHeight>
-    </Flex>
+    </SocialLinks>
   )
 }
-
 function Footer() {
   const above768 = useMedia('(min-width: 768px)')
 
@@ -103,17 +101,26 @@ function Footer() {
       <FooterContent>
         <InfoWrapper>
           <Item>
-            <Text marginRight="6px">
-              <Trans>Powered By</Trans>
+            <Text marginRight="6px" color={colors.text}>
+              <Trans>Powered By Kyber</Trans>
             </Text>
             <ExternalLink href="https://kyber.network" style={{ display: 'flex' }}>
               <PoweredByIconDark width={48} />
             </ExternalLink>
           </Item>
           <Separator />
-
           <Item>
-            <Text marginRight="6px" display="flex">
+            <Text marginRight="6px" color={colors.text}>
+              <Trans>Powered By Rubic</Trans>
+            </Text>
+            <ExternalLink href="https://rubic.exchange" style={{ display: 'flex' }}>
+              {/* Replace with actual Rubic logo or text */}
+              <Text color={colors.primary}>Rubic</Text>
+            </ExternalLink>
+          </Item>
+          <Separator />
+          <Item>
+            <Text marginRight="6px" display="flex" color={colors.text}>
               <Trans>Audited By</Trans>
               {!above768 && <InfoHelper size={14} text={t`Covers smart-contracts`} placement="top" />}
             </Text>
@@ -123,7 +130,10 @@ function Footer() {
             {above768 && <InfoHelper size={14} text={t`Covers smart-contracts`} placement="top" />}
           </Item>
         </InfoWrapper>
-        <FooterSocialLink />
+        <Flex flexDirection="column" alignItems="flex-end">
+          <FooterSocialLink />
+          <CopyrightText>Roo Finance 2024 All Rights Reserved</CopyrightText>
+        </Flex>
       </FooterContent>
     </FooterWrapper>
   )

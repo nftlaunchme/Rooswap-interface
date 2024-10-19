@@ -1,255 +1,202 @@
-import { Trans } from '@lingui/macro'
-import { lighten } from 'polished'
+import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useMedia } from 'react-use'
-import { Flex } from 'rebass'
 import styled from 'styled-components'
 
 import Announcement from 'components/Announcement'
 import SelectNetwork from 'components/Header/web3/SelectNetwork'
 import SelectWallet from 'components/Header/web3/SelectWallet'
 import Menu from 'components/Menu'
-import Row, { RowFixed } from 'components/Row'
-import { AGGREGATOR_ANALYTICS_URL, APP_PATHS } from 'constants/index'
+import { APP_PATHS } from 'constants/index'
 import { Z_INDEXS } from 'constants/styles'
 import { useActiveWeb3React } from 'hooks'
-import useTheme from 'hooks/useTheme'
-import { useHolidayMode } from 'state/user/hooks'
 import { MEDIA_WIDTHS } from 'theme'
 
-import AboutNavGroup from './groups/AboutNavGroup'
-import CampaignNavGroup from './groups/CampaignNavGroup'
-import KyberDAONavGroup from './groups/KyberDaoGroup'
-import SwapNavGroup from './groups/SwapNavGroup'
-import { StyledNavExternalLink, StyledNavLink } from './styleds'
+const colors = {
+  background: '#010725',
+  text: '#ffffff',
+  subText: '#7F7F7F',
+  primary: '#0328EE',
+  border: 'rgba(255, 255, 255, 0.1)',
+}
 
-const HeaderFrame = styled.div<{ hide?: boolean }>`
-  height: ${({ hide }) => (hide ? 0 : undefined)};
-  padding: ${({ hide }) => (hide ? 0 : '1rem')};
-  overflow: ${({ hide }) => (hide ? 'hidden' : undefined)};
-  display: grid;
-  grid-template-columns: 1fr 120px;
+const HeaderFrame = styled.header`
+  width: 100%;
+  height: 80px;
+  position: sticky;
+  top: 0;
+  background: ${colors.background};
+  border-bottom: 1px solid ${colors.border};
+  z-index: ${Z_INDEXS.HEADER};
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-direction: row;
-  width: 100%;
-  top: 0;
-  position: relative;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  z-index: ${Z_INDEXS.HEADER};
-  ${({ theme, hide }) => theme.mediaWidth.upToMedium`
-    grid-template-columns: 1fr;
-    padding: ${hide ? 0 : '1rem'};
-    width: calc(100%);
-    position: relative;
-    
-  `};
+  padding: 0 24px;
 
-  ${({ theme, hide }) => theme.mediaWidth.upToExtraSmall`
-    padding: ${hide ? 0 : '0.5 1rem'};
-    height: ${hide ? 0 : '60px'};
-  `}
+  ${({ theme }) => theme.mediaWidth.upToMedium`
+    padding: 0 16px;
+  `};
 `
 
 const HeaderControls = styled.div`
-  display: flex;
-  flex-direction: row;
   align-items: center;
-  justify-self: flex-end;
-  gap: 8px;
-  ${({ theme }) => theme.mediaWidth.upToLarge`
-    flex-direction: row;
-    justify-content: space-between;
-    justify-self: center;
-    padding: 1rem;
-    position: fixed;
-    bottom: 0px;
-    left: 0px;
-    width: 100%;
-    z-index: 98;
-    height: 72px;
-    background-color: ${({ theme }) => theme.buttonBlack};
-  `};
-  ${({ theme }) => theme.mediaWidth.upToSmall`
-      height: 60px;
-  `};
-  ${({ theme }) => theme.mediaWidth.upToExtraSmall`
-      padding: 1rem 8px;
-  `};
+  display: flex;
+  gap: 16px;
 `
 
 const HeaderElement = styled.div`
-  display: flex;
   align-items: center;
-  gap: 8px;
-
-  ${({ theme }) => theme.mediaWidth.upToXXSmall`
-    align-items: center;
-    width: 100%;
-    justify-content: space-between;
-  `};
-`
-
-const HeaderElementWrap = styled.div`
   display: flex;
-  align-items: center;
   gap: 8px;
-  padding: 0px 6px;
-  border-radius: 36px;
-  background-color: ${({ theme }) => theme.background};
-  border: 1px solid ${({ theme }) => theme.background};
-  color: ${({ theme }) => theme.subText};
-  :hover,
-  :focus {
-    background-color: ${({ theme }) => lighten(0.05, theme.background)};
-    border: 1px solid ${({ theme }) => theme.primary};
-  }
 `
 
-const HeaderRow = styled(RowFixed)`
-  ${({ theme }) => theme.mediaWidth.upToMedium`
-   width: 100%;
-  `};
-`
-
-const HeaderLinks = styled(Row)`
-  gap: 4px;
-  justify-content: center;
+const HeaderLinks = styled.div`
+  display: flex;
+  gap: 24px;
+  margin-left: 48px;
 
   ${({ theme }) => theme.mediaWidth.upToLarge`
-    justify-content: flex-end;
+    display: none;
   `};
-
-  ${({ theme }) => theme.mediaWidth.upToExtraSmall`
-     gap: 0px;
-  `}
 `
 
-const IconImage = styled.img<{ isChristmas?: boolean }>`
-  width: 140px;
-  margin-top: ${({ isChristmas }) => (isChristmas ? '-18px' : '1px')};
+const IconImage = styled.img`
+  width: 163px;
+  height: 53px;
+  object-fit: contain;
 
-  ${({ theme, isChristmas }) => theme.mediaWidth.upToSmall`
-    width: 114px;
-    margin-top: ${isChristmas ? '-10px' : '1px'};
+  ${({ theme }) => theme.mediaWidth.upToSmall`
+    width: 120px;
+    height: 39px;
   `};
-
-  ${({ theme }) => theme.mediaWidth.upToExtraSmall`
-    width:100px;
-  `}
 `
 
-const Title = styled(Link)`
+const StyledNavLink = styled(Link)`
+  color: ${colors.text};
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+
+  &:hover {
+    color: ${colors.primary};
+  }
+`
+
+const MobileMenuButton = styled.button`
+  display: none;
+  background: none;
+  border: none;
+  color: ${colors.text};
+  font-size: 24px;
+  cursor: pointer;
+
+  ${({ theme }) => theme.mediaWidth.upToLarge`
+    display: block;
+  `};
+`
+
+const MobileMenu = styled.div<{ isOpen: boolean }>`
+  display: ${({ isOpen }) => (isOpen ? 'flex' : 'none')};
+  flex-direction: column;
+  position: fixed;
+  top: 80px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: ${colors.background};
+  padding: 16px;
+  z-index: ${Z_INDEXS.MODAL};
+`
+
+const MobileMenuItem = styled(StyledNavLink)`
+  padding: 12px 0;
+  font-size: 18px;
+`
+
+const MobileHeaderControls = styled.div`
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: ${colors.background};
+  border-top: 1px solid ${colors.border};
   display: flex;
   align-items: center;
-  pointer-events: auto;
-  justify-self: flex-start;
-  margin-right: 12px;
-  ${({ theme }) => theme.mediaWidth.upToSmall`
-    justify-self: center;
-  `};
-  :hover {
-    cursor: pointer;
-  }
-`
-
-const LogoIcon = styled.div`
-  transition: transform 0.3s ease;
-
-  :hover {
-    transform: rotate(-5deg);
-  }
-
-  ${({ theme }) => theme.mediaWidth.upToExtraSmall`
-    :hover {
-      transform: rotate(0);
-    }
-  `}
+  justify-content: space-around;
+  padding: 0 16px;
+  z-index: ${Z_INDEXS.MODAL};
 `
 
 export default function Header() {
   const { networkInfo } = useActiveWeb3React()
-  const [holidayMode] = useHolidayMode()
-  const theme = useTheme()
   const { pathname } = useLocation()
   const isPartnerSwap = pathname.startsWith(APP_PATHS.PARTNER_SWAP)
 
-  const upToXXSmall = useMedia(`(max-width: ${MEDIA_WIDTHS.upToXXSmall}px)`)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const upToLarge = useMedia(`(max-width: ${MEDIA_WIDTHS.upToLarge}px)`)
 
-  const menu = (
-    <HeaderElementWrap>
-      <Announcement />
-      <div style={{ height: '18px', borderLeft: `2px solid ${theme.subText}` }} />
-      <Menu />
-    </HeaderElementWrap>
-  )
+  const navLinks = [
+    { to: `${APP_PATHS.SWAP}/${networkInfo.route}`, label: 'Swap' },
+    { to: APP_PATHS.BRIDGE, label: 'Bridge' },
+    { to: '/rebel-kangas', label: "Rebel Kanga's" },
+    { to: '/learn', label: 'Learn' },
+    { to: '/ai', label: 'AI' },
+  ]
 
   return (
-    <HeaderFrame hide={isPartnerSwap && upToLarge}>
-      <HeaderRow>
-        {isPartnerSwap ? (
-          <LogoIcon>
-            <IconImage src={'/logo-dark.svg'} alt="logo" />
-          </LogoIcon>
-        ) : (
-          <Title to={`${APP_PATHS.SWAP}/${networkInfo.route}`}>
-            {holidayMode ? (
-              <LogoIcon>
-                <IconImage isChristmas src={'/christmas-logo-dark.svg'} alt="logo" />
-              </LogoIcon>
-            ) : (
-              <LogoIcon>
-                <IconImage src={'/logo-dark.svg'} alt="logo" />
-              </LogoIcon>
-            )}
-          </Title>
-        )}
-        {!isPartnerSwap && (
-          <HeaderLinks>
-            <SwapNavGroup />
+    <>
+      <HeaderFrame>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Link to={`${APP_PATHS.SWAP}/${networkInfo.route}`}>
+            <IconImage src="/roosvg.svg" alt="Roo Finance logo" />
+          </Link>
+          {!isPartnerSwap && !upToLarge && (
+            <HeaderLinks>
+              {navLinks.map(link => (
+                <StyledNavLink key={link.to} to={link.to}>
+                  {link.label} {/* Remove <Trans> wrapper */}
+                </StyledNavLink>
+              ))}
+            </HeaderLinks>
+          )}
+        </div>
 
-            <StyledNavLink to={`${APP_PATHS.MARKET_OVERVIEW}`}>Market</StyledNavLink>
-            <KyberDAONavGroup />
-            <CampaignNavGroup />
-            <StyledNavExternalLink target="_blank" href={AGGREGATOR_ANALYTICS_URL}>
-              <Trans>Analytics</Trans>
-            </StyledNavExternalLink>
-            <AboutNavGroup />
-          </HeaderLinks>
-        )}
-      </HeaderRow>
+        <HeaderControls>
+          {!upToLarge && (
+            <>
+              <HeaderElement>
+                <SelectNetwork />
+                <SelectWallet />
+              </HeaderElement>
+              <HeaderElement>
+                <Announcement />
+                <Menu />
+              </HeaderElement>
+            </>
+          )}
+          {upToLarge && <MobileMenuButton onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>☰</MobileMenuButton>}
+        </HeaderControls>
+      </HeaderFrame>
 
-      <HeaderControls>
-        {isPartnerSwap ? (
-          <Flex justifyContent="space-between" width="100%">
-            {upToLarge && (
-              <LogoIcon>
-                <IconImage src={'/logo-dark.svg'} alt="logo" />
-              </LogoIcon>
-            )}
-
-            <Flex sx={{ gap: '1rem' }} height="42px">
-              <SelectNetwork />
-              <SelectWallet />
-            </Flex>
-          </Flex>
-        ) : upToXXSmall ? (
-          <HeaderElement>
+      {upToLarge && (
+        <>
+          <MobileMenu isOpen={isMobileMenuOpen}>
+            {navLinks.map(link => (
+              <MobileMenuItem key={link.to} to={link.to} onClick={() => setIsMobileMenuOpen(false)}>
+                {link.label} {/* Remove <Trans> wrapper */}
+              </MobileMenuItem>
+            ))}
+          </MobileMenu>
+          <MobileHeaderControls>
             <SelectNetwork />
             <SelectWallet />
-            {menu}
-          </HeaderElement>
-        ) : (
-          <>
-            <HeaderElement style={{ justifyContent: 'flex-start' }}>
-              <SelectNetwork />
-              <SelectWallet />
-            </HeaderElement>
-            <HeaderElement style={{ justifyContent: 'flex-end' }}>{menu}</HeaderElement>
-          </>
-        )}
-      </HeaderControls>
-    </HeaderFrame>
+            <Announcement />
+            <Menu />
+          </MobileHeaderControls>
+        </>
+      )}
+    </>
   )
 }
