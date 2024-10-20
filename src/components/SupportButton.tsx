@@ -103,7 +103,7 @@ export default function SupportButton() {
   return (
     <Wrapper onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)}>
       <Flex
-        backgroundColor={theme.primary}
+        backgroundColor="#010725" // Updated button color
         alignItems="center"
         justifyContent="center"
         sx={{
@@ -111,7 +111,7 @@ export default function SupportButton() {
           width: upToSmall ? '36px' : 'max-content',
           padding: upToSmall ? 0 : '0 12px',
           borderRadius: '999px',
-          color: theme.textReverse,
+          color: '#ffffff', // Updated text color to white
           fontSize: '14px',
           fontWeight: '500',
           cursor: 'pointer',
@@ -127,10 +127,7 @@ export default function SupportButton() {
 
       <SubMenu initial="exit" animate={isHover ? 'enter' : 'exit'} variants={subMenuAnimate}>
         <SubMenuContent flexDirection="column" sx={{ gap: '1rem' }}>
-          <ExternalLink
-            href="https://discord.com/channels/608934314960224276/1192426056183972010"
-            style={{ textDecoration: 'none' }}
-          >
+          <ExternalLink href="https://discord.gg/AMQB6ZWKfa" style={{ textDecoration: 'none' }}>
             <Flex alignItems="center" sx={{ gap: '6px' }}>
               <DiscordIcon />
               <Text fontSize="14px" fontWeight="500" color={theme.text}>
@@ -138,15 +135,15 @@ export default function SupportButton() {
               </Text>
             </Flex>
           </ExternalLink>
-          <ExternalLink href="https://t.me/kybernetwork" style={{ textDecoration: 'none' }}>
+          <ExternalLink href="https://x.com/roofinance" style={{ textDecoration: 'none' }}>
             <Flex alignItems="center" sx={{ gap: '6px' }}>
               <TeleIcon />
               <Text fontSize="14px" fontWeight="500" color={theme.text}>
-                Telegram
+                X
               </Text>
             </Flex>
           </ExternalLink>
-          <a href="mailto:support@kyberswap.com">
+          <a href="mailto:joey@roo.finance">
             <Flex alignItems="center" sx={{ gap: '6px' }}>
               <EmailIcon />
               <Text fontSize="14px" fontWeight="500" color={theme.text}>

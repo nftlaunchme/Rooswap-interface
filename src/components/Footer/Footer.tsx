@@ -72,7 +72,7 @@ const Item = styled.div`
 `
 
 const CopyrightText = styled(Text)`
-  color: ${colors.subText};
+  color: ${colors.text}; // Change this to make copyright text white
   font-size: 14px;
   margin-top: 16px;
 `
@@ -85,14 +85,15 @@ export const FooterSocialLink = () => {
   return (
     <SocialLinks>
       <ExternalLinkNoLineHeight href="https://twitter.com/RooFinance">
-        <TwitterIcon color={colors.subText} width={20} height={20} />
+        <TwitterIcon color={colors.text} width={20} height={20} />  {/* Make icon color white */}
       </ExternalLinkNoLineHeight>
       <ExternalLinkNoLineHeight href="https://discord.gg/AMQB6ZWKfa">
-        <Discord width={20} height={20} color={colors.subText} />
+        <Discord width={20} height={20} color={colors.text} />  {/* Make icon color white */}
       </ExternalLinkNoLineHeight>
     </SocialLinks>
   )
 }
+
 function Footer() {
   const above768 = useMedia('(min-width: 768px)')
 

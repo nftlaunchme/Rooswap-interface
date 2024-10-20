@@ -1,5 +1,5 @@
 import { Trans } from '@lingui/macro'
-import { RefObject } from 'react'
+import { RefObject, useEffect, useState } from 'react'
 import { Info, X } from 'react-feather'
 import { useMedia } from 'react-use'
 import AutoSizer from 'react-virtualized-auto-sizer'
@@ -20,9 +20,10 @@ const Wrapper = styled.div`
   gap: 24px;
   height: 80vh;
   padding: 24px;
-  background-color: #021D5E;
-  border-radius: 16px;
+  background-color: #010725;
+  border-radius: 20px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  overflow: visible; /* Changed to visible to allow content overflow */
 
   ${({ theme }: { theme: DefaultTheme }) => theme.mediaWidth.upToMedium`
     width: 100%;
@@ -40,14 +41,14 @@ const Wrapper = styled.div`
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 `
 
 const TabItem = styled.div<{ active: boolean }>`
   flex: 1;
   background-color: ${({ active }) => (active ? '#FFFFFF' : 'transparent')};
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
   text-align: center;
   font-weight: 600;
   font-size: 16px;
@@ -56,7 +57,7 @@ const TabItem = styled.div<{ active: boolean }>`
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  color: ${({ active }) => (active ? '#021D5E' : '#FFFFFF')};
+  color: ${({ active }) => (active ? '#010725' : '#FFFFFF')};
   transition: all 0.3s ease-in-out;
 
   &:hover {
@@ -65,7 +66,7 @@ const TabItem = styled.div<{ active: boolean }>`
 `
 
 const Title = styled.div`
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -86,16 +87,17 @@ const ListAnnouncement = styled.div`
   overflow-y: auto;
   overflow-x: hidden;
   border-radius: 16px;
+  padding: 4px;
 
   .scrollbar {
     &::-webkit-scrollbar {
       display: block;
-      width: 8px;
+      width: 4px;
     }
     
     &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
     }
   }
   
@@ -105,9 +107,9 @@ const ListAnnouncement = styled.div`
 ` 
 
 const AnnouncementItem = styled.div`
-  padding: 20px;
+  padding: 16px;
   background-color: #FFFFFF;
-  color: #021D5E;
+  color: #010725;
   border-radius: 12px;
   margin-bottom: 16px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -115,19 +117,20 @@ const AnnouncementItem = styled.div`
   transition: all 0.3s ease-in-out;
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   }
 `
 
 const AnnouncementTitle = styled(Text)`
   font-weight: 700;
   font-size: 18px;
+  margin-bottom: 8px;
 `
 
 const AnnouncementDescription = styled(Text)`
-  font-size: 16px;
-  margin-top: 12px;
+  font-size: 14px;
+  color: #4A5568;
 `
 
 export enum Tab {
@@ -152,7 +155,6 @@ export default function AnnouncementView({
   const theme = useTheme()
   const isMobile = useMedia(`(max-width: ${MEDIA_WIDTHS.upToMedium}px)`)
 
-  // Hardcoded announcement 
   const announcements = [
     {
       id: 1,
@@ -190,10 +192,10 @@ export default function AnnouncementView({
       <Container>
         <RowBetween>
           <Title>
-            <NotificationIcon size={28} color="#FFFFFF" />
+            <NotificationIcon size={24} color="#FFFFFF" />
             <Trans>Notifications</Trans>  
           </Title>
-          {isMobile && <X color="#FFFFFF" size={28} onClick={toggleNotificationCenter} cursor="pointer" />}
+          {isMobile && <X color="#FFFFFF" size={24} onClick={toggleNotificationCenter} cursor="pointer" />}
         </RowBetween>
 
         {tabComponent}
@@ -208,15 +210,18 @@ export default function AnnouncementView({
                 height={height}
                 width={width}
                 itemCount={announcements.length}
-                itemSize={120}
+                itemSize={140}
+                itemData={announcements}
               >
-                {({ index, style }) => {
-                  const item = announcements[index]
+                {({ index, style, data }) => {
+                  const item = data[index]
                   return (
-                    <AnnouncementItem key={item.id} style={style} onClick={() => onReadAnnouncement(index)}>
-                      <AnnouncementTitle>{item.templateBody.name}</AnnouncementTitle>
-                      <AnnouncementDescription>{item.templateBody.description}</AnnouncementDescription>
-                    </AnnouncementItem>
+                    <div style={{ ...style, paddingBottom: '16px' }}>
+                      <AnnouncementItem key={item.id} onClick={() => onReadAnnouncement(index)}>
+                        <AnnouncementTitle>{item.templateBody.name}</AnnouncementTitle>
+                        <AnnouncementDescription>{item.templateBody.description}</AnnouncementDescription>
+                      </AnnouncementItem>
+                    </div>
                   )
                 }}
               </FixedSizeList>  
