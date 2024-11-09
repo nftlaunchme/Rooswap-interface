@@ -11,11 +11,39 @@ const DEFAULT_REFERRER_FEE = '0.01'
 // Default referrer address
 const DEFAULT_REFERRER = '0x0000000000000000000000000000000000000000'
 
+// Thresholds for route validation
+const MAX_PRICE_IMPACT = 10 // 10%
+const MIN_OUTPUT_USD = 0.01 // $0.01
+const MIN_LIQUIDITY_USD = 10000 // $10k
+
 function getTokenAddress(currency: Currency): string {
   if (currency.isNative) {
     return '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
   }
   return currency.wrapped.address
+}
+
+function isValidRoute(quote: OpenOceanQuote): boolean {
+  // Check price impact
+  if (parseFloat(quote.priceImpact) > MAX_PRICE_IMPACT) {
+    console.log(`Skipping route due to high price impact: ${quote.priceImpact}%`)
+    return false
+  }
+
+  // Check output value
+  if (parseFloat(quote.amountOutUsd) < MIN_OUTPUT_USD) {
+    console.log(`Skipping route due to small output value: $${quote.amountOutUsd}`)
+    return false
+  }
+
+  // Calculate implied liquidity
+  const impliedLiquidity = Math.sqrt(parseFloat(quote.amountInUsd) * parseFloat(quote.amountOutUsd)) * 100
+  if (impliedLiquidity < MIN_LIQUIDITY_USD) {
+    console.log(`Skipping route due to low liquidity: $${impliedLiquidity.toFixed(2)}`)
+    return false
+  }
+
+  return true
 }
 
 async function getGasPrice(chainId: number): Promise<string> {
@@ -37,10 +65,7 @@ export async function getTokenList(chainId: number): Promise<TokenInfo[]> {
     const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/tokenList`)
     const data = await response.json()
     if (data.code === 200 && data.data) {
-      return data.data.map((token: any) => ({
-        ...token,
-        hasFeeOnTransfer: token.hasFeeOnTransfer || false
-      }))
+      return data.data
     }
     return []
   } catch (error) {
@@ -116,7 +141,7 @@ async function getOpenOceanRoute(
       return null
     }
 
-    return {
+    const quote = {
       inAmount: data.data.inAmount,
       outAmount: data.data.outAmount,
       price: data.data.price || '0',
@@ -125,16 +150,18 @@ async function getOpenOceanRoute(
       gasUsd: data.data.gasUsd || '0',
       amountInUsd: data.data.inUSD || '0',
       amountOutUsd: data.data.outUSD || '0',
-      route: data.data.path?.routes?.map((r: any) => JSON.stringify({
-        ...r,
-        hasFeeOnTransfer: r.hasFeeOnTransfer || false,
-        feeOnTransferAmount: r.feeOnTransferAmount || '0'
-      })) || [],
+      route: data.data.path?.routes?.map((r: any) => JSON.stringify(r)) || [],
       routerAddress: data.data.to || '',
       estimatedGas: data.data.estimatedGas || '250000',
-      hasFeeOnTransfer: data.data.hasFeeOnTransfer || false,
-      feeOnTransferAmount: data.data.feeOnTransferAmount || '0'
     }
+
+    // Validate the route
+    if (!isValidRoute(quote)) {
+      console.log('OpenOcean route failed validation')
+      return null
+    }
+
+    return quote
   } catch (error) {
     console.error('OpenOcean route error:', error)
     return null
@@ -168,25 +195,7 @@ export async function getOpenOceanQuote(
     // Find best direct quote
     let bestDirectQuote: DexQuote | null = null
     if (directQuotes.length > 0) {
-      bestDirectQuote = directQuotes.reduce((best, current) => {
-        // If current quote has an error, skip it
-        if (current.error) return best
-        // If best quote has an error, use current
-        if (best.error) return current
-        
-        const bestAmount = ethers.BigNumber.from(best.outAmount)
-        const currentAmount = ethers.BigNumber.from(current.outAmount)
-        
-        // Account for fee on transfer if present
-        const bestNet = best.hasFeeOnTransfer && best.feeOnTransferAmount
-          ? bestAmount.sub(best.feeOnTransferAmount)
-          : bestAmount
-        const currentNet = current.hasFeeOnTransfer && current.feeOnTransferAmount
-          ? currentAmount.sub(current.feeOnTransferAmount)
-          : currentAmount
-          
-        return currentNet.gt(bestNet) ? current : best
-      })
+      bestDirectQuote = directQuotes[0] // Already sorted by output amount
     }
 
     // Compare direct vs OpenOcean route
@@ -194,14 +203,6 @@ export async function getOpenOceanQuote(
       const directOutput = ethers.BigNumber.from(bestDirectQuote.outAmount)
       const openOceanOutput = ethers.BigNumber.from(openOceanQuote.outAmount)
       const gasPrice = ethers.BigNumber.from(openOceanQuote.gasPrice)
-
-      // Account for fees on transfer
-      const directNet = bestDirectQuote.hasFeeOnTransfer && bestDirectQuote.feeOnTransferAmount
-        ? directOutput.sub(bestDirectQuote.feeOnTransferAmount)
-        : directOutput
-      const openOceanNet = openOceanQuote.hasFeeOnTransfer && openOceanQuote.feeOnTransferAmount
-        ? openOceanOutput.sub(openOceanQuote.feeOnTransferAmount)
-        : openOceanOutput
 
       // Calculate gas costs
       const directGasEstimate = ethers.BigNumber.from(bestDirectQuote.gasEstimate || '200000')
@@ -216,32 +217,26 @@ export async function getOpenOceanQuote(
       const scaledDirectGasCost = directGasCost.mul(gasCostScaling)
       const scaledOpenOceanGasCost = openOceanGasCost.mul(gasCostScaling)
 
-      // Compare final net outputs
-      const directFinalNet = directNet.sub(scaledDirectGasCost)
-      const openOceanFinalNet = openOceanNet.sub(scaledOpenOceanGasCost)
+      // Compare net outputs
+      const directNet = directOutput.sub(scaledDirectGasCost)
+      const openOceanNet = openOceanOutput.sub(scaledOpenOceanGasCost)
 
       console.log('Route comparison:', {
         direct: {
           dex: bestDirectQuote.dex,
           output: directOutput.toString(),
-          netAfterFees: directNet.toString(),
           gasCost: directGasCost.toString(),
-          finalNet: directFinalNet.toString(),
-          hasFeeOnTransfer: bestDirectQuote.hasFeeOnTransfer,
-          feeOnTransferAmount: bestDirectQuote.feeOnTransferAmount,
+          netOutput: directNet.toString(),
         },
         openOcean: {
           output: openOceanOutput.toString(),
-          netAfterFees: openOceanNet.toString(),
           gasCost: openOceanGasCost.toString(),
-          finalNet: openOceanFinalNet.toString(),
-          hasFeeOnTransfer: openOceanQuote.hasFeeOnTransfer,
-          feeOnTransferAmount: openOceanQuote.feeOnTransferAmount,
+          netOutput: openOceanNet.toString(),
         }
       })
 
       // Use direct route if it's better
-      if (directFinalNet.gt(openOceanFinalNet)) {
+      if (directNet.gt(openOceanNet)) {
         return {
           inAmount: amount.raw.toString(),
           outAmount: bestDirectQuote.outAmount,
@@ -255,18 +250,14 @@ export async function getOpenOceanQuote(
             dexId: bestDirectQuote.dex,
             dexName: bestDirectQuote.dex,
             swapAmount: bestDirectQuote.outAmount,
-            hasFeeOnTransfer: bestDirectQuote.hasFeeOnTransfer,
-            feeOnTransferAmount: bestDirectQuote.feeOnTransferAmount,
           })],
           routerAddress: bestDirectQuote.routerAddress,
           estimatedGas: bestDirectQuote.gasEstimate,
-          hasFeeOnTransfer: bestDirectQuote.hasFeeOnTransfer,
-          feeOnTransferAmount: bestDirectQuote.feeOnTransferAmount,
         }
       }
     }
 
-    // If only OpenOcean quote is available
+    // If only OpenOcean quote is available and valid
     if (openOceanQuote) {
       return openOceanQuote
     }
@@ -287,13 +278,9 @@ export async function getOpenOceanQuote(
           dexId: bestDirectQuote.dex,
           dexName: bestDirectQuote.dex,
           swapAmount: bestDirectQuote.outAmount,
-          hasFeeOnTransfer: bestDirectQuote.hasFeeOnTransfer,
-          feeOnTransferAmount: bestDirectQuote.feeOnTransferAmount,
         })],
         routerAddress: bestDirectQuote.routerAddress,
         estimatedGas: bestDirectQuote.gasEstimate,
-        hasFeeOnTransfer: bestDirectQuote.hasFeeOnTransfer,
-        feeOnTransferAmount: bestDirectQuote.feeOnTransferAmount,
       }
     }
 
@@ -327,6 +314,11 @@ export async function getOpenOceanSwapData(
     // Get the best route
     const quote = await getOpenOceanQuote(chainId, currencyIn, currencyOut, amount, slippage)
 
+    // Validate the quote
+    if (!isValidRoute(quote)) {
+      throw new Error('No valid route available')
+    }
+
     const effectiveRecipient = recipient || account
     const inAmount = amount.raw.toString()
 
@@ -334,19 +326,17 @@ export async function getOpenOceanSwapData(
     let firstRoute
     try {
       firstRoute = JSON.parse(quote.route[0])
+      console.log('Parsed route:', firstRoute)
     } catch (e) {
       console.error('Failed to parse route info:', e)
     }
 
     // If this is a direct DEX route, create the swap transaction directly
     if (firstRoute?.dexName && CRONOS_DEXES[firstRoute.dexName]) {
+      console.log('Using direct DEX route:', firstRoute)
       const deadline = Math.floor(Date.now() / 1000) + 20 * 60 // 20 minutes
-      
-      // Add extra slippage for fee on transfer tokens
-      const adjustedSlippage = quote.hasFeeOnTransfer ? slippage + 100 : slippage // Add 1% for fee tokens
-      
       const minOutAmount = ethers.BigNumber.from(quote.outAmount)
-        .mul(1000 - Math.floor(adjustedSlippage * 10)) // Convert slippage to basis points
+        .mul(1000 - Math.floor(slippage * 10)) // Convert slippage to basis points
         .div(1000)
         .toString()
 
@@ -383,17 +373,17 @@ export async function getOpenOceanSwapData(
       referrerFee: DEFAULT_REFERRER_FEE,
     }
 
-    console.log('Getting swap quote with params:', paramsObj)
+    console.log('Getting OpenOcean swap quote with params:', paramsObj)
 
     const params = new URLSearchParams(paramsObj)
     const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/swap_quote?${params}`)
     const data = await response.json()
 
-    console.log('Swap quote response:', data)
+    console.log('OpenOcean swap quote response:', data)
 
     if (!data || data.code !== 200 || !data.data) {
       console.error('Invalid swap quote response:', data)
-      throw new Error(data?.message || 'Failed to get swap data')
+      throw new Error(data?.message || data?.error?.msg || 'Failed to get swap data')
     }
 
     if (!data.data.to || !data.data.data) {

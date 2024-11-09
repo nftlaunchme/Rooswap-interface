@@ -3,37 +3,19 @@ import { ethers } from 'ethers'
 import { CRONOS_DEXES } from '../constants/dex'
 import { DexQuote } from '../types/openocean'
 
+// Uniswap V2 Router ABI (used by all Uniswap forks)
 const ROUTER_ABI = [
-  // Read functions
-  'function WETH() external pure returns (address)',
-  'function factory() external pure returns (address)',
-  'function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) public pure returns (uint amountIn)',
-  'function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) public pure returns (uint amountOut)',
-  'function getAmountsIn(uint amountOut, address[] memory path) public view returns (uint[] memory amounts)',
   'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)',
-  'function quote(uint amountA, uint reserveA, uint reserveB) public pure returns (uint amountB)',
-  
-  // Write functions
-  'function addLiquidity(address tokenA, address tokenB, uint amountADesired, uint amountBDesired, uint amountAMin, uint amountBMin, address to, uint deadline) external returns (uint amountA, uint amountB, uint liquidity)',
-  'function addLiquidityETH(address token, uint amountTokenDesired, uint amountTokenMin, uint amountETHMin, address to, uint deadline) external payable returns (uint amountToken, uint amountETH, uint liquidity)',
-  'function removeLiquidity(address tokenA, address tokenB, uint liquidity, uint amountAMin, uint amountBMin, address to, uint deadline) external returns (uint amountA, uint amountB)',
-  'function removeLiquidityETH(address token, uint liquidity, uint amountTokenMin, uint amountETHMin, address to, uint deadline) external returns (uint amountToken, uint amountETH)',
-  'function removeLiquidityETHSupportingFeeOnTransferTokens(address token, uint liquidity, uint amountTokenMin, uint amountETHMin, address to, uint deadline) external returns (uint amountETH)',
-  'function removeLiquidityETHWithPermit(address token, uint liquidity, uint amountTokenMin, uint amountETHMin, address to, uint deadline, bool approveMax, uint8 v, bytes32 r, bytes32 s) external returns (uint amountToken, uint amountETH)',
-  'function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(address token, uint liquidity, uint amountTokenMin, uint amountETHMin, address to, uint deadline, bool approveMax, uint8 v, bytes32 r, bytes32 s) external returns (uint amountETH)',
-  'function removeLiquidityWithPermit(address tokenA, address tokenB, uint liquidity, uint amountAMin, uint amountBMin, address to, uint deadline, bool approveMax, uint8 v, bytes32 r, bytes32 s) external returns (uint amountA, uint amountB)',
-  'function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts)',
-  'function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts)',
-  'function swapExactETHForTokensSupportingFeeOnTransferTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable',
-  'function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)',
-  'function swapExactTokensForETHSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external',
   'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)',
-  'function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external',
-  'function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)',
-  'function swapTokensForExactTokens(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)'
+  'function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts)',
+  'function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)'
 ]
 
 const WCRO_ADDRESS = '0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23'
+
+// Minimum liquidity threshold (in USD)
+const MIN_LIQUIDITY_USD = 10000 // $10k minimum liquidity
+const MIN_OUTPUT_USD = 0.01 // $0.01 minimum output value
 
 function getTokenAddressForDex(currency: Currency): string {
   if (currency.isNative) {
@@ -42,11 +24,21 @@ function getTokenAddressForDex(currency: Currency): string {
   return currency.wrapped.address
 }
 
-function getTokenAddressForOpenOcean(currency: Currency): string {
-  if (currency.isNative) {
-    return '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+function isValidQuote(quote: DexQuote, amountInUsd: string, amountOutUsd: string): boolean {
+  // Skip if output amount is too small
+  if (parseFloat(amountOutUsd) < MIN_OUTPUT_USD) {
+    console.log(`Skipping ${quote.dex} due to small output: $${amountOutUsd}`)
+    return false
   }
-  return currency.wrapped.address
+
+  // Calculate implied liquidity
+  const impliedLiquidity = Math.sqrt(parseFloat(amountInUsd) * parseFloat(amountOutUsd)) * 100
+  if (impliedLiquidity < MIN_LIQUIDITY_USD) {
+    console.log(`Skipping ${quote.dex} due to low liquidity: $${impliedLiquidity.toFixed(2)}`)
+    return false
+  }
+
+  return true
 }
 
 export async function getDirectDexQuotes(
@@ -90,20 +82,8 @@ export async function getDirectDexQuotes(
         setTimeout(() => reject(new Error(`Quote request timeout for ${dex.name}`)), 5000)
       })
       
-      let amounts: ethers.BigNumber[]
-      
-      try {
-        // First try regular getAmountsOut
-        const quotePromise = router.getAmountsOut(amountIn, path)
-        amounts = await Promise.race([quotePromise, timeoutPromise]) as ethers.BigNumber[]
-      } catch (error) {
-        console.log(`Regular getAmountsOut failed for ${dex.name}, trying with fee on transfer support`)
-        
-        // If regular call fails, try getting amounts manually using getAmountOut
-        const reserves = await router.getReserves(inTokenAddress, outTokenAddress)
-        const amountOut = await router.getAmountOut(amountIn, reserves[0], reserves[1])
-        amounts = [ethers.BigNumber.from(amountIn), amountOut]
-      }
+      const quotePromise = router.getAmountsOut(amountIn, path)
+      const amounts = await Promise.race([quotePromise, timeoutPromise]) as ethers.BigNumber[]
       
       const quote = {
         dex: dex.name,
@@ -145,11 +125,23 @@ export async function getDirectDexQuotes(
       }
     })
 
-    console.log('All direct DEX quotes:', quotes.map(q => ({
+    // Sort quotes by output amount (descending)
+    quotes.sort((a, b) => {
+      const aAmount = ethers.BigNumber.from(a.outAmount)
+      const bAmount = ethers.BigNumber.from(b.outAmount)
+      return bAmount.gt(aAmount) ? 1 : -1
+    })
+
+    // Take only the top 3 quotes
+    const topQuotes = quotes.slice(0, 3)
+
+    console.log('Top direct DEX quotes:', topQuotes.map(q => ({
       dex: q.dex,
       outAmount: q.outAmount,
       gasEstimate: q.gasEstimate,
     })))
+
+    return topQuotes
   } catch (error) {
     console.error('Error getting direct DEX quotes:', error)
   }
@@ -185,59 +177,29 @@ export async function createSwapTransaction(
     let value = '0'
 
     if (currencyIn.isNative) {
-      // Try fee-supporting function first for better compatibility
-      try {
-        data = router.interface.encodeFunctionData('swapExactETHForTokensSupportingFeeOnTransferTokens', [
-          minOutAmount,
-          path,
-          recipient,
-          deadline
-        ])
-      } catch {
-        data = router.interface.encodeFunctionData('swapExactETHForTokens', [
-          minOutAmount,
-          path,
-          recipient,
-          deadline
-        ])
-      }
+      data = router.interface.encodeFunctionData('swapExactETHForTokens', [
+        minOutAmount,
+        path,
+        recipient,
+        deadline
+      ])
       value = amount
     } else if (currencyOut.isNative) {
-      try {
-        data = router.interface.encodeFunctionData('swapExactTokensForETHSupportingFeeOnTransferTokens', [
-          amount,
-          minOutAmount,
-          path,
-          recipient,
-          deadline
-        ])
-      } catch {
-        data = router.interface.encodeFunctionData('swapExactTokensForETH', [
-          amount,
-          minOutAmount,
-          path,
-          recipient,
-          deadline
-        ])
-      }
+      data = router.interface.encodeFunctionData('swapExactTokensForETH', [
+        amount,
+        minOutAmount,
+        path,
+        recipient,
+        deadline
+      ])
     } else {
-      try {
-        data = router.interface.encodeFunctionData('swapExactTokensForTokensSupportingFeeOnTransferTokens', [
-          amount,
-          minOutAmount,
-          path,
-          recipient,
-          deadline
-        ])
-      } catch {
-        data = router.interface.encodeFunctionData('swapExactTokensForTokens', [
-          amount,
-          minOutAmount,
-          path,
-          recipient,
-          deadline
-        ])
-      }
+      data = router.interface.encodeFunctionData('swapExactTokensForTokens', [
+        amount,
+        minOutAmount,
+        path,
+        recipient,
+        deadline
+      ])
     }
 
     console.log('Created swap transaction:', {
