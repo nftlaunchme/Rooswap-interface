@@ -1,5 +1,17 @@
 import { Currency, CurrencyAmount } from './currency'
-import { DetailedRouteSummary } from './route'
+
+export interface TokenInfo {
+  id?: number
+  code?: string
+  name: string
+  address: string
+  decimals: number
+  symbol: string
+  icon?: string
+  chainId?: number
+  logoURI?: string
+  hasFeeOnTransfer?: boolean
+}
 
 interface TokenData {
   address: string
@@ -21,6 +33,9 @@ export interface OpenOceanQuote {
   amountOutUsd: string
   route: string[]
   routerAddress: string
+  estimatedGas: string
+  hasFeeOnTransfer?: boolean
+  feeOnTransferAmount?: string
 }
 
 export interface OpenOceanSwapResult {
@@ -28,32 +43,45 @@ export interface OpenOceanSwapResult {
   to: string
   value: string
   gasPrice: string
+  estimatedGas: string
+  error?: {
+    code: string
+    message: string
+    data?: any
+  }
 }
 
-export function createOpenOceanRouteSummary(
-  currencyIn: Currency,
-  currencyOut: Currency,
-  parsedAmountIn: CurrencyAmount<Currency>,
-  quote: OpenOceanQuote,
-): DetailedRouteSummary {
-  const parsedAmountOut = CurrencyAmount.fromRaw(currencyOut, quote.outAmount)
+export interface OpenOceanRoute {
+  dexId: string
+  dexName: string
+  protocol?: string
+  routerAddress?: string
+  swapAmount: string
+  swapPercentage?: number
+  hasFeeOnTransfer?: boolean
+  feeOnTransferAmount?: string
+}
 
-  // Convert amounts to decimal format for display
-  const inAmountDecimal = CurrencyAmount.fromRaw(currencyIn, quote.inAmount).toExact()
-  const outAmountDecimal = parsedAmountOut.toExact()
-
-  // Calculate price as outAmount/inAmount
-  const price = (Number(outAmountDecimal) / Number(inAmountDecimal)).toString()
-
-  return {
-    parsedAmountIn,
-    parsedAmountOut,
-    priceImpact: quote.priceImpact,
-    executionPrice: price,
-    gasUsd: quote.gasUsd,
-    amountInUsd: quote.amountInUsd,
-    amountOutUsd: quote.amountOutUsd,
-    route: quote.route,
-    routerAddress: quote.routerAddress,
+export interface DexQuote {
+  dex: string
+  outAmount: string
+  routerAddress: string
+  gasEstimate: string
+  error?: {
+    code: string
+    message: string
+    data?: any
   }
+  hasFeeOnTransfer?: boolean
+  feeOnTransferAmount?: string
+}
+
+export interface DexError {
+  dex: string
+  error: {
+    code: string
+    message: string
+    data?: any
+  }
+  routerAddress: string
 }

@@ -1,65 +1,48 @@
 import { Currency, CurrencyAmount } from '../types/currency'
-import { OpenOceanQuote, OpenOceanSwapResult } from '../types/openocean'
+import { OpenOceanQuote, OpenOceanSwapResult, TokenInfo, DexQuote } from '../types/openocean'
+import { ethers } from 'ethers'
+import { getDirectDexQuotes, createSwapTransaction } from './dexService'
+import { CRONOS_DEXES } from '../constants/dex'
 
 const OPENOCEAN_API_URL = 'https://open-api.openocean.finance/v3'
 
-// Helper to get the correct token address format for OpenOcean
+// Default referrer fee (required by API to be >= 0.01)
+const DEFAULT_REFERRER_FEE = '0.01'
+// Default referrer address
+const DEFAULT_REFERRER = '0x0000000000000000000000000000000000000000'
+
 function getTokenAddress(currency: Currency): string {
   if (currency.isNative) {
-    // Use OpenOcean's native token address format
     return '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
   }
-  return currency.getAddress()
+  return currency.wrapped.address
 }
 
-export interface TokenInfo {
-  id?: number
-  code?: string
-  name: string
-  address: string
-  decimals: number
-  symbol: string
-  icon?: string
-  chainId?: number
-  logoURI?: string
-}
-
-interface OpenOceanTokenListResponse {
-  code: number
-  data: TokenInfo[]
-}
-
-interface OpenOceanBalanceResponse {
-  code: number
-  data: Array<{
-    symbol: string
-    tokenAddress: string
-    balance: number
-    raw: string
-  }>
+async function getGasPrice(chainId: number): Promise<string> {
+  try {
+    const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/gasPrice`)
+    const data = await response.json()
+    if (data.code === 200 && data.data) {
+      return data.data.standard || '5000000000' // Default to 5 Gwei
+    }
+    return '5000000000'
+  } catch (error) {
+    console.error('Failed to fetch gas price:', error)
+    return '5000000000'
+  }
 }
 
 export async function getTokenList(chainId: number): Promise<TokenInfo[]> {
   try {
-    // Use the correct OpenOcean token list endpoint for Cronos
     const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/tokenList`)
-    const data = await response.json() as OpenOceanTokenListResponse
-
-    console.log('OpenOcean token list response:', data)
-
-    if (data.code !== 200 || !data.data) {
-      throw new Error('Failed to get token list')
+    const data = await response.json()
+    if (data.code === 200 && data.data) {
+      return data.data.map((token: any) => ({
+        ...token,
+        hasFeeOnTransfer: token.hasFeeOnTransfer || false
+      }))
     }
-
-    // Map the response to our TokenInfo format
-    return data.data.map((token: TokenInfo) => ({
-      address: token.address,
-      symbol: token.symbol,
-      name: token.name,
-      decimals: token.decimals,
-      chainId,
-      logoURI: token.icon || token.logoURI, // OpenOcean uses 'icon' field
-    }))
+    return []
   } catch (error) {
     console.error('Failed to fetch token list:', error)
     return []
@@ -79,26 +62,82 @@ export async function getTokenBalances(
     })
 
     const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/getBalance?${params}`)
-    const data = await response.json() as OpenOceanBalanceResponse
+    const data = await response.json()
 
-    console.log('OpenOcean balance response:', data)
-
-    if (data.code !== 200 || !data.data) {
-      throw new Error('Failed to get token balances')
+    if (data.code === 200 && data.data) {
+      const balances: { [address: string]: string } = {}
+      data.data.forEach((token: { tokenAddress: string; raw: string }) => {
+        if (token.tokenAddress) {
+          balances[token.tokenAddress.toLowerCase()] = token.raw
+        }
+      })
+      return balances
     }
-
-    // Convert the response to our expected format
-    const balances: { [address: string]: string } = {}
-    data.data.forEach(token => {
-      if (token.tokenAddress) {
-        balances[token.tokenAddress.toLowerCase()] = token.raw
-      }
-    })
-
-    return balances
+    return {}
   } catch (error) {
     console.error('Failed to fetch token balances:', error)
     return {}
+  }
+}
+
+async function getOpenOceanRoute(
+  chainId: number,
+  currencyIn: Currency,
+  currencyOut: Currency,
+  amount: CurrencyAmount<Currency>,
+  slippage: number,
+): Promise<OpenOceanQuote | null> {
+  try {
+    const inTokenAddress = getTokenAddress(currencyIn)
+    const outTokenAddress = getTokenAddress(currencyOut)
+    const inAmount = amount.raw.toString()
+    const gasPrice = await getGasPrice(chainId)
+
+    const params = new URLSearchParams({
+      inTokenAddress,
+      outTokenAddress,
+      amount: inAmount,
+      gasPrice,
+      slippage: slippage.toString(),
+      chainId: chainId.toString(),
+      gasInclude: '1',
+      referrer: DEFAULT_REFERRER,
+      referrerFee: DEFAULT_REFERRER_FEE,
+    })
+
+    console.log('Getting OpenOcean quote with params:', Object.fromEntries(params))
+    const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/quote?${params}`)
+    const data = await response.json()
+
+    console.log('OpenOcean Quote response:', data)
+
+    if (!data || data.code !== 200 || !data.data) {
+      console.error('Invalid OpenOcean quote response:', data)
+      return null
+    }
+
+    return {
+      inAmount: data.data.inAmount,
+      outAmount: data.data.outAmount,
+      price: data.data.price || '0',
+      priceImpact: data.data.price_impact?.replace('%', '') || '0',
+      gasPrice: data.data.gasPrice || gasPrice,
+      gasUsd: data.data.gasUsd || '0',
+      amountInUsd: data.data.inUSD || '0',
+      amountOutUsd: data.data.outUSD || '0',
+      route: data.data.path?.routes?.map((r: any) => JSON.stringify({
+        ...r,
+        hasFeeOnTransfer: r.hasFeeOnTransfer || false,
+        feeOnTransferAmount: r.feeOnTransferAmount || '0'
+      })) || [],
+      routerAddress: data.data.to || '',
+      estimatedGas: data.data.estimatedGas || '250000',
+      hasFeeOnTransfer: data.data.hasFeeOnTransfer || false,
+      feeOnTransferAmount: data.data.feeOnTransferAmount || '0'
+    }
+  } catch (error) {
+    console.error('OpenOcean route error:', error)
+    return null
   }
 }
 
@@ -110,76 +149,158 @@ export async function getOpenOceanQuote(
   slippage: number,
 ): Promise<OpenOceanQuote> {
   try {
-    const inTokenAddress = getTokenAddress(currencyIn)
-    const outTokenAddress = getTokenAddress(currencyOut)
-
-    // Convert to decimal format without decimals as per API docs
-    const inAmount = amount.toExact()
-
-    console.log('Getting OpenOcean quote with params:', {
+    console.log('Getting quotes for:', {
       chainId,
-      inTokenAddress,
-      outTokenAddress,
-      amount: inAmount,
+      currencyIn: currencyIn.symbol,
+      currencyOut: currencyOut.symbol,
+      amount: amount.toExact(),
       slippage,
     })
 
-    const params = new URLSearchParams({
-      inTokenAddress,
-      outTokenAddress,
-      amount: inAmount,
-      gasPrice: '5', // 5 gwei
-      slippage: slippage.toString(),
-      chainId: chainId.toString(),
-    })
+    // Get direct DEX quotes
+    const directQuotes = await getDirectDexQuotes(chainId, currencyIn, currencyOut, amount)
+    console.log('Direct DEX quotes:', directQuotes)
 
-    const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/quote?${params}`)
-    const data = await response.json()
+    // Get OpenOcean route
+    const openOceanQuote = await getOpenOceanRoute(chainId, currencyIn, currencyOut, amount, slippage)
+    console.log('OpenOcean quote:', openOceanQuote)
 
-    console.log('OpenOcean quote response:', data)
-
-    if (data.code !== 200 || !data.data) {
-      throw new Error(data.message || 'Failed to get quote')
+    // Find best direct quote
+    let bestDirectQuote: DexQuote | null = null
+    if (directQuotes.length > 0) {
+      bestDirectQuote = directQuotes.reduce((best, current) => {
+        // If current quote has an error, skip it
+        if (current.error) return best
+        // If best quote has an error, use current
+        if (best.error) return current
+        
+        const bestAmount = ethers.BigNumber.from(best.outAmount)
+        const currentAmount = ethers.BigNumber.from(current.outAmount)
+        
+        // Account for fee on transfer if present
+        const bestNet = best.hasFeeOnTransfer && best.feeOnTransferAmount
+          ? bestAmount.sub(best.feeOnTransferAmount)
+          : bestAmount
+        const currentNet = current.hasFeeOnTransfer && current.feeOnTransferAmount
+          ? currentAmount.sub(current.feeOnTransferAmount)
+          : currentAmount
+          
+        return currentNet.gt(bestNet) ? current : best
+      })
     }
 
-    // Get the raw amounts with decimals
-    const inAmountRaw = data.data.inAmount
-    const outAmountRaw = data.data.outAmount
+    // Compare direct vs OpenOcean route
+    if (bestDirectQuote && openOceanQuote) {
+      const directOutput = ethers.BigNumber.from(bestDirectQuote.outAmount)
+      const openOceanOutput = ethers.BigNumber.from(openOceanQuote.outAmount)
+      const gasPrice = ethers.BigNumber.from(openOceanQuote.gasPrice)
 
-    // Calculate price using the token volumes from the API
-    const inVolume = Number(data.data.inToken.volume)
-    const outVolume = Number(data.data.outToken.volume)
-    const price = (outVolume / inVolume).toString()
+      // Account for fees on transfer
+      const directNet = bestDirectQuote.hasFeeOnTransfer && bestDirectQuote.feeOnTransferAmount
+        ? directOutput.sub(bestDirectQuote.feeOnTransferAmount)
+        : directOutput
+      const openOceanNet = openOceanQuote.hasFeeOnTransfer && openOceanQuote.feeOnTransferAmount
+        ? openOceanOutput.sub(openOceanQuote.feeOnTransferAmount)
+        : openOceanOutput
 
-    return {
-      inAmount: inAmountRaw,
-      outAmount: outAmountRaw,
-      price,
-      priceImpact: data.data.price_impact?.replace('%', '') || '0',
-      gasPrice: data.data.gasPrice || '5000000000',
-      gasUsd: data.data.gasUsd || '0',
-      amountInUsd: (inVolume * Number(data.data.inToken.usd)).toString(),
-      amountOutUsd: (outVolume * Number(data.data.outToken.usd)).toString(),
-      route: data.data.path || [],
-      routerAddress: data.data.to || '',
+      // Calculate gas costs
+      const directGasEstimate = ethers.BigNumber.from(bestDirectQuote.gasEstimate || '200000')
+      const openOceanGasEstimate = ethers.BigNumber.from(openOceanQuote.estimatedGas || '250000')
+
+      const directGasCost = gasPrice.mul(directGasEstimate)
+      const openOceanGasCost = gasPrice.mul(openOceanGasEstimate)
+
+      // Convert gas costs to output token terms for fair comparison
+      const outputDecimals = currencyOut.decimals
+      const gasCostScaling = ethers.BigNumber.from(10).pow(outputDecimals)
+      const scaledDirectGasCost = directGasCost.mul(gasCostScaling)
+      const scaledOpenOceanGasCost = openOceanGasCost.mul(gasCostScaling)
+
+      // Compare final net outputs
+      const directFinalNet = directNet.sub(scaledDirectGasCost)
+      const openOceanFinalNet = openOceanNet.sub(scaledOpenOceanGasCost)
+
+      console.log('Route comparison:', {
+        direct: {
+          dex: bestDirectQuote.dex,
+          output: directOutput.toString(),
+          netAfterFees: directNet.toString(),
+          gasCost: directGasCost.toString(),
+          finalNet: directFinalNet.toString(),
+          hasFeeOnTransfer: bestDirectQuote.hasFeeOnTransfer,
+          feeOnTransferAmount: bestDirectQuote.feeOnTransferAmount,
+        },
+        openOcean: {
+          output: openOceanOutput.toString(),
+          netAfterFees: openOceanNet.toString(),
+          gasCost: openOceanGasCost.toString(),
+          finalNet: openOceanFinalNet.toString(),
+          hasFeeOnTransfer: openOceanQuote.hasFeeOnTransfer,
+          feeOnTransferAmount: openOceanQuote.feeOnTransferAmount,
+        }
+      })
+
+      // Use direct route if it's better
+      if (directFinalNet.gt(openOceanFinalNet)) {
+        return {
+          inAmount: amount.raw.toString(),
+          outAmount: bestDirectQuote.outAmount,
+          price: '0',
+          priceImpact: '0',
+          gasPrice: gasPrice.toString(),
+          gasUsd: '0',
+          amountInUsd: '0',
+          amountOutUsd: '0',
+          route: [JSON.stringify({
+            dexId: bestDirectQuote.dex,
+            dexName: bestDirectQuote.dex,
+            swapAmount: bestDirectQuote.outAmount,
+            hasFeeOnTransfer: bestDirectQuote.hasFeeOnTransfer,
+            feeOnTransferAmount: bestDirectQuote.feeOnTransferAmount,
+          })],
+          routerAddress: bestDirectQuote.routerAddress,
+          estimatedGas: bestDirectQuote.gasEstimate,
+          hasFeeOnTransfer: bestDirectQuote.hasFeeOnTransfer,
+          feeOnTransferAmount: bestDirectQuote.feeOnTransferAmount,
+        }
+      }
     }
+
+    // If only OpenOcean quote is available
+    if (openOceanQuote) {
+      return openOceanQuote
+    }
+
+    // If only direct route is available
+    if (bestDirectQuote) {
+      const gasPrice = await getGasPrice(chainId)
+      return {
+        inAmount: amount.raw.toString(),
+        outAmount: bestDirectQuote.outAmount,
+        price: '0',
+        priceImpact: '0',
+        gasPrice,
+        gasUsd: '0',
+        amountInUsd: '0',
+        amountOutUsd: '0',
+        route: [JSON.stringify({
+          dexId: bestDirectQuote.dex,
+          dexName: bestDirectQuote.dex,
+          swapAmount: bestDirectQuote.outAmount,
+          hasFeeOnTransfer: bestDirectQuote.hasFeeOnTransfer,
+          feeOnTransferAmount: bestDirectQuote.feeOnTransferAmount,
+        })],
+        routerAddress: bestDirectQuote.routerAddress,
+        estimatedGas: bestDirectQuote.gasEstimate,
+        hasFeeOnTransfer: bestDirectQuote.hasFeeOnTransfer,
+        feeOnTransferAmount: bestDirectQuote.feeOnTransferAmount,
+      }
+    }
+
+    throw new Error('No valid routes found')
   } catch (error) {
-    console.error('OpenOcean quote error:', error)
+    console.error('Quote error:', error)
     throw error
-  }
-}
-
-async function getGasPrice(chainId: number): Promise<string> {
-  try {
-    const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/gasPrice`)
-    const data = await response.json()
-    if (data.code === 200 && data.data) {
-      return data.data.standard || '5000000000' // Default to 5 gwei if no gas price
-    }
-    return '5000000000'
-  } catch (error) {
-    console.error('Failed to fetch gas price:', error)
-    return '5000000000'
   }
 }
 
@@ -193,69 +314,103 @@ export async function getOpenOceanSwapData(
   recipient: string | null,
 ): Promise<OpenOceanSwapResult> {
   try {
-    const effectiveRecipient = recipient || account
-    const inTokenAddress = getTokenAddress(currencyIn)
-    const outTokenAddress = getTokenAddress(currencyOut)
-    const inAmount = amount.toExact()
-    const gasPrice = await getGasPrice(chainId)
-
-    console.log('Getting OpenOcean swap data with params:', {
+    console.log('Getting swap data for:', {
       chainId,
-      inTokenAddress,
-      outTokenAddress,
-      amount: inAmount,
+      currencyIn: currencyIn.symbol,
+      currencyOut: currencyOut.symbol,
+      amount: amount.toExact(),
       slippage,
       account,
-      recipient: effectiveRecipient,
-      gasPrice,
+      recipient,
     })
 
-    const params = new URLSearchParams({
-      inTokenAddress,
-      outTokenAddress,
+    // Get the best route
+    const quote = await getOpenOceanQuote(chainId, currencyIn, currencyOut, amount, slippage)
+
+    const effectiveRecipient = recipient || account
+    const inAmount = amount.raw.toString()
+
+    // Check if this is a direct DEX route
+    let firstRoute
+    try {
+      firstRoute = JSON.parse(quote.route[0])
+    } catch (e) {
+      console.error('Failed to parse route info:', e)
+    }
+
+    // If this is a direct DEX route, create the swap transaction directly
+    if (firstRoute?.dexName && CRONOS_DEXES[firstRoute.dexName]) {
+      const deadline = Math.floor(Date.now() / 1000) + 20 * 60 // 20 minutes
+      
+      // Add extra slippage for fee on transfer tokens
+      const adjustedSlippage = quote.hasFeeOnTransfer ? slippage + 100 : slippage // Add 1% for fee tokens
+      
+      const minOutAmount = ethers.BigNumber.from(quote.outAmount)
+        .mul(1000 - Math.floor(adjustedSlippage * 10)) // Convert slippage to basis points
+        .div(1000)
+        .toString()
+
+      const { data, value } = await createSwapTransaction(
+        quote.routerAddress,
+        currencyIn,
+        currencyOut,
+        inAmount,
+        minOutAmount,
+        effectiveRecipient,
+        deadline
+      )
+
+      return {
+        data,
+        to: quote.routerAddress,
+        value,
+        gasPrice: quote.gasPrice,
+        estimatedGas: quote.estimatedGas,
+      }
+    }
+
+    // Otherwise use OpenOcean's swap quote
+    const paramsObj: Record<string, string> = {
+      inTokenAddress: getTokenAddress(currencyIn),
+      outTokenAddress: getTokenAddress(currencyOut),
       amount: inAmount,
-      gasPrice,
+      gasPrice: quote.gasPrice,
       slippage: slippage.toString(),
       account,
       recipient: effectiveRecipient,
       chainId: chainId.toString(),
-      referrer: '0x0000000000000000000000000000000000000000',
-      referrerFee: '0.01', // Minimum required fee
-      disabledDexIds: '', // Allow all DEXes
-      enabledDexIds: '', // Allow all DEXes
-    })
+      referrer: DEFAULT_REFERRER,
+      referrerFee: DEFAULT_REFERRER_FEE,
+    }
 
+    console.log('Getting swap quote with params:', paramsObj)
+
+    const params = new URLSearchParams(paramsObj)
     const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/swap_quote?${params}`)
     const data = await response.json()
 
-    console.log('OpenOcean swap data response:', data)
+    console.log('Swap quote response:', data)
 
     if (!data || data.code !== 200 || !data.data) {
-      console.error('Invalid swap data response:', data)
+      console.error('Invalid swap quote response:', data)
       throw new Error(data?.message || 'Failed to get swap data')
     }
 
-    // Verify required fields are present
     if (!data.data.to || !data.data.data) {
-      console.error('Missing required fields in swap data:', data.data)
+      console.error('Missing required swap data:', data.data)
       throw new Error('Invalid swap data response')
     }
 
-    // Log the swap data for debugging
-    console.log('Parsed swap data:', {
-      to: data.data.to,
-      value: data.data.value || '0',
-      gasPrice: data.data.gasPrice || gasPrice,
-      estimatedGas: data.data.estimatedGas,
-      data: data.data.data.slice(0, 66) + '...' // Log first 66 chars of data
-    })
-
-    return {
+    const result = {
       data: data.data.data,
       to: data.data.to,
       value: data.data.value || '0',
-      gasPrice: data.data.gasPrice || gasPrice,
+      gasPrice: data.data.gasPrice || quote.gasPrice,
+      estimatedGas: quote.estimatedGas,
     }
+
+    console.log('Swap data result:', result)
+    return result
   } catch (error) {
     console.error('OpenOcean swap data error:', error)
     throw error
