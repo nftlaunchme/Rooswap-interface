@@ -24,6 +24,21 @@ const SummaryRow = styled.div`
   color: ${({ theme }) => theme.subText};
 `
 
+const WarningText = styled(Text)`
+  color: ${({ theme }) => theme.warning};
+  font-size: 11px;
+  font-style: italic;
+  margin-top: 4px;
+`
+
+const RouteBox = styled.div`
+  background: ${({ theme }) => rgba(theme.primary, 0.1)};
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 4px;
+  font-size: 11px;
+`
+
 const RefreshButton = styled.button`
   display: flex;
   align-items: center;
@@ -68,11 +83,46 @@ const TradeSummary: React.FC<Props> = ({
 
   if (!routeSummary) return null
 
+  // Safely format the output amount
+  const formatOutputAmount = () => {
+    try {
+      if (!routeSummary.parsedAmountOut) return '0'
+      if (typeof routeSummary.parsedAmountOut.toSignificant === 'function') {
+        return routeSummary.parsedAmountOut.toSignificant(6)
+      }
+      // Fallback to raw value if toSignificant is not available
+      return routeSummary.parsedAmountOut.raw || '0'
+    } catch (e) {
+      console.error('Error formatting output amount:', e)
+      return '0'
+    }
+  }
+
+  // Get route information
+  const getRouteInfo = () => {
+    try {
+      if (!routeSummary.openOceanQuote.route[0]) return null
+      const route = JSON.parse(routeSummary.openOceanQuote.route[0])
+      return {
+        dexName: route.dexName,
+        hasFeeOnTransfer: route.hasFeeOnTransfer,
+        feeOnTransferAmount: route.feeOnTransferAmount,
+      }
+    } catch (e) {
+      console.error('Error parsing route info:', e)
+      return null
+    }
+  }
+
+  const routeInfo = getRouteInfo()
+
   return (
     <SummaryWrapper>
       <SummaryRow>
         <Text color={theme.subText}>Rate</Text>
-        <Text color={theme.text}>{routeSummary.executionPrice}</Text>
+        <Text color={theme.text}>
+          {routeSummary.executionPrice.price} {routeSummary.executionPrice.baseSymbol}/{routeSummary.executionPrice.quoteSymbol}
+        </Text>
       </SummaryRow>
 
       <SummaryRow>
@@ -93,14 +143,40 @@ const TradeSummary: React.FC<Props> = ({
       <SummaryRow>
         <Text color={theme.subText}>Minimum Received</Text>
         <Text color={theme.text}>
-          {routeSummary.parsedAmountOut.toSignificant(6)} {routeSummary.parsedAmountOut.currency.symbol}
+          {formatOutputAmount()} {routeSummary.parsedAmountOut?.currency?.symbol || ''}
         </Text>
       </SummaryRow>
 
       <SummaryRow>
         <Text color={theme.subText}>Network Fee</Text>
-        <Text color={theme.text}>${parseFloat(routeSummary.gasUsd).toFixed(2)}</Text>
+        <Text color={theme.text}>${parseFloat(routeSummary.gasCostUSD || '0').toFixed(2)}</Text>
       </SummaryRow>
+
+      {routeInfo && (
+        <>
+          <RouteBox>
+            <Text color={theme.text} mb="4px">Route: {routeInfo.dexName}</Text>
+            {routeInfo.hasFeeOnTransfer && (
+              <WarningText>
+                This token has a transfer fee of approximately{' '}
+                {((parseFloat(routeInfo.feeOnTransferAmount || '0') / parseFloat(routeSummary.parsedAmountOut?.raw || '1')) * 100).toFixed(2)}%
+              </WarningText>
+            )}
+          </RouteBox>
+        </>
+      )}
+
+      {routeSummary.extraFee && (
+        <SummaryRow>
+          <Text color={theme.warning}>Extra Fee</Text>
+          <Text color={theme.warning}>
+            {routeSummary.extraFee.isInBps 
+              ? `${(parseFloat(routeSummary.extraFee.feeAmount) / 100).toFixed(2)}%`
+              : routeSummary.extraFee.feeAmount
+            }
+          </Text>
+        </SummaryRow>
+      )}
 
       {!disableRefresh && (
         <RefreshButton onClick={refreshCallback} disabled={disableRefresh}>
