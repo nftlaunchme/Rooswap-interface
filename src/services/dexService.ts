@@ -20,6 +20,7 @@ function getTokenAddressForDex(currency: Currency): string {
   return currency.wrapped.address
 }
 
+// Get quotes from all DEXs
 export async function getDirectDexQuotes(
   chainId: number,
   currencyIn: Currency,
@@ -34,96 +35,61 @@ export async function getDirectDexQuotes(
   
   const path = [inTokenAddress, outTokenAddress]
 
-  console.log('Getting direct DEX quotes for:', {
-    chainId,
-    inToken: {
-      symbol: currencyIn.symbol,
-      address: inTokenAddress,
-      isNative: currencyIn.isNative,
-      decimals: currencyIn.decimals,
-      amount: ethers.utils.formatUnits(inputAmount, currencyIn.decimals),
-    },
-    outToken: {
-      symbol: currencyOut.symbol,
-      address: outTokenAddress,
-      isNative: currencyOut.isNative,
-      decimals: currencyOut.decimals,
-    },
-  })
-
   // Get quotes from each DEX in parallel
   const quotePromises = Object.entries(CRONOS_DEXES).map(async ([dexKey, dex]) => {
     try {
-      console.log(`Getting quote from ${dex.name} (${dex.routerAddress})`)
-      
       const router = new ethers.Contract(dex.routerAddress, ROUTER_ABI, provider)
-      
-      // Add a timeout to the quote request
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error(`Quote request timeout for ${dex.name}`)), 5000)
-      })
-      
-      const quotePromise = router.getAmountsOut(inputAmount, path)
-      const amounts = await Promise.race([quotePromise, timeoutPromise]) as ethers.BigNumber[]
-      
-      // Get output amount
+      const amounts = await router.getAmountsOut(inputAmount, path)
       const outAmount = amounts[amounts.length - 1].toString()
 
-      const quote = {
+      console.log(`Got quote from ${dex.name}:`, {
+        dex: dex.name,
+        formattedInput: ethers.utils.formatUnits(inputAmount, currencyIn.decimals),
+        formattedOutput: ethers.utils.formatUnits(outAmount, currencyOut.decimals),
+      })
+
+      return {
         dex: dex.name,
         outAmount,
         routerAddress: dex.routerAddress,
         gasEstimate: dex.gasEstimate,
       }
-
-      console.log(`Got quote from ${dex.name}:`, {
-        ...quote,
-        formattedOutAmount: ethers.utils.formatUnits(outAmount, currencyOut.decimals),
-      })
-
-      return quote
     } catch (error) {
       console.error(`Failed to get quote from ${dex.name}:`, error)
       return null
     }
   })
 
-  try {
-    const results = await Promise.all(quotePromises)
-    
-    // Filter out null results and add valid quotes
-    results.forEach(quote => {
-      if (quote && ethers.BigNumber.from(quote.outAmount).gt(0)) {
-        quotes.push(quote)
-      }
-    })
+  const results = await Promise.all(quotePromises)
+  
+  // Filter out null results and add valid quotes
+  results.forEach(quote => {
+    if (quote && ethers.BigNumber.from(quote.outAmount).gt(0)) {
+      quotes.push(quote)
+    }
+  })
 
-    // Sort quotes by output amount (descending)
-    quotes.sort((a, b) => {
-      const aAmount = ethers.BigNumber.from(a.outAmount)
-      const bAmount = ethers.BigNumber.from(b.outAmount)
-      if (bAmount.gt(aAmount)) return 1
-      if (bAmount.lt(aAmount)) return -1
-      // If output amounts are equal, prefer the one with lower gas
-      const aGas = ethers.BigNumber.from(a.gasEstimate)
-      const bGas = ethers.BigNumber.from(b.gasEstimate)
-      return aGas.lt(bGas) ? -1 : 1
-    })
+  // Sort quotes by output amount (descending)
+  quotes.sort((a, b) => {
+    const aAmount = ethers.BigNumber.from(a.outAmount)
+    const bAmount = ethers.BigNumber.from(b.outAmount)
+    if (bAmount.gt(aAmount)) return 1
+    if (bAmount.lt(aAmount)) return -1
+    // If output amounts are equal, prefer the one with lower gas
+    const aGas = ethers.BigNumber.from(a.gasEstimate)
+    const bGas = ethers.BigNumber.from(b.gasEstimate)
+    return aGas.lt(bGas) ? -1 : 1
+  })
 
-    console.log('All direct DEX quotes:', quotes.map(q => ({
-      dex: q.dex,
-      formattedOutAmount: ethers.utils.formatUnits(q.outAmount, currencyOut.decimals),
-      gasEstimate: q.gasEstimate,
-    })))
-
-    return quotes
-  } catch (error) {
-    console.error('Error getting direct DEX quotes:', error)
-  }
+  console.log('All direct DEX quotes:', quotes.map(q => ({
+    dex: q.dex,
+    formattedOutput: ethers.utils.formatUnits(q.outAmount, currencyOut.decimals),
+  })))
 
   return quotes
 }
 
+// Create direct swap transaction
 export async function createSwapTransaction(
   routerAddress: string,
   currencyIn: Currency,
@@ -139,13 +105,8 @@ export async function createSwapTransaction(
 
     console.log('Creating swap transaction:', {
       router: routerAddress,
-      path,
-      formattedAmount: ethers.utils.formatUnits(amount, currencyIn.decimals),
-      formattedMinOutAmount: ethers.utils.formatUnits(minOutAmount, currencyOut.decimals),
-      recipient,
-      deadline,
-      isNativeIn: currencyIn.isNative,
-      isNativeOut: currencyOut.isNative,
+      formattedInput: ethers.utils.formatUnits(amount, currencyIn.decimals),
+      formattedMinOutput: ethers.utils.formatUnits(minOutAmount, currencyOut.decimals),
     })
 
     let data: string
@@ -176,11 +137,6 @@ export async function createSwapTransaction(
         deadline
       ])
     }
-
-    console.log('Created swap transaction:', {
-      data: data.slice(0, 66) + '...', // Log first 66 chars of data
-      value,
-    })
 
     return { data, value }
   } catch (error) {

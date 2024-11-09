@@ -2,7 +2,6 @@ import { Currency, CurrencyAmount } from '../types/currency'
 import { OpenOceanQuote, OpenOceanSwapResult, TokenInfo, DexQuote } from '../types/openocean'
 import { ethers } from 'ethers'
 import { getDirectDexQuotes, createSwapTransaction } from './dexService'
-import { CRONOS_DEXES } from '../constants/dex'
 
 const OPENOCEAN_API_URL = 'https://open-api.openocean.finance/v3'
 
@@ -11,56 +10,11 @@ const DEFAULT_REFERRER_FEE = '0.01'
 // Default referrer address
 const DEFAULT_REFERRER = '0x0000000000000000000000000000000000000000'
 
-// Thresholds for route validation
-const MAX_PRICE_IMPACT = 15 // 15%
-const MIN_OUTPUT_USD = 0.001 // $0.001
-const MIN_LIQUIDITY_USD = 1000 // $1k
-
 function getTokenAddress(currency: Currency): string {
   if (currency.isNative) {
     return '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
   }
   return currency.wrapped.address
-}
-
-function isValidRoute(quote: OpenOceanQuote): boolean {
-  // For direct routes without USD values, consider them valid
-  if (!quote.amountInUsd || !quote.amountOutUsd) {
-    return true
-  }
-
-  console.log('Validating route:', {
-    priceImpact: quote.priceImpact + '%',
-    outputUsd: '$' + quote.amountOutUsd,
-    inputUsd: '$' + quote.amountInUsd,
-  })
-
-  // Skip if price impact is too high
-  if (parseFloat(quote.priceImpact) > MAX_PRICE_IMPACT) {
-    console.log(`Route rejected: Price impact too high (${quote.priceImpact}% > ${MAX_PRICE_IMPACT}%)`)
-    return false
-  }
-
-  // Skip if output amount is too small
-  if (parseFloat(quote.amountOutUsd) < MIN_OUTPUT_USD) {
-    console.log(`Route rejected: Output too small ($${quote.amountOutUsd} < $${MIN_OUTPUT_USD})`)
-    return false
-  }
-
-  // Calculate implied liquidity
-  const impliedLiquidity = Math.sqrt(parseFloat(quote.amountInUsd) * parseFloat(quote.amountOutUsd)) * 100
-  if (impliedLiquidity < MIN_LIQUIDITY_USD) {
-    console.log(`Route rejected: Low liquidity ($${impliedLiquidity.toFixed(2)} < $${MIN_LIQUIDITY_USD})`)
-    return false
-  }
-
-  console.log('Route accepted:', {
-    priceImpact: quote.priceImpact + '%',
-    outputUsd: '$' + quote.amountOutUsd,
-    impliedLiquidity: '$' + impliedLiquidity.toFixed(2),
-  })
-
-  return true
 }
 
 async function getGasPrice(chainId: number): Promise<string> {
@@ -122,7 +76,7 @@ export async function getTokenBalances(
   }
 }
 
-async function getOpenOceanRoute(
+async function getMultiHopQuote(
   chainId: number,
   currencyIn: Currency,
   currencyOut: Currency,
@@ -147,22 +101,20 @@ async function getOpenOceanRoute(
       referrerFee: DEFAULT_REFERRER_FEE,
     })
 
-    console.log('Getting OpenOcean quote with params:', {
-      ...Object.fromEntries(params),
-      formattedAmount: ethers.utils.formatUnits(inAmount, currencyIn.decimals),
-    })
-
     const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/quote?${params}`)
     const data = await response.json()
 
-    console.log('OpenOcean Quote response:', data)
-
     if (!data || data.code !== 200 || !data.data) {
-      console.error('Invalid OpenOcean quote response:', data)
       return null
     }
 
-    const quote = {
+    // Check if this is a multi-hop route
+    const routes = data.data.path?.routes || []
+    if (routes.length <= 1) {
+      return null // Not a multi-hop route
+    }
+
+    return {
       inAmount: data.data.inAmount,
       outAmount: data.data.outAmount,
       price: data.data.price || '0',
@@ -171,62 +123,14 @@ async function getOpenOceanRoute(
       gasUsd: data.data.gasUsd || '0',
       amountInUsd: data.data.inUSD || '0',
       amountOutUsd: data.data.outUSD || '0',
-      route: data.data.path?.routes?.map((r: any) => JSON.stringify(r)) || [],
+      route: routes.map((r: any) => JSON.stringify(r)),
       routerAddress: data.data.to || '',
       estimatedGas: data.data.estimatedGas || '250000',
     }
-
-    // Verify output amount is valid
-    if (!quote.outAmount || ethers.BigNumber.from(quote.outAmount).lte(0)) {
-      console.log('OpenOcean quote rejected: Invalid output amount')
-      return null
-    }
-
-    console.log('Parsed OpenOcean quote:', {
-      ...quote,
-      formattedInAmount: ethers.utils.formatUnits(quote.inAmount, currencyIn.decimals),
-      formattedOutAmount: ethers.utils.formatUnits(quote.outAmount, currencyOut.decimals),
-    })
-
-    return quote
   } catch (error) {
-    console.error('OpenOcean route error:', error)
+    console.error('Failed to get multi-hop quote:', error)
     return null
   }
-}
-
-async function selectBestQuote(
-  quotes: OpenOceanQuote[],
-  currencyIn: Currency,
-  currencyOut: Currency
-): Promise<OpenOceanQuote> {
-  let bestQuote: OpenOceanQuote | null = null
-  let bestOutput: ethers.BigNumber = ethers.constants.Zero
-
-  for (const quote of quotes) {
-    try {
-      const outputAmount = ethers.BigNumber.from(quote.outAmount)
-      if (outputAmount.gt(bestOutput)) {
-        bestOutput = outputAmount
-        bestQuote = quote
-      }
-
-      const dexName = quote.route[0] ? JSON.parse(quote.route[0]).dexName : 'OpenOcean'
-      console.log('Quote comparison:', {
-        dex: dexName,
-        formattedOutput: ethers.utils.formatUnits(quote.outAmount, currencyOut.decimals),
-        gasEstimate: quote.estimatedGas,
-      })
-    } catch (error) {
-      console.error('Error comparing quote:', error)
-    }
-  }
-
-  if (!bestQuote) {
-    throw new Error('No valid quotes available')
-  }
-
-  return bestQuote
 }
 
 export async function getOpenOceanQuote(
@@ -237,46 +141,15 @@ export async function getOpenOceanQuote(
   slippage: number,
 ): Promise<OpenOceanQuote> {
   try {
-    console.log('Getting quotes for:', {
-      chainId,
-      currencyIn: currencyIn.symbol,
-      currencyOut: currencyOut.symbol,
-      amount: amount.toExact(),
-      formattedAmount: ethers.utils.formatUnits(amount.raw.toString(), currencyIn.decimals),
-      slippage,
-    })
-
-    // Get direct DEX quotes
+    // Try direct DEX quotes first
     const directQuotes = await getDirectDexQuotes(chainId, currencyIn, currencyOut, amount)
-    console.log('Direct DEX quotes:', directQuotes.map(q => ({
-      ...q,
-      formattedOutAmount: ethers.utils.formatUnits(q.outAmount, currencyOut.decimals),
-    })))
+    if (directQuotes.length > 0) {
+      const bestQuote = directQuotes[0] // Already sorted by output amount
+      const gasPrice = await getGasPrice(chainId)
 
-    // Get OpenOcean route
-    const openOceanQuote = await getOpenOceanRoute(chainId, currencyIn, currencyOut, amount, slippage)
-    if (openOceanQuote) {
-      console.log('OpenOcean quote:', {
-        ...openOceanQuote,
-        formattedInAmount: ethers.utils.formatUnits(openOceanQuote.inAmount, currencyIn.decimals),
-        formattedOutAmount: ethers.utils.formatUnits(openOceanQuote.outAmount, currencyOut.decimals),
-      })
-    }
-
-    // Combine all quotes
-    const allQuotes: OpenOceanQuote[] = []
-
-    // Add direct quotes
-    const gasPrice = await getGasPrice(chainId)
-    for (const directQuote of directQuotes) {
-      // Skip quotes with zero or invalid output
-      if (!directQuote.outAmount || ethers.BigNumber.from(directQuote.outAmount).lte(0)) {
-        continue
-      }
-
-      const quote: OpenOceanQuote = {
+      return {
         inAmount: amount.raw.toString(),
-        outAmount: directQuote.outAmount,
+        outAmount: bestQuote.outAmount,
         price: '0',
         priceImpact: '0',
         gasPrice,
@@ -284,34 +157,22 @@ export async function getOpenOceanQuote(
         amountInUsd: '0',
         amountOutUsd: '0',
         route: [JSON.stringify({
-          dexId: directQuote.dex,
-          dexName: directQuote.dex,
-          swapAmount: directQuote.outAmount,
+          dexId: bestQuote.dex,
+          dexName: bestQuote.dex,
+          swapAmount: bestQuote.outAmount,
         })],
-        routerAddress: directQuote.routerAddress,
-        estimatedGas: directQuote.gasEstimate || '200000',
+        routerAddress: bestQuote.routerAddress,
+        estimatedGas: bestQuote.gasEstimate || '200000',
       }
-      allQuotes.push(quote)
     }
 
-    // Add OpenOcean quote if available
-    if (openOceanQuote) {
-      allQuotes.push(openOceanQuote)
+    // Try multi-hop route
+    const multiHopQuote = await getMultiHopQuote(chainId, currencyIn, currencyOut, amount, slippage)
+    if (multiHopQuote) {
+      return multiHopQuote
     }
 
-    if (allQuotes.length === 0) {
-      throw new Error('No quotes available')
-    }
-
-    // Select best quote based on output amount
-    const bestQuote = await selectBestQuote(allQuotes, currencyIn, currencyOut)
-    console.log('Selected best quote:', {
-      ...bestQuote,
-      formattedInAmount: ethers.utils.formatUnits(bestQuote.inAmount, currencyIn.decimals),
-      formattedOutAmount: ethers.utils.formatUnits(bestQuote.outAmount, currencyOut.decimals),
-    })
-
-    return bestQuote
+    throw new Error('No valid routes found')
   } catch (error) {
     console.error('Quote error:', error)
     throw error
@@ -328,43 +189,20 @@ export async function getOpenOceanSwapData(
   recipient: string | null,
 ): Promise<OpenOceanSwapResult> {
   try {
-    console.log('Getting swap data for:', {
-      chainId,
-      currencyIn: currencyIn.symbol,
-      currencyOut: currencyOut.symbol,
-      amount: amount.toExact(),
-      formattedAmount: ethers.utils.formatUnits(amount.raw.toString(), currencyIn.decimals),
-      slippage,
-      account,
-      recipient,
-    })
-
-    // Get the best quote
     const quote = await getOpenOceanQuote(chainId, currencyIn, currencyOut, amount, slippage)
     const effectiveRecipient = recipient || account
 
-    // Check if this is a direct DEX route
-    let firstRoute
-    try {
-      firstRoute = JSON.parse(quote.route[0])
-      console.log('Parsed route:', firstRoute)
-    } catch (e) {
-      console.error('Failed to parse route info:', e)
-    }
+    // Parse route info
+    const firstRoute = JSON.parse(quote.route[0])
+    const isDirectRoute = quote.route.length === 1
 
-    // If this is a direct DEX route, create the swap transaction directly
-    if (firstRoute?.dexName && CRONOS_DEXES[firstRoute.dexName]) {
-      console.log('Using direct DEX route:', firstRoute)
+    // For direct routes, use DEX router directly
+    if (isDirectRoute) {
       const deadline = Math.floor(Date.now() / 1000) + 20 * 60 // 20 minutes
       const minOutAmount = ethers.BigNumber.from(quote.outAmount)
         .mul(1000 - Math.floor(slippage * 10)) // Convert slippage to basis points
         .div(1000)
         .toString()
-
-      console.log('Direct swap parameters:', {
-        formattedAmount: ethers.utils.formatUnits(amount.raw.toString(), currencyIn.decimals),
-        formattedMinOutAmount: ethers.utils.formatUnits(minOutAmount, currencyOut.decimals),
-      })
 
       const { data, value } = await createSwapTransaction(
         quote.routerAddress,
@@ -385,8 +223,8 @@ export async function getOpenOceanSwapData(
       }
     }
 
-    // Otherwise use OpenOcean's swap quote
-    const paramsObj: Record<string, string> = {
+    // For multi-hop routes, use OpenOcean API
+    const params = new URLSearchParams({
       inTokenAddress: getTokenAddress(currencyIn),
       outTokenAddress: getTokenAddress(currencyOut),
       amount: amount.raw.toString(),
@@ -397,34 +235,22 @@ export async function getOpenOceanSwapData(
       chainId: chainId.toString(),
       referrer: DEFAULT_REFERRER,
       referrerFee: DEFAULT_REFERRER_FEE,
-    }
-
-    console.log('Getting OpenOcean swap quote with params:', {
-      ...paramsObj,
-      formattedAmount: ethers.utils.formatUnits(amount.raw.toString(), currencyIn.decimals),
     })
 
-    const params = new URLSearchParams(paramsObj)
     const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/swap_quote?${params}`)
     const data = await response.json()
 
-    console.log('OpenOcean swap quote response:', data)
-
     if (!data || data.code !== 200 || !data.data || !data.data.to || !data.data.data) {
-      console.error('Invalid swap quote response:', data)
-      throw new Error('Failed to build transaction')
+      throw new Error('Failed to build multi-hop transaction')
     }
 
-    const result = {
+    return {
       data: data.data.data,
       to: data.data.to,
       value: data.data.value || '0',
       gasPrice: data.data.gasPrice || quote.gasPrice,
       estimatedGas: quote.estimatedGas,
     }
-
-    console.log('Swap data result:', result)
-    return result
   } catch (error) {
     console.error('OpenOcean swap data error:', error)
     throw error

@@ -6,6 +6,48 @@ import { getOpenOceanQuote, getOpenOceanSwapData } from '../services/openocean'
 import { useActiveWeb3React } from '../hooks'
 import { useEthersProvider } from './useEthersProvider'
 
+const ERC20_ABI = [
+  'function allowance(address owner, address spender) external view returns (uint256)',
+  'function approve(address spender, uint256 amount) external returns (bool)',
+]
+
+async function checkAndApproveToken(
+  tokenAddress: string,
+  owner: string,
+  spender: string,
+  amount: string,
+  signer: ethers.Signer
+): Promise<boolean> {
+  try {
+    const token = new ethers.Contract(tokenAddress, ERC20_ABI, signer)
+    const allowance = await token.allowance(owner, spender)
+
+    if (allowance.lt(amount)) {
+      console.log('Approving token:', {
+        token: tokenAddress,
+        owner,
+        spender,
+        amount,
+      })
+
+      // Approve max uint256
+      const maxUint256 = ethers.constants.MaxUint256
+      const tx = await token.approve(spender, maxUint256, {
+        gasLimit: 100000 // Fixed gas limit for approvals
+      })
+      await tx.wait()
+      
+      console.log('Token approved:', tx.hash)
+      return true
+    }
+
+    return true
+  } catch (error) {
+    console.error('Token approval error:', error)
+    throw new Error('Failed to approve token')
+  }
+}
+
 export function useOpenOceanQuote(
   currencyIn: Currency | undefined,
   currencyOut: Currency | undefined,
@@ -32,7 +74,11 @@ export function useOpenOceanQuote(
         const quote = await getOpenOceanQuote(chainId, currencyIn, currencyOut, parsedAmount, slippage)
         
         if (!stale) {
-          console.log('OpenOcean quote:', quote)
+          console.log('OpenOcean quote:', {
+            ...quote,
+            formattedInAmount: ethers.utils.formatUnits(quote.inAmount, currencyIn.decimals),
+            formattedOutAmount: ethers.utils.formatUnits(quote.outAmount, currencyOut.decimals),
+          })
           setQuote(quote)
         }
       } catch (error) {
@@ -108,33 +154,69 @@ export function useOpenOceanSwapCallback(
         to: swapData.to,
         value: swapData.value,
         gasPrice: swapData.gasPrice,
-        data: swapData.data.slice(0, 66) + '...' // Log first 66 chars of data
+        data: swapData.data.slice(0, 66) + '...', // Log first 66 chars of data
+        formattedAmount: ethers.utils.formatUnits(parsedAmount.raw.toString(), currencyIn.decimals),
       })
 
-      // Send the transaction
       const signer = provider.getSigner(account)
 
-      // Estimate gas first
-      const gasEstimate = await signer.estimateGas({
+      // Check and approve token if needed
+      if (!currencyIn.isNative) {
+        await checkAndApproveToken(
+          currencyIn.wrapped.address,
+          account,
+          swapData.to,
+          parsedAmount.raw.toString(),
+          signer
+        )
+      }
+
+      // Prepare transaction parameters
+      const txParams: any = {
         from: account,
         to: swapData.to,
         data: swapData.data,
-        value: ethers.BigNumber.from(swapData.value),
-      })
-
-      // Add 20% buffer to gas estimate
-      const gasLimit = gasEstimate.mul(120).div(100)
-
-      // Send transaction with estimated gas limit
-      const tx = await signer.sendTransaction({
-        from: account,
-        to: swapData.to,
-        data: swapData.data,
-        value: ethers.BigNumber.from(swapData.value),
         gasPrice: ethers.BigNumber.from(swapData.gasPrice),
-        gasLimit,
-      })
+      }
 
+      // Add value for native token swaps
+      if (currencyIn.isNative) {
+        txParams.value = ethers.BigNumber.from(swapData.value)
+      }
+
+      // Estimate gas with a try-catch to get more detailed error info
+      let gasEstimate
+      try {
+        gasEstimate = await signer.estimateGas(txParams)
+        console.log('Gas estimate:', gasEstimate.toString())
+      } catch (error: any) {
+        console.error('Gas estimation failed:', {
+          error,
+          code: error.code,
+          message: error.message,
+          data: error.data,
+          txParams,
+        })
+
+        // Check for specific error cases
+        if (error.data?.message?.includes('INSUFFICIENT_OUTPUT_AMOUNT')) {
+          throw new Error('Price impact too high or insufficient liquidity')
+        }
+        if (error.data?.message?.includes('TRANSFER_FROM_FAILED')) {
+          throw new Error('Insufficient token balance')
+        }
+        if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+          throw new Error('Transaction would fail: Insufficient liquidity or high price impact')
+        }
+
+        throw error
+      }
+
+      // Add gas limit with 20% buffer
+      txParams.gasLimit = gasEstimate.mul(120).div(100)
+
+      // Send transaction
+      const tx = await signer.sendTransaction(txParams)
       console.log('Transaction sent:', tx.hash)
       
       // Wait for transaction to be mined
@@ -149,13 +231,21 @@ export function useOpenOceanSwapCallback(
       if (error.code === 'INSUFFICIENT_FUNDS') {
         errorMessage = 'Insufficient funds for gas'
       } else if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
-        errorMessage = 'Unable to estimate gas'
+        errorMessage = 'Transaction would fail: Insufficient liquidity or high price impact'
+      } else if (error.code === -32603) {
+        if (error.data?.message?.includes('TRANSFER_FROM_FAILED')) {
+          errorMessage = 'Insufficient token balance'
+        } else if (error.data?.message?.includes('INSUFFICIENT_OUTPUT_AMOUNT')) {
+          errorMessage = 'Price impact too high. Try a smaller amount or increase slippage tolerance.'
+        } else {
+          errorMessage = 'Transaction reverted. The swap may fail due to price impact or low liquidity.'
+        }
       } else if (error.message) {
         errorMessage = error.message
       }
 
       setError(errorMessage)
-      throw new Error(errorMessage)
+      throw error
     }
   }, [chainId, account, provider, currencyIn, currencyOut, parsedAmount, slippage, recipient])
 
