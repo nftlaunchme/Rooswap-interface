@@ -1,10 +1,8 @@
-import { Currency, CurrencyAmount, Price } from '@kyberswap/ks-sdk-core'
 import { Trans } from '@lingui/macro'
 import { transparentize } from 'polished'
 import { useMemo, useState } from 'react'
 import { Check, Info } from 'react-feather'
 import { Flex, Text } from 'rebass'
-import { calculatePriceImpact } from 'services/route/utils'
 import styled from 'styled-components'
 
 import { ButtonPrimary } from 'components/Button'
@@ -24,12 +22,8 @@ import useMixpanel, { MIXPANEL_TYPE } from 'hooks/useMixpanel'
 import useTheme from 'hooks/useTheme'
 import { useDegenModeManager } from 'state/user/hooks'
 import { CloseIcon } from 'theme/components'
+import { Currency, CurrencyAmount, Price } from 'types/currency'
 import { minimumAmountAfterSlippage, toCurrencyAmount } from 'utils/currencyAmount'
-import { checkShouldDisableByPriceImpact } from 'utils/priceImpact'
-import { checkPriceImpact } from 'utils/prices'
-
-import SwapBrief from './SwapBrief'
-import SwapDetails, { Props as SwapDetailsProps } from './SwapDetails'
 
 const SHOW_ACCEPT_NEW_AMOUNT_THRESHOLD = -1
 const AMOUNT_OUT_FROM_BUILD_ERROR_THRESHOLD = -5
@@ -109,12 +103,6 @@ export default function ConfirmSwapModalContent({
         </Text>
       )
     }
-    if (
-      errorWhileBuildRoute.includes(
-        'Please use a different wallet to fill an order that you created via the KyberSwap Limit Order',
-      )
-    )
-      return <Text>{errorWhileBuildRoute}</Text>
 
     return (
       <Text>
@@ -123,11 +111,7 @@ export default function ConfirmSwapModalContent({
     )
   }, [errorWhileBuildRoute])
 
-  const priceImpactFromBuild = buildResult?.data
-    ? calculatePriceImpact(Number(buildResult?.data?.amountInUsd || 0), Number(buildResult?.data?.amountOutUsd || 0))
-    : undefined
-
-  const priceImpactResult = checkPriceImpact(priceImpactFromBuild)
+  const priceImpactFromBuild = buildResult?.data?.priceImpact
 
   const outputChangePercent = Number(buildResult?.data?.outputChange?.percent) || 0
   const formattedOutputChangePercent =
@@ -137,16 +121,14 @@ export default function ConfirmSwapModalContent({
       ? '< 0.001'
       : outputChangePercent.toFixed(3)
 
-  const getSwapDetailsProps = (): SwapDetailsProps => {
+  const getSwapDetailsProps = () => {
     if (!buildResult?.data || !routeSummary) {
       return {
         isLoading: isBuildingRoute,
-
         gasUsd: undefined,
         minimumAmountOut: undefined,
         executionPrice: undefined,
         priceImpact: undefined,
-
         buildData: undefined,
       }
     }
@@ -160,17 +142,14 @@ export default function ConfirmSwapModalContent({
       parsedAmountIn.quotient,
       parsedAmountOut.quotient,
     )
-    // Min amount out is calculated from get route api amount out.
     const minimumAmountOut = minimumAmountAfterSlippage(routeSummary.parsedAmountOut, slippage)
 
     return {
       isLoading: isBuildingRoute,
-
       gasUsd,
       executionPrice,
       minimumAmountOut,
       priceImpact: priceImpactFromBuild,
-
       buildData: buildResult.data,
     }
   }
@@ -188,7 +167,6 @@ export default function ConfirmSwapModalContent({
     if (buildResult?.data) {
       const { amountOut } = buildResult.data
       parsedAmountOutFromBuild = toCurrencyAmount(routeSummary.parsedAmountOut.currency, amountOut)
-
       amountOutUsdFromBuild = buildResult.data.amountOutUsd
     }
   }
@@ -222,11 +200,9 @@ export default function ConfirmSwapModalContent({
   }
 
   const warningStyle =
-    priceImpactResult.isVeryHigh || priceImpactResult.isInvalid
-      ? { background: theme.red, color: theme.text }
-      : undefined
+    Number(priceImpactFromBuild) >= 10 ? { background: theme.red, color: theme.text } : undefined
 
-  const shouldDisableByPriceImpact = checkShouldDisableByPriceImpact(isAdvancedMode, priceImpactFromBuild)
+  const shouldDisableByPriceImpact = !isAdvancedMode && Number(priceImpactFromBuild) >= 10
 
   const isShowAcceptNewAmount =
     outputChangePercent < SHOW_ACCEPT_NEW_AMOUNT_THRESHOLD || (isStablePairSwap && outputChangePercent < 0)
@@ -330,19 +306,18 @@ export default function ConfirmSwapModalContent({
               {isShowAcceptNewAmount && (
                 <ButtonPrimary
                   style={
-                    hasAcceptedNewAmount || (priceImpactResult.isVeryHigh && !isDegenMode)
+                    hasAcceptedNewAmount || (Number(priceImpactFromBuild) >= 10 && !isDegenMode)
                       ? undefined
                       : {
                           backgroundColor:
-                            priceImpactResult.isVeryHigh ||
-                            priceImpactResult.isInvalid ||
+                            Number(priceImpactFromBuild) >= 10 ||
                             outputChangePercent <= AMOUNT_OUT_FROM_BUILD_ERROR_THRESHOLD
                               ? theme.red
                               : theme.warning,
                         }
                   }
                   onClick={handleClickAcceptNewAmount}
-                  disabled={hasAcceptedNewAmount || (priceImpactResult.isVeryHigh && !isDegenMode)}
+                  disabled={hasAcceptedNewAmount || (Number(priceImpactFromBuild) >= 10 && !isDegenMode)}
                 >
                   Accept New Amount
                 </ButtonPrimary>

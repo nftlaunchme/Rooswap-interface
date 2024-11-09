@@ -1,9 +1,6 @@
-import { ChainId, Currency, CurrencyAmount } from '@kyberswap/ks-sdk-core'
 import { rgba } from 'polished'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import { Box, Flex, Text } from 'rebass'
-import { parseGetRouteResponse } from 'services/route/utils'
 import styled from 'styled-components'
 
 import { ReactComponent as RoutingIcon } from 'assets/svg/routing-icon.svg'
@@ -11,78 +8,72 @@ import AddressInputPanel from 'components/AddressInputPanel'
 import FeeControlGroup from 'components/FeeControlGroup'
 import WarningIcon from 'components/Icons/WarningIcon'
 import { NetworkSelector } from 'components/NetworkSelector'
-import InputCurrencyPanel from 'components/SwapForm/InputCurrencyPanel'
-import OutputCurrencyPanel from 'components/SwapForm/OutputCurrencyPanel'
-import PriceImpactNote from 'components/SwapForm/PriceImpactNote'
-import SlippageSettingGroup from 'components/SwapForm/SlippageSettingGroup'
-import { SwapFormContextProvider } from 'components/SwapForm/SwapFormContext'
-import useBuildRoute from 'components/SwapForm/hooks/useBuildRoute'
-import useCheckStablePairSwap from 'components/SwapForm/hooks/useCheckStablePairSwap'
-import useGetInputError from 'components/SwapForm/hooks/useGetInputError'
-import useGetRoute from 'components/SwapForm/hooks/useGetRoute'
-import useParsedAmount from 'components/SwapForm/hooks/useParsedAmount'
+import InputCurrencyPanel from './InputCurrencyPanel'
+import OutputCurrencyPanel from './OutputCurrencyPanel'
+import PriceImpactNote from './PriceImpactNote'
+import SlippageSettingGroup from './SlippageSettingGroup'
+import { SwapFormContextProvider } from './SwapFormContext'
+import useCheckStablePairSwap from './hooks/useCheckStablePairSwap'
+import useGetInputError from './hooks/useGetInputError'
 import { TutorialIds } from 'components/Tutorial/TutorialSwap/constant'
-import { Wrapper } from 'components/swapv2/styleds'
 import { TOKEN_API_URL } from 'constants/env'
 import { useActiveWeb3React } from 'hooks'
 import useTheme from 'hooks/useTheme'
-import useWrapCallback, { WrapType } from 'hooks/useWrapCallback'
-import useUpdateSlippageInStableCoinSwap from 'pages/SwapV3/useUpdateSlippageInStableCoinSwap'
-import { Field } from 'state/swap/actions'
-import { useCheckCorrelatedPair, useSwapActionHandlers, useSwapState } from 'state/swap/hooks'
-import { DetailedRouteSummary } from 'types/route'
-
-import MultichainKNCNote from './MultichainKNCNote'
+import { Field } from 'state/swap/types'
+import { useAppDispatch, useAppSelector } from 'state/hooks'
+import { setRecipient, typeInput, WrapType } from 'state/swap/slice'
+import { useOpenOceanSwapForm } from 'hooks/useOpenOceanSwapForm'
+import { Currency, CurrencyAmount } from 'types/currency'
+import { adaptAnyCurrency, adaptAnyToCurrencyAmount, stringToCurrencyAmount } from 'utils/currency'
+import useParsedAmount from 'hooks/useParsedAmount'
+import { SwapFormProps } from './types'
 import ReverseTokenSelectionButton from './ReverseTokenSelectionButton'
 import SwapActionButton from './SwapActionButton'
 import TradeSummary from './TradeSummary'
 
-export const RoutingIconWrapper = styled(RoutingIcon)`
-  height: 20px;
-  width: 20px;
-  margin-right: 10px;
-  path {
-    fill: ${({ theme }) => theme.text} !important;
-  }
+const SwapFormWrapper = styled(Box)`
+  width: 100%;
+  max-width: 480px;
+  background: ${({ theme }) => theme.background};
+  border-radius: 24px;
+  padding: 20px;
+  position: relative;
+  color: ${({ theme }) => theme.text};
 `
 
-export type SwapFormProps = {
-  hidden: boolean
+const SwapFormInner = styled(Flex)`
+  flex-direction: column;
+  gap: 16px;
+`
 
-  currencyIn: Currency | undefined
-  currencyOut: Currency | undefined
+const SwapFormContent = styled(Flex)`
+  flex-direction: column;
+  gap: 12px;
+`
 
-  balanceIn: CurrencyAmount<Currency> | undefined
-  balanceOut: CurrencyAmount<Currency> | undefined
+const SwapFormHeader = styled(Flex)`
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid ${({ theme }) => rgba(theme.border, 0.1)};
+`
 
-  routeSummary: DetailedRouteSummary | undefined
-  setRouteSummary: React.Dispatch<React.SetStateAction<DetailedRouteSummary | undefined>>
-
-  isDegenMode: boolean
-  slippage: number
-  transactionTimeout: number
-  permit?: string
-
-  onChangeCurrencyIn: (c: Currency) => void
-  onChangeCurrencyOut: (c: Currency) => void
-  customChainId?: ChainId
-  omniView?: boolean
-  onOpenGasToken?: () => void
-}
+const SwapFormTitle = styled(Text)`
+  font-size: 20px;
+  font-weight: 500;
+`
 
 const SwapForm: React.FC<SwapFormProps> = props => {
-  const [searchParams] = useSearchParams()
+  const { chainId: walletChainId } = useActiveWeb3React()
+  const chainId = props.customChainId || walletChainId
+  const dispatch = useAppDispatch()
+
   const {
     hidden,
     currencyIn,
     currencyOut,
     balanceIn,
     balanceOut,
-    setRouteSummary,
-    isDegenMode,
-    slippage,
-    transactionTimeout,
-    permit,
     onChangeCurrencyIn,
     onChangeCurrencyOut,
     customChainId,
@@ -90,202 +81,187 @@ const SwapForm: React.FC<SwapFormProps> = props => {
     onOpenGasToken,
   } = props
 
-  const { chainId: walletChainId } = useActiveWeb3React()
-  const chainId = customChainId || walletChainId
   const [isProcessingSwap, setProcessingSwap] = useState(false)
-  const { typedValue } = useSwapState()
-  const [recipient, setRecipient] = useState<string | null>(null)
-  useUpdateSlippageInStableCoinSwap(chainId)
+  const swapState = useAppSelector(state => state.swap)
+  const { typedValue } = swapState
+  const recipient = swapState.recipient
+  const slippage = (swapState as any).slippage || 50 // Default to 0.5%
 
-  const { onUserInput: updateInputAmount } = useSwapActionHandlers()
   const onUserInput = useCallback(
     (value: string) => {
-      updateInputAmount(Field.INPUT, value)
+      dispatch(typeInput({ field: Field.INPUT, typedValue: value }))
     },
-    [updateInputAmount],
+    [dispatch],
   )
 
-  const parsedAmount = useParsedAmount(currencyIn, typedValue)
+  const adaptedCurrencyIn = useMemo(() => adaptAnyCurrency(currencyIn), [currencyIn])
+  const adaptedCurrencyOut = useMemo(() => adaptAnyCurrency(currencyOut), [currencyOut])
+  const adaptedBalanceIn = useMemo(() => balanceIn && adaptAnyToCurrencyAmount(balanceIn), [balanceIn])
+  const adaptedBalanceOut = useMemo(() => balanceOut && adaptAnyToCurrencyAmount(balanceOut), [balanceOut])
+
+  const parsedAmount = useParsedAmount(adaptedCurrencyIn, typedValue)
+  const isStablePairSwap = useCheckStablePairSwap(adaptedCurrencyIn, adaptedCurrencyOut)
+  const isCorrelatedPair = false // Removed KyberSwap correlation check
+  const isWrapOrUnwrap = false // No wrapping in OpenOcean implementation
+
+  // OpenOcean integration
   const {
-    wrapType,
-    inputError: wrapInputError,
-    execute: onWrap,
-  } = useWrapCallback(currencyIn, currencyOut, typedValue, false, customChainId)
-  const isWrapOrUnwrap = wrapType !== WrapType.NOT_APPLICABLE
-
-  const isStablePairSwap = useCheckStablePairSwap(currencyIn, currencyOut)
-  const isCorrelatedPair = useCheckCorrelatedPair()
-
-  const { fetcher: getRoute, result } = useGetRoute({
-    currencyIn,
-    currencyOut,
-    parsedAmount,
-    isProcessingSwap,
-    customChain: chainId,
-    clientId: searchParams.get('clientId') || undefined,
-  })
-
-  const { data: getRouteRawResponse, isFetching: isGettingRoute, error: getRouteError } = result
-  const getRouteResponse = useMemo(() => {
-    if (!getRouteRawResponse?.data || getRouteError || !currencyIn || !currencyOut) {
-      return undefined
-    }
-
-    return parseGetRouteResponse(getRouteRawResponse.data, currencyIn, currencyOut)
-  }, [currencyIn, currencyOut, getRouteError, getRouteRawResponse])
-
-  const routeSummary = getRouteResponse?.routeSummary
-
-  const buildRoute = useBuildRoute({
-    recipient: isDegenMode && recipient ? recipient : '',
-    routeSummary: getRouteRawResponse?.data?.routeSummary || undefined,
-    slippage,
-    transactionTimeout,
-    permit,
-  })
+    isLoading: openOceanLoading,
+    routeSummary: openOceanRouteSummary,
+    buildRoute: openOceanBuildRoute,
+    error: openOceanError,
+  } = useOpenOceanSwapForm(adaptedCurrencyIn, adaptedCurrencyOut, parsedAmount, slippage)
 
   const swapInputError = useGetInputError({
-    currencyIn,
-    currencyOut,
+    currencyIn: adaptedCurrencyIn,
+    currencyOut: adaptedCurrencyOut,
     typedValue,
-    recipient,
-    balanceIn,
+    recipient: recipient,
+    balanceIn: adaptedBalanceIn,
     parsedAmountFromTypedValue: parsedAmount,
   })
-
-  useEffect(() => {
-    setRouteSummary(routeSummary)
-  }, [routeSummary, setRouteSummary])
 
   const theme = useTheme()
 
   const [honeypot, setHoneypot] = useState<{ isHoneypot: boolean; isFOT: boolean; tax: number } | null>(null)
 
   useEffect(() => {
-    if (!currencyOut) return
+    if (!adaptedCurrencyOut) return
     fetch(
-      `${TOKEN_API_URL}/v1/public/tokens/honeypot-fot-info?address=${currencyOut.wrapped.address.toLowerCase()}&chainId=${chainId}`,
+      `${TOKEN_API_URL}/v1/public/tokens/honeypot-fot-info?address=${adaptedCurrencyOut.getAddress().toLowerCase()}&chainId=${chainId}`,
     )
       .then(res => res.json())
       .then(res => {
         setHoneypot(res.data)
       })
-  }, [currencyOut, chainId])
+  }, [adaptedCurrencyOut, chainId])
+
+  const handleRecipientChange = useCallback((value: string | null) => {
+    dispatch(setRecipient({ recipient: value }))
+  }, [dispatch])
+
+  const handleChangeCurrencyIn = useCallback((c: any) => {
+    const adapted = adaptAnyCurrency(c)
+    if (adapted) onChangeCurrencyIn(adapted)
+  }, [onChangeCurrencyIn])
+
+  const handleChangeCurrencyOut = useCallback((c: any) => {
+    const adapted = adaptAnyCurrency(c)
+    if (adapted) onChangeCurrencyOut(adapted)
+  }, [onChangeCurrencyOut])
+
+  const refreshCallback = useCallback(() => {
+    // OpenOcean refreshes automatically via the useEffect in useOpenOceanQuote
+  }, [])
+
+  const finalSwapInputError = useMemo(() => {
+    return (swapInputError || openOceanError || undefined) as string | undefined
+  }, [swapInputError, openOceanError])
+
+  const handleReverseTokens = useCallback(() => {
+    if (adaptedCurrencyIn && openOceanRouteSummary?.parsedAmountOut) {
+      handleChangeCurrencyOut(adaptedCurrencyIn)
+      // Convert the CurrencyAmount to a string for the input
+      const value = openOceanRouteSummary.parsedAmountOut.toSignificant(6)
+      dispatch(typeInput({ field: Field.INPUT, typedValue: value }))
+    }
+  }, [adaptedCurrencyIn, handleChangeCurrencyOut, openOceanRouteSummary, dispatch])
+
+  if (hidden) return null
 
   return (
-    <SwapFormContextProvider
-      slippage={slippage}
-      routeSummary={routeSummary}
-      typedValue={typedValue}
-      recipient={recipient}
-      isStablePairSwap={isStablePairSwap}
-      isCorrelatedPair={isCorrelatedPair}
-      isAdvancedMode={isDegenMode}
-    >
-      <Box sx={{ flexDirection: 'column', gap: '16px', display: hidden ? 'none' : 'flex' }}>
-        <Wrapper id={TutorialIds.SWAP_FORM_CONTENT}>
-          <Flex flexDirection="column" sx={{ gap: '0.75rem' }}>
-            {omniView ? <NetworkSelector chainId={chainId} /> : null}
+    <SwapFormWrapper>
+      <SwapFormInner>
+        <SwapFormHeader>
+          <SwapFormTitle>Swap</SwapFormTitle>
+          {omniView && <NetworkSelector chainId={chainId} />}
+        </SwapFormHeader>
 
-            <Flex flexDirection="column" sx={{ gap: '0.5rem' }}>
-              <InputCurrencyPanel
-                wrapType={wrapType}
-                typedValue={typedValue}
-                setTypedValue={onUserInput}
-                currencyIn={currencyIn}
-                currencyOut={currencyOut}
-                balanceIn={balanceIn}
-                onChangeCurrencyIn={onChangeCurrencyIn}
-                customChainId={customChainId}
-              />
+        <SwapFormContent>
+          <InputCurrencyPanel
+            typedValue={typedValue}
+            setTypedValue={onUserInput}
+            currencyIn={adaptedCurrencyIn}
+            currencyOut={adaptedCurrencyOut}
+            balanceIn={adaptedBalanceIn}
+            onChangeCurrencyIn={handleChangeCurrencyIn}
+            customChainId={customChainId}
+          />
 
-              <ReverseTokenSelectionButton
-                onClick={() => {
-                  currencyIn && onChangeCurrencyOut(currencyIn)
-                  routeSummary && onUserInput(routeSummary.parsedAmountOut.toExact())
-                }}
-              />
+          <ReverseTokenSelectionButton onClick={handleReverseTokens} />
 
-              <OutputCurrencyPanel
-                wrapType={wrapType}
-                parsedAmountIn={parsedAmount}
-                parsedAmountOut={routeSummary?.parsedAmountOut}
-                currencyIn={currencyIn}
-                currencyOut={currencyOut}
-                amountOutUsd={routeSummary?.amountOutUsd}
-                onChangeCurrencyOut={onChangeCurrencyOut}
-                customChainId={customChainId}
-              />
-            </Flex>
+          <OutputCurrencyPanel
+            parsedAmountIn={parsedAmount}
+            parsedAmountOut={openOceanRouteSummary?.parsedAmountOut}
+            currencyIn={adaptedCurrencyIn}
+            currencyOut={adaptedCurrencyOut}
+            amountOutUsd={openOceanRouteSummary?.amountOutUsd}
+            onChangeCurrencyOut={handleChangeCurrencyOut}
+            customChainId={customChainId}
+          />
 
-            {isDegenMode && !isWrapOrUnwrap && (
-              <AddressInputPanel id="recipient" value={recipient} onChange={setRecipient} />
-            )}
-            <SlippageSettingGroup
-              isWrapOrUnwrap={isWrapOrUnwrap}
-              isStablePairSwap={isStablePairSwap}
-              onOpenGasToken={onOpenGasToken}
-              isCorrelatedPair={isCorrelatedPair}
-            />
-            <FeeControlGroup />
-          </Flex>
-        </Wrapper>
-        <Flex flexDirection="column" style={{ gap: '1.25rem' }}>
-          <MultichainKNCNote currencyIn={currencyIn} currencyOut={currencyOut} />
+          <AddressInputPanel id="recipient" value={recipient} onChange={handleRecipientChange} />
+          
+          <SlippageSettingGroup
+            isWrapOrUnwrap={isWrapOrUnwrap}
+            isStablePairSwap={isStablePairSwap}
+            isCorrelatedPair={isCorrelatedPair}
+            onOpenGasToken={onOpenGasToken}
+          />
 
-          {!isWrapOrUnwrap && (
-            <TradeSummary
-              routeSummary={routeSummary}
-              slippage={slippage}
-              disableRefresh={!parsedAmount || parsedAmount.equalTo(0) || isProcessingSwap}
-              refreshCallback={getRoute}
-            />
-          )}
+          <FeeControlGroup />
 
-          {honeypot?.isFOT || honeypot?.isHoneypot ? (
+          <TradeSummary
+            routeSummary={openOceanRouteSummary}
+            slippage={slippage}
+            disableRefresh={!parsedAmount || parsedAmount.equalTo('0') || isProcessingSwap}
+            refreshCallback={refreshCallback}
+          />
+
+          {(honeypot?.isFOT || honeypot?.isHoneypot) && (
             <Flex
               sx={{
-                borderRadius: '1rem',
-                background: rgba(theme.warning, 0.3),
-                padding: '10px 12px',
+                borderRadius: '16px',
+                background: rgba(theme.warning, 0.1),
+                padding: '12px',
                 gap: '8px',
               }}
             >
               <WarningIcon color={theme.warning} size={20} />
               <Text fontSize={14} flex={1}>
                 {honeypot.isHoneypot
-                  ? `Our simulation detects that ${currencyOut?.symbol} token can not be sold immediately or has an extremely high sell fee after being bought, please check further before buying!`
-                  : `Our simulation detects that ${currencyOut?.symbol} has ${
+                  ? `Our simulation detects that ${adaptedCurrencyOut?.symbol} token can not be sold immediately or has an extremely high sell fee after being bought, please check further before buying!`
+                  : `Our simulation detects that ${adaptedCurrencyOut?.symbol} has ${
                       honeypot.tax * 100
                     }% fee on transfer, please check further before buying.`}
               </Text>
             </Flex>
-          ) : null}
+          )}
 
-          <PriceImpactNote priceImpact={routeSummary?.priceImpact} isDegenMode={isDegenMode} showLimitOrderLink />
+          <PriceImpactNote priceImpact={openOceanRouteSummary?.priceImpact} showLimitOrderLink />
 
           <SwapActionButton
-            isGettingRoute={isGettingRoute}
+            isGettingRoute={openOceanLoading}
             parsedAmountFromTypedValue={parsedAmount}
-            balanceIn={balanceIn}
-            balanceOut={balanceOut}
-            isDegenMode={isDegenMode}
+            balanceIn={adaptedBalanceIn}
+            balanceOut={adaptedBalanceOut}
             typedValue={typedValue}
-            currencyIn={currencyIn}
-            currencyOut={currencyOut}
-            wrapInputError={wrapInputError}
-            wrapType={wrapType}
-            routeSummary={routeSummary}
+            currencyIn={adaptedCurrencyIn}
+            currencyOut={adaptedCurrencyOut}
+            routeSummary={openOceanRouteSummary}
             isProcessingSwap={isProcessingSwap}
             setProcessingSwap={setProcessingSwap}
-            onWrap={onWrap}
-            buildRoute={buildRoute}
-            swapInputError={swapInputError}
+            buildRoute={openOceanBuildRoute}
+            swapInputError={finalSwapInputError}
             customChainId={customChainId}
+            isDegenMode={false}
+            wrapInputError={undefined}
+            wrapType={WrapType.NOT_APPLICABLE}
+            onWrap={undefined}
           />
-        </Flex>
-      </Box>
-    </SwapFormContextProvider>
+        </SwapFormContent>
+      </SwapFormInner>
+    </SwapFormWrapper>
   )
 }
 

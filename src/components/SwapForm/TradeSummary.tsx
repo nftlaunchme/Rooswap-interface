@@ -1,250 +1,114 @@
-import { Trans } from '@lingui/macro'
-import React, { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { rgba } from 'polished'
+import React from 'react'
+import { RefreshCw } from 'react-feather'
 import { Flex, Text } from 'rebass'
 import styled from 'styled-components'
 
-import { ReactComponent as RoutingIcon } from 'assets/svg/routing-icon.svg'
-import { AutoColumn } from 'components/Column'
-import { RowBetween, RowFixed } from 'components/Row'
-import { useSwapFormContext } from 'components/SwapForm/SwapFormContext'
-import { MouseoverTooltip, TextDashed } from 'components/Tooltip'
-import TradePrice from 'components/swapv2/TradePrice'
-import { BIPS_BASE } from 'constants/index'
+import { DetailedRouteSummary } from '../../types/route'
 import useTheme from 'hooks/useTheme'
-import { ExternalLink, TYPE } from 'theme'
-import { DetailedRouteSummary } from 'types/route'
-import { formattedNum } from 'utils'
-import { minimumAmountAfterSlippage } from 'utils/currencyAmount'
-import { formatDisplayNumber } from 'utils/numbers'
-import { checkPriceImpact, formatPriceImpact } from 'utils/prices'
 
-import RefreshButton from './RefreshButton'
-
-type WrapperProps = {
-  $visible: boolean
-  $disabled: boolean
-}
-
-export const RoutingIconWrapper = styled(RoutingIcon)`
-  height: 16px;
-  width: 16px;
-  cursor: pointer;
-  path {
-    fill: ${({ theme }) => theme.text} !important;
-  }
-`
-
-const Wrapper = styled.div.attrs<WrapperProps>(props => ({
-  'data-visible': props.$visible,
-  'data-disabled': props.$disabled,
-}))<WrapperProps>`
-  display: none;
-  padding: 0;
-  width: 100%;
-  max-width: 425px;
+const SummaryWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: ${({ theme }) => rgba(theme.buttonBlack, 0.4)};
   border-radius: 16px;
-  max-height: 0;
-  transition: height 300ms ease-in-out, transform 300ms;
-  border: 1px solid ${({ theme }) => theme.border};
-  overflow: hidden;
+`
 
-  &[data-visible='true'] {
-    display: block;
-    padding: 12px 12px;
-    max-height: max-content;
-    color: ${({ theme }) => theme.text};
+const SummaryRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: ${({ theme }) => theme.subText};
+`
+
+const RefreshButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  background: ${({ theme }) => rgba(theme.primary, 0.2)};
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.primary};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  :hover:not(:disabled) {
+    background: ${({ theme }) => rgba(theme.primary, 0.4)};
   }
 
-  &[data-disabled='true'] {
-    color: ${({ theme }) => theme.subText};
+  :disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `
 
-type TooltipTextOfSwapFeeProps = {
-  feeBips: string | undefined
-  feeAmountText: string
-}
-export const TooltipTextOfSwapFee: React.FC<TooltipTextOfSwapFeeProps> = ({ feeBips, feeAmountText }) => {
-  const [searchParams] = useSearchParams()
-  const clientId = searchParams.get('clientId')
-
-  const feePercent = formatDisplayNumber(Number(feeBips) / Number(BIPS_BASE.toString()), {
-    style: 'percent',
-    fractionDigits: 2,
-  })
-  const hereLink = (
-    <ExternalLink href="https://docs.kyberswap.com/kyberswap-solutions/kyberswap-interface/user-guides/instantly-swap-at-superior-rates#swap-fees-supporting-transactions-on-low-trading-volume-chains">
-      <b>
-        <Trans>here</Trans> ↗
-      </b>
-    </ExternalLink>
-  )
-
-  if (!feeAmountText || !feePercent) {
-    return <Trans>Read more about the fees {hereLink}</Trans>
-  }
-
-  if (clientId) {
-    return <Trans>Swap fees charged by {clientId}.</Trans>
-  }
-
-  return (
-    <Trans>
-      A {feePercent} fee ({feeAmountText}) will incur on this swap. The Est. Output amount you see above is inclusive of
-      this fee. Read more about the fees {hereLink}
-    </Trans>
-  )
-}
-
-const SwapFee: React.FC = () => {
-  const theme = useTheme()
-  const { routeSummary } = useSwapFormContext()
-
-  const {
-    formattedAmount: feeAmount = '',
-    formattedAmountUsd: feeAmountUsd = '',
-    currency = undefined,
-  } = routeSummary?.fee || {}
-
-  if (!feeAmount) {
-    return null
-  }
-
-  const feeAmountWithSymbol = feeAmount && currency?.symbol ? `${feeAmount} ${currency.symbol}` : ''
-
-  return (
-    <RowBetween>
-      <RowFixed>
-        <TextDashed fontSize={12} fontWeight={400} color={theme.subText}>
-          <MouseoverTooltip
-            text={
-              <TooltipTextOfSwapFee feeAmountText={feeAmountWithSymbol} feeBips={routeSummary?.extraFee?.feeAmount} />
-            }
-            placement="right"
-          >
-            <Trans>Est. Swap Fee</Trans>
-          </MouseoverTooltip>
-        </TextDashed>
-      </RowFixed>
-
-      <RowFixed>
-        <TYPE.black color={theme.text} fontSize={12}>
-          {feeAmountUsd || feeAmountWithSymbol || '--'}
-        </TYPE.black>
-      </RowFixed>
-    </RowBetween>
-  )
-}
-
-type Props = {
+interface Props {
   routeSummary: DetailedRouteSummary | undefined
   slippage: number
   disableRefresh: boolean
   refreshCallback: () => void
 }
-const TradeSummary: React.FC<Props> = ({ routeSummary, slippage, disableRefresh, refreshCallback }) => {
+
+const TradeSummary: React.FC<Props> = ({
+  routeSummary,
+  slippage,
+  disableRefresh,
+  refreshCallback,
+}) => {
   const theme = useTheme()
-  const [alreadyVisible, setAlreadyVisible] = useState(false)
-  const { parsedAmountOut, priceImpact } = routeSummary || {}
-  const hasTrade = !!routeSummary?.route
 
-  const priceImpactResult = checkPriceImpact(priceImpact)
-
-  const minimumAmountOut = parsedAmountOut ? minimumAmountAfterSlippage(parsedAmountOut, slippage) : undefined
-  const currencyOut = parsedAmountOut?.currency
-  const minimumAmountOutStr =
-    minimumAmountOut && currencyOut ? (
-      <Text
-        as="span"
-        sx={{
-          color: theme.text,
-          fontWeight: '500',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {formattedNum(minimumAmountOut.toSignificant(10), false, 10)} {currencyOut.symbol}
-      </Text>
-    ) : (
-      ''
-    )
-
-  useEffect(() => {
-    if (hasTrade) {
-      setAlreadyVisible(true)
-    }
-  }, [hasTrade])
+  if (!routeSummary) return null
 
   return (
-    <Wrapper $visible={alreadyVisible} $disabled={!hasTrade}>
-      <AutoColumn gap="0.75rem">
-        <RowBetween>
-          <Text fontSize={12} fontWeight={400} color={theme.subText}>
-            <Trans>Rate</Trans>
-          </Text>
+    <SummaryWrapper>
+      <SummaryRow>
+        <Text color={theme.subText}>Rate</Text>
+        <Text color={theme.text}>{routeSummary.executionPrice}</Text>
+      </SummaryRow>
 
-          <Flex alignItems="center" sx={{ gap: '4px' }}>
-            <RefreshButton shouldDisable={disableRefresh} callback={refreshCallback} size={16} />
-            <TradePrice price={routeSummary?.executionPrice} color={theme.text} />
-          </Flex>
-        </RowBetween>
-        <RowBetween>
-          <RowFixed>
-            <TextDashed fontSize={12} fontWeight={400} color={theme.subText}>
-              <MouseoverTooltip
-                width="200px"
-                text={<Trans>You will receive at least this amount or your transaction will revert.</Trans>}
-                placement="right"
-              >
-                <Trans>Minimum Received</Trans>
-              </MouseoverTooltip>
-            </TextDashed>
-          </RowFixed>
-          <RowFixed>
-            <TYPE.black color={theme.text} fontSize={12}>
-              {minimumAmountOutStr || '--'}
-            </TYPE.black>
-          </RowFixed>
-        </RowBetween>
+      <SummaryRow>
+        <Text color={theme.subText}>Price Impact</Text>
+        <Text 
+          color={
+            parseFloat(routeSummary.priceImpact) >= 10 
+              ? theme.red 
+              : parseFloat(routeSummary.priceImpact) >= 5 
+              ? theme.warning 
+              : theme.text
+          }
+        >
+          {routeSummary.priceImpact}%
+        </Text>
+      </SummaryRow>
 
-        <RowBetween>
-          <RowFixed>
-            <TextDashed fontSize={12} fontWeight={400} color={theme.subText}>
-              <MouseoverTooltip
-                text={
-                  <div>
-                    <Trans>Estimated change in price due to the size of your transaction.</Trans>
-                    <Text fontSize={12}>
-                      <Trans>
-                        Read more{' '}
-                        <a
-                          href="https://docs.kyberswap.com/getting-started/foundational-topics/decentralized-finance/price-impact"
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          <b>here ↗</b>
-                        </a>
-                      </Trans>
-                    </Text>
-                  </div>
-                }
-                placement="right"
-              >
-                <Trans>Price Impact</Trans>
-              </MouseoverTooltip>
-            </TextDashed>
-          </RowFixed>
-          <TYPE.black
-            fontSize={12}
-            color={priceImpactResult.isVeryHigh ? theme.red : priceImpactResult.isHigh ? theme.warning : theme.text}
-          >
-            {priceImpactResult.isInvalid || typeof priceImpact !== 'number' ? '--' : formatPriceImpact(priceImpact)}
-          </TYPE.black>
-        </RowBetween>
+      <SummaryRow>
+        <Text color={theme.subText}>Minimum Received</Text>
+        <Text color={theme.text}>
+          {routeSummary.parsedAmountOut.toSignificant(6)} {routeSummary.parsedAmountOut.currency.symbol}
+        </Text>
+      </SummaryRow>
 
-        <SwapFee />
-      </AutoColumn>
-    </Wrapper>
+      <SummaryRow>
+        <Text color={theme.subText}>Network Fee</Text>
+        <Text color={theme.text}>${parseFloat(routeSummary.gasUsd).toFixed(2)}</Text>
+      </SummaryRow>
+
+      {!disableRefresh && (
+        <RefreshButton onClick={refreshCallback} disabled={disableRefresh}>
+          <RefreshCw size={14} />
+          <Text>Refresh Rate</Text>
+        </RefreshButton>
+      )}
+    </SummaryWrapper>
   )
 }
 

@@ -1,6 +1,6 @@
-import { createContext, useContext } from 'react'
-
+import { createContext, useContext, ReactNode } from 'react'
 import { DetailedRouteSummary } from 'types/route'
+import { CurrencyAmount, Currency } from 'types/currency'
 
 type SwapFormContextProps = {
   slippage: number
@@ -12,13 +12,13 @@ type SwapFormContextProps = {
   isAdvancedMode: boolean
 }
 
+type SwapFormContextProviderProps = SwapFormContextProps & {
+  children: ReactNode
+}
+
 const SwapFormContext = createContext<SwapFormContextProps | undefined>(undefined)
 
-const SwapFormContextProvider: React.FC<
-  SwapFormContextProps & {
-    children: React.ReactNode
-  }
-> = ({ children, ...props }) => {
+const SwapFormContextProvider = ({ children, ...props }: SwapFormContextProviderProps) => {
   const contextValue: SwapFormContextProps = props
   return <SwapFormContext.Provider value={contextValue}>{children}</SwapFormContext.Provider>
 }
@@ -32,4 +32,5 @@ const useSwapFormContext = (): SwapFormContextProps => {
   return context
 }
 
+export type { SwapFormContextProps }
 export { SwapFormContextProvider, useSwapFormContext }

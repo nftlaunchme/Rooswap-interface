@@ -1,37 +1,69 @@
-import { ChainId, Currency, CurrencyAmount } from '@kyberswap/ks-sdk-core'
-import { Trans } from '@lingui/macro'
-import React from 'react'
-import { Text } from 'rebass'
+import { rgba } from 'polished'
+import React, { useState } from 'react'
+import { Flex, Text } from 'rebass'
 import styled from 'styled-components'
 
-import CurrencyInputPanel from 'components/CurrencyInputPanel'
-import { MouseoverTooltip } from 'components/Tooltip'
-import { CHAINS_SUPPORT_FEE_CONFIGS, RESERVE_USD_DECIMALS } from 'constants/index'
-import { useActiveWeb3React } from 'hooks'
-import { WrapType } from 'hooks/useWrapCallback'
-import { formattedNum } from 'utils'
+import { Currency, CurrencyAmount } from '../../types/currency'
+import { OutputCurrencyPanelProps } from './types'
+import useTheme from 'hooks/useTheme'
+import TokenSelector from './TokenSelector'
 
-export const Label = styled.div`
-  font-weight: 500;
-  font-size: 12px;
-  color: ${({ theme }) => theme.subText};
-  border-bottom: 1px dashed ${({ theme }) => theme.border};
+const OutputPanelWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: ${({ theme }) => rgba(theme.buttonBlack, 0.4)};
+  border-radius: 20px;
 `
 
-type Props = {
-  wrapType: WrapType
-  parsedAmountIn: CurrencyAmount<Currency> | undefined
-  parsedAmountOut: CurrencyAmount<Currency> | undefined
-  currencyIn: Currency | undefined
-  currencyOut: Currency | undefined
-  amountOutUsd: string | undefined
+const OutputRow = styled.div`
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+`
 
-  onChangeCurrencyOut: (c: Currency) => void
-  customChainId?: ChainId
-}
+const OutputAmount = styled.div`
+  font-size: 28px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.text};
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`
 
-const OutputCurrencyPanel: React.FC<Props> = ({
-  wrapType,
+const TokenButton = styled.button<{ hasToken?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: ${({ theme, hasToken }) => hasToken ? rgba(theme.buttonGray, 0.4) : theme.primary};
+  border: none;
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.text};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  :hover {
+    background: ${({ theme, hasToken }) => hasToken ? rgba(theme.buttonGray, 0.6) : rgba(theme.primary, 0.8)};
+  }
+`
+
+const UsdValueRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: 12px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.subText};
+`
+
+const OutputCurrencyPanel: React.FC<OutputCurrencyPanelProps> = ({
   parsedAmountIn,
   parsedAmountOut,
   currencyIn,
@@ -40,72 +72,43 @@ const OutputCurrencyPanel: React.FC<Props> = ({
   onChangeCurrencyOut,
   customChainId,
 }) => {
-  const { chainId: walletChainId } = useActiveWeb3React()
-  const chainId = customChainId || walletChainId
-
-  // showWrap = true if this swap is either WRAP or UNWRAP
-  const showWrap: boolean = wrapType !== WrapType.NOT_APPLICABLE
-
-  const getFormattedAmount = () => {
-    if (showWrap) {
-      return parsedAmountIn?.toExact() || ''
-    }
-    if (!parsedAmountOut) return ''
-    return parsedAmountOut.toSignificant(RESERVE_USD_DECIMALS)
-  }
-
-  const getEstimatedUsd = () => {
-    if (showWrap) {
-      return undefined
-    }
-
-    return amountOutUsd ? `${formattedNum(amountOutUsd.toString(), true)}` : undefined
-  }
+  const theme = useTheme()
+  const [showTokenSelector, setShowTokenSelector] = useState(false)
 
   return (
-    <CurrencyInputPanel
-      disabledInput
-      value={getFormattedAmount()}
-      onMax={null}
-      onHalf={null}
-      currency={currencyOut}
-      onCurrencySelect={onChangeCurrencyOut}
-      otherCurrency={currencyIn}
-      id="swap-currency-output"
-      dataTestId="swap-currency-output"
-      showCommonBases={true}
-      estimatedUsd={getEstimatedUsd()}
-      label={
-        <Label>
-          <MouseoverTooltip
-            placement="right"
-            width="200px"
-            text={
-              <Text fontSize={12}>
-                {CHAINS_SUPPORT_FEE_CONFIGS.includes(chainId) ? (
-                  <Trans>
-                    This is the estimated output amount. It is inclusive of any applicable swap fees. Do review the
-                    actual output amount at the confirmation stage.
-                  </Trans>
-                ) : (
-                  <Trans>
-                    This is the estimated output amount. Do review the actual output amount at the confirmation stage.
-                  </Trans>
-                )}
-              </Text>
-            }
+    <>
+      <TokenSelector
+        isOpen={showTokenSelector}
+        onDismiss={() => setShowTokenSelector(false)}
+        onSelect={onChangeCurrencyOut}
+        selectedCurrency={currencyOut}
+        otherCurrency={currencyIn}
+      />
+
+      <OutputPanelWrapper>
+        <Text fontSize={12} fontWeight={500} color={theme.subText}>
+          You Receive
+        </Text>
+
+        <OutputRow>
+          <OutputAmount>
+            {parsedAmountOut ? parsedAmountOut.toSignificant(6) : '0.0'}
+          </OutputAmount>
+          <TokenButton 
+            hasToken={!!currencyOut} 
+            onClick={() => setShowTokenSelector(true)}
           >
-            {CHAINS_SUPPORT_FEE_CONFIGS.includes(chainId) ? (
-              <Trans>Est. Output (incl. fee)</Trans>
-            ) : (
-              <Trans>Est. Output</Trans>
-            )}
-          </MouseoverTooltip>
-        </Label>
-      }
-      positionLabel="in"
-      customChainId={customChainId}
-    />
+            {currencyOut?.symbol || 'Select Token'}
+          </TokenButton>
+        </OutputRow>
+
+        <UsdValueRow>
+          {amountOutUsd && (
+            <Text>≈ ${parseFloat(amountOutUsd).toFixed(2)}</Text>
+          )}
+        </UsdValueRow>
+      </OutputPanelWrapper>
+    </>
   )
 }
 

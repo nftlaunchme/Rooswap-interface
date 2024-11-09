@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
-import { Currency, CurrencyAmount } from '../../../types/currency'
-import { useOpenOceanSwapForm } from '../../../hooks/useOpenOceanSwapForm'
-import { adaptAnyCurrency, stringToCurrencyAmount } from '../../../utils/currency'
+import { Currency, CurrencyAmount } from '../types/currency'
+import { useOpenOceanSwapForm } from './useOpenOceanSwapForm'
+import { adaptAnyCurrency, stringToCurrencyAmount } from '../utils/currency'
 
 interface Args {
   currencyIn: Currency | undefined
@@ -11,7 +11,7 @@ interface Args {
   slippage: number
 }
 
-export default function useBuildRoute({
+export default function useBuildRouteWithRecipient({
   currencyIn,
   currencyOut,
   typedValue,
@@ -37,14 +37,31 @@ export default function useBuildRoute({
       return { error: 'Invalid amount' }
     }
 
+    if (!adaptedCurrencyIn || !adaptedCurrencyOut) {
+      return { error: 'Select tokens' }
+    }
+
     try {
+      console.log('Building route with:', {
+        currencyIn: adaptedCurrencyIn.symbol,
+        currencyOut: adaptedCurrencyOut.symbol,
+        amount: parsedAmount.toExact(),
+        slippage,
+        recipient
+      })
+      
       const result = await buildRoute()
+      
+      if (result.error) {
+        console.error('Route build error:', result.error)
+      }
+      
       return result
-    } catch (error) {
+    } catch (error: any) {
       console.error('Build route error:', error)
       return { error: error.message || 'Failed to build route' }
     }
-  }, [buildRoute, parsedAmount])
+  }, [buildRoute, parsedAmount, adaptedCurrencyIn, adaptedCurrencyOut, slippage, recipient])
 
   return {
     isLoading,

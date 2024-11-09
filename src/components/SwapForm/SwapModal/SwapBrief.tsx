@@ -1,4 +1,3 @@
-import { Currency, CurrencyAmount } from '@kyberswap/ks-sdk-core'
 import { Trans } from '@lingui/macro'
 import React from 'react'
 import { ArrowDown } from 'react-feather'
@@ -11,9 +10,10 @@ import CurrencyLogo from 'components/CurrencyLogo'
 import { RowBetween } from 'components/Row'
 import { useSwapFormContext } from 'components/SwapForm/SwapFormContext'
 import UpdatedBadge, { Props as UpdatedBadgeProps } from 'components/SwapForm/SwapModal/SwapDetails/UpdatedBadge'
-import { CHAINS_SUPPORT_FEE_CONFIGS, RESERVE_USD_DECIMALS } from 'constants/index'
+import { RESERVE_USD_DECIMALS } from 'constants/index'
 import { useActiveWeb3React } from 'hooks'
 import useTheme from 'hooks/useTheme'
+import { Currency, CurrencyAmount } from 'types/currency'
 import { formattedNum } from 'utils'
 
 type Props = {
@@ -75,7 +75,6 @@ export default function SwapBrief({
       return (
         <Skeleton
           width="108px"
-          // there's border of 1px
           height="26.5px"
           baseColor={theme.border}
           highlightColor={theme.buttonGray}
@@ -96,7 +95,6 @@ export default function SwapBrief({
       return (
         <Skeleton
           width="64px"
-          // there's border of 1px
           height="15px"
           baseColor={theme.border}
           highlightColor={theme.buttonGray}
@@ -147,11 +145,7 @@ export default function SwapBrief({
       <CurrencyInputAmountWrapper>
         <Flex alignItems="center" style={{ gap: '4px' }}>
           <Text fontSize={12} fontWeight={500} color={theme.subText}>
-            {CHAINS_SUPPORT_FEE_CONFIGS.includes(chainId) ? (
-              <Trans>Output Amount (incl. fee)</Trans>
-            ) : (
-              <Trans>Output Amount</Trans>
-            )}
+            <Trans>Output Amount</Trans>
           </Text>
           <UpdatedBadge $level={$level} outputAmount={outputAmount} />
         </Flex>

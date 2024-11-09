@@ -1,0 +1,4273 @@
+
+
+// ----- File: AddMEVProtectionModal.tsx -----
+import { ChainId } from '@kyberswap/ks-sdk-core'
+import { Trans, t } from '@lingui/macro'
+import { useCallback, useMemo } from 'react'
+import { X } from 'react-feather'
+import { useMedia } from 'react-use'
+import { Text } from 'rebass'
+import styled from 'styled-components'
+
+import { NotificationType } from 'components/Announcement/type'
+import { ButtonOutlined, ButtonPrimary } from 'components/Button'
+import Modal from 'components/Modal'
+import Row, { RowBetween } from 'components/Row'
+import { CONNECTION } from 'components/Web3Provider'
+import { Z_INDEXS } from 'constants/styles'
+import { useActiveWeb3React } from 'hooks'
+import useMixpanel, { MIXPANEL_TYPE } from 'hooks/useMixpanel'
+import useTheme from 'hooks/useTheme'
+import { useChangeNetwork } from 'hooks/web3/useChangeNetwork'
+import { useNotify } from 'state/application/hooks'
+import { ExternalLink, MEDIA_WIDTHS } from 'theme'
+import { friendlyError } from 'utils/errorMessage'
+
+const Wrapper = styled.div`
+  padding: 20px;
+  border-radius: 20px;
+  background-color: ${({ theme }) => theme.tableHeader};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+  color: ${({ theme }) => theme.subText};
+
+  .time-frame-legend {
+    display: none;
+  }
+`
+
+const KYBER_SWAP_RPC = 'https://ethereum-mev-protection.kyberengineering.io/'
+
+export default function AddMEVProtectionModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const upToExtraSmall = useMedia(`(max-width: ${MEDIA_WIDTHS.upToExtraSmall}px)`)
+  const { addNewNetwork } = useChangeNetwork()
+  const { mixpanelHandler } = useMixpanel()
+  const { walletKey } = useActiveWeb3React()
+  const notify = useNotify()
+  const theme = useTheme()
+
+  const isUsingMetamask = useMemo(() => walletKey === CONNECTION.METAMASK_RDNS, [walletKey])
+
+  const onAdd = useCallback(() => {
+    if (!isUsingMetamask) {
+      onClose?.()
+      return
+    }
+
+    const name = 'KyberSwap'
+    mixpanelHandler(MIXPANEL_TYPE.MEV_ADD_CLICK_MODAL, { type: name })
+    addNewNetwork(
+      ChainId.MAINNET,
+      KYBER_SWAP_RPC,
+      {
+        name,
+        title: t`Failed to switch to ${name} RPC Endpoint`,
+        rejected: t`In order to enable MEV Protection with ${name}, you must change the RPC endpoint in your wallet`,
+      },
+      () => {
+        notify({
+          title: t`MEV Protection Mode is on`,
+          type: NotificationType.SUCCESS,
+          summary: t`You have successfully turned on MEV Protection Mode. All transactions on Ethereum will go through the custom RPC endpoint unless you change it`,
+        })
+        onClose?.()
+        mixpanelHandler(MIXPANEL_TYPE.MEV_ADD_RESULT, { type: name, result: 'success' })
+      },
+      (error: Error) => {
+        const message = friendlyError(error)
+        mixpanelHandler(MIXPANEL_TYPE.MEV_ADD_RESULT, { type: name, result: 'fail', reason: message })
+        onClose?.()
+      },
+    )
+  }, [isUsingMetamask, onClose, mixpanelHandler, addNewNetwork, notify])
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      width="fit-content"
+      maxWidth="500px"
+      maxHeight="80vh"
+      onDismiss={onClose}
+      zindex={Z_INDEXS.POPOVER_CONTAINER + 1}
+    >
+      <Wrapper>
+        <RowBetween align="start">
+          <Text fontSize={24} fontWeight={500} color={theme.text}>
+            <Trans>Add Custom RPC Endpoint</Trans>
+          </Text>
+          <X color={theme.text} style={{ cursor: 'pointer' }} onClick={onClose} />
+        </RowBetween>
+        <Row gap="12px">
+          <Text fontSize={12} lineHeight="16px">
+            <Trans>
+              <ExternalLink href="https://docs.kyberswap.com/getting-started/foundational-topics/decentralized-finance/maximal-extractable-value-mev">
+                MEV
+              </ExternalLink>{' '}
+              Protection safeguards you from front-running attacks on Ethereum. We recommend using{' '}
+              <ExternalLink href="https://docs.kyberswap.com/getting-started/foundational-topics/decentralized-technologies/rpc">
+                KyberSwap&apos;s RPC endpoint
+              </ExternalLink>{' '}
+              - powered by Blink to protect your transactions from front-running attacks and ensure a better trading
+              experience.
+              <br />
+              <br />
+              Note that adding the RPC endpoint automatically is only available via the MetaMask wallet. If you are
+              using another wallet or would like to add the RPC endpoint to your wallet manually, please refer to this{' '}
+              <ExternalLink href="https://docs.kyberswap.com/getting-started/quickstart/faq#how-to-change-rpc-in-metamask">
+                guide
+              </ExternalLink>
+              . Please make sure you understand how it works and use at your own caution.
+            </Trans>
+          </Text>
+        </Row>
+        <Row gap="16px" flexDirection={upToExtraSmall ? 'column' : 'row'}>
+          <ButtonOutlined onClick={onClose}>{isUsingMetamask ? t`No, go back` : t`Dismiss`}</ButtonOutlined>
+          {isUsingMetamask && (
+            <ButtonPrimary onClick={onAdd}>
+              <Trans>Yes</Trans>
+            </ButtonPrimary>
+          )}
+        </Row>
+      </Wrapper>
+    </Modal>
+  )
+}
+
+
+// ----- End of File -----
+
+
+// ----- File: GasPriceNote.tsx -----
+import { ChainId } from '@kyberswap/ks-sdk-core'
+import { Trans } from '@lingui/macro'
+import { FC } from 'react'
+import { Text } from 'rebass'
+
+import PriceImpactNote from 'components/SwapForm/PriceImpactNote'
+import WarningNote from 'components/WarningNote'
+import { useActiveWeb3React } from 'hooks'
+import useMixpanel, { MIXPANEL_TYPE } from 'hooks/useMixpanel'
+import useTheme from 'hooks/useTheme'
+import { useSwitchPairToLimitOrder } from 'state/swap/hooks'
+import { checkPriceImpact } from 'utils/prices'
+
+type Props = {
+  gasUsd?: string
+  priceImpact?: number
+  isDegenMode: boolean
+}
+
+const GAS_USD_THRESHOLD = 20
+const GasFeeAndPriceImpactNote: FC<Props> = ({ gasUsd = 0, priceImpact, isDegenMode }) => {
+  const theme = useTheme()
+  const { chainId } = useActiveWeb3React()
+  const switchToLimitOrder = useSwitchPairToLimitOrder()
+  const { isHigh, isVeryHigh } = checkPriceImpact(priceImpact)
+  const { mixpanelHandler } = useMixpanel()
+
+  if (+gasUsd < GAS_USD_THRESHOLD || chainId !== ChainId.MAINNET)
+    return <PriceImpactNote priceImpact={priceImpact} isDegenMode={isDegenMode} showLimitOrderLink />
+
+  const limitOrderLink = (
+    <Text>
+      <Trans>
+        Do you want to make a{' '}
+        <Text
+          as="span"
+          sx={{ cursor: 'pointer', fontWeight: 'bold' }}
+          color={theme.primary}
+          onClick={() => {
+            mixpanelHandler(MIXPANEL_TYPE.LO_CLICK_WARNING_IN_SWAP)
+            switchToLimitOrder()
+          }}
+        >
+          Limit Order
+        </Text>{' '}
+        instead?
+      </Trans>
+    </Text>
+  )
+  return (
+    <WarningNote
+      shortText={
+        <Text>
+          {isHigh || isVeryHigh ? (
+            <Trans>Gas fees and Price Impact are very high. You will lose your funds.</Trans>
+          ) : (
+            <Trans>Gas fees is very high. You will lose your funds.</Trans>
+          )}
+        </Text>
+      }
+      longText={limitOrderLink}
+    />
+  )
+}
+
+export default GasFeeAndPriceImpactNote
+
+
+// ----- End of File -----
+
+
+// ----- File: index.tsx -----
+import { rgba } from 'polished'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Box, Flex, Text } from 'rebass'
+import styled from 'styled-components'
+
+import { ReactComponent as RoutingIcon } from 'assets/svg/routing-icon.svg'
+import AddressInputPanel from 'components/AddressInputPanel'
+import FeeControlGroup from 'components/FeeControlGroup'
+import WarningIcon from 'components/Icons/WarningIcon'
+import { NetworkSelector } from 'components/NetworkSelector'
+import InputCurrencyPanel from './InputCurrencyPanel'
+import OutputCurrencyPanel from './OutputCurrencyPanel'
+import PriceImpactNote from './PriceImpactNote'
+import SlippageSettingGroup from './SlippageSettingGroup'
+import { SwapFormContextProvider } from './SwapFormContext'
+import useCheckStablePairSwap from './hooks/useCheckStablePairSwap'
+import useGetInputError from './hooks/useGetInputError'
+import { TutorialIds } from 'components/Tutorial/TutorialSwap/constant'
+import { TOKEN_API_URL } from 'constants/env'
+import { useActiveWeb3React } from 'hooks'
+import useTheme from 'hooks/useTheme'
+import { Field } from 'state/swap/types'
+import { useAppDispatch, useAppSelector } from 'state/hooks'
+import { setRecipient, typeInput, WrapType } from 'state/swap/slice'
+import { useOpenOceanSwapForm } from 'hooks/useOpenOceanSwapForm'
+import { Currency, CurrencyAmount } from 'types/currency'
+import { adaptAnyCurrency, adaptAnyToCurrencyAmount } from 'utils/currency'
+import useParsedAmount from 'hooks/useParsedAmount'
+import { SwapFormProps } from './types'
+import ReverseTokenSelectionButton from './ReverseTokenSelectionButton'
+import SwapActionButton from './SwapActionButton'
+import TradeSummary from './TradeSummary'
+
+const SwapFormWrapper = styled(Box)`
+  width: 100%;
+  max-width: 480px;
+  background: ${({ theme }) => theme.background};
+  border-radius: 24px;
+  padding: 20px;
+  position: relative;
+  color: ${({ theme }) => theme.text};
+`
+
+const SwapFormInner = styled(Flex)`
+  flex-direction: column;
+  gap: 16px;
+`
+
+const SwapFormContent = styled(Flex)`
+  flex-direction: column;
+  gap: 12px;
+`
+
+const SwapFormHeader = styled(Flex)`
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid ${({ theme }) => rgba(theme.border, 0.1)};
+`
+
+const SwapFormTitle = styled(Text)`
+  font-size: 20px;
+  font-weight: 500;
+`
+
+const SwapForm: React.FC<SwapFormProps> = props => {
+  const { chainId: walletChainId } = useActiveWeb3React()
+  const chainId = props.customChainId || walletChainId
+  const dispatch = useAppDispatch()
+
+  const {
+    hidden,
+    currencyIn,
+    currencyOut,
+    balanceIn,
+    balanceOut,
+    onChangeCurrencyIn,
+    onChangeCurrencyOut,
+    customChainId,
+    omniView,
+    onOpenGasToken,
+  } = props
+
+  const [isProcessingSwap, setProcessingSwap] = useState(false)
+  const swapState = useAppSelector(state => state.swap)
+  const { typedValue } = swapState
+  const recipient = swapState.recipient
+  const slippage = swapState.slippage || 0.5 // Default to 0.5%
+
+  const onUserInput = useCallback(
+    (value: string) => {
+      dispatch(typeInput({ field: Field.INPUT, typedValue: value }))
+    },
+    [dispatch],
+  )
+
+  const adaptedCurrencyIn = useMemo(() => adaptAnyCurrency(currencyIn), [currencyIn])
+  const adaptedCurrencyOut = useMemo(() => adaptAnyCurrency(currencyOut), [currencyOut])
+  const adaptedBalanceIn = useMemo(() => balanceIn && adaptAnyToCurrencyAmount(balanceIn), [balanceIn])
+  const adaptedBalanceOut = useMemo(() => balanceOut && adaptAnyToCurrencyAmount(balanceOut), [balanceOut])
+
+  const parsedAmount = useParsedAmount(adaptedCurrencyIn, typedValue)
+  const isStablePairSwap = useCheckStablePairSwap(adaptedCurrencyIn, adaptedCurrencyOut)
+  const isCorrelatedPair = false // Removed KyberSwap correlation check
+  const isWrapOrUnwrap = false // No wrapping in OpenOcean implementation
+
+  // OpenOcean integration
+  const {
+    isLoading: openOceanLoading,
+    routeSummary: openOceanRouteSummary,
+    buildRoute: openOceanBuildRoute,
+    error: openOceanError,
+  } = useOpenOceanSwapForm(adaptedCurrencyIn, adaptedCurrencyOut, parsedAmount, slippage)
+
+  const swapInputError = useGetInputError({
+    currencyIn: adaptedCurrencyIn,
+    currencyOut: adaptedCurrencyOut,
+    typedValue,
+    recipient: recipient,
+    balanceIn: adaptedBalanceIn,
+    parsedAmountFromTypedValue: parsedAmount,
+  })
+
+  const theme = useTheme()
+
+  const [honeypot, setHoneypot] = useState<{ isHoneypot: boolean; isFOT: boolean; tax: number } | null>(null)
+
+  useEffect(() => {
+    if (!adaptedCurrencyOut) return
+    fetch(
+      `${TOKEN_API_URL}/v1/public/tokens/honeypot-fot-info?address=${adaptedCurrencyOut.getAddress().toLowerCase()}&chainId=${chainId}`,
+    )
+      .then(res => res.json())
+      .then(res => {
+        setHoneypot(res.data)
+      })
+  }, [adaptedCurrencyOut, chainId])
+
+  const handleRecipientChange = useCallback(
+    (value: string | null) => {
+      dispatch(setRecipient({ recipient: value }))
+    },
+    [dispatch],
+  )
+
+  const handleChangeCurrencyIn = useCallback(
+    (c: any) => {
+      const adapted = adaptAnyCurrency(c)
+      if (adapted) onChangeCurrencyIn(adapted)
+    },
+    [onChangeCurrencyIn],
+  )
+
+  const handleChangeCurrencyOut = useCallback(
+    (c: any) => {
+      const adapted = adaptAnyCurrency(c)
+      if (adapted) onChangeCurrencyOut(adapted)
+    },
+    [onChangeCurrencyOut],
+  )
+
+  const refreshCallback = useCallback(() => {
+    // OpenOcean refreshes automatically via the useEffect in useOpenOceanQuote
+  }, [])
+
+  const finalSwapInputError = useMemo(() => {
+    return (swapInputError || openOceanError || undefined) as string | undefined
+  }, [swapInputError, openOceanError])
+
+  const handleReverseTokens = useCallback(() => {
+    if (adaptedCurrencyIn && adaptedCurrencyOut && openOceanRouteSummary?.parsedAmountOut) {
+      handleChangeCurrencyIn(adaptedCurrencyOut)
+      handleChangeCurrencyOut(adaptedCurrencyIn)
+      const value = openOceanRouteSummary.parsedAmountOut.toExact()
+      onUserInput(value)
+    }
+  }, [adaptedCurrencyIn, adaptedCurrencyOut, handleChangeCurrencyIn, handleChangeCurrencyOut, openOceanRouteSummary, onUserInput])
+
+  if (hidden) return null
+
+  return (
+    <SwapFormWrapper>
+      <SwapFormInner>
+        <SwapFormHeader>
+          <SwapFormTitle>Swap</SwapFormTitle>
+          {omniView && <NetworkSelector chainId={chainId} />}
+        </SwapFormHeader>
+
+        <SwapFormContent>
+          <InputCurrencyPanel
+            typedValue={typedValue}
+            setTypedValue={onUserInput}
+            currencyIn={adaptedCurrencyIn}
+            currencyOut={adaptedCurrencyOut}
+            balanceIn={adaptedBalanceIn}
+            onChangeCurrencyIn={handleChangeCurrencyIn}
+            customChainId={customChainId}
+          />
+
+          <ReverseTokenSelectionButton onClick={handleReverseTokens} />
+
+          <OutputCurrencyPanel
+            parsedAmountIn={parsedAmount}
+            parsedAmountOut={openOceanRouteSummary?.parsedAmountOut}
+            currencyIn={adaptedCurrencyIn}
+            currencyOut={adaptedCurrencyOut}
+            amountOutUsd={openOceanRouteSummary?.amountOutUsd}
+            onChangeCurrencyOut={handleChangeCurrencyOut}
+            customChainId={customChainId}
+          />
+
+          <AddressInputPanel id="recipient" value={recipient} onChange={handleRecipientChange} />
+
+          <SlippageSettingGroup
+            isWrapOrUnwrap={isWrapOrUnwrap}
+            isStablePairSwap={isStablePairSwap}
+            isCorrelatedPair={isCorrelatedPair}
+            onOpenGasToken={onOpenGasToken}
+          />
+
+          <FeeControlGroup />
+
+          <TradeSummary
+            routeSummary={openOceanRouteSummary}
+            slippage={slippage}
+            disableRefresh={!parsedAmount || parsedAmount.equalTo('0') || isProcessingSwap}
+            refreshCallback={refreshCallback}
+          />
+
+          {(honeypot?.isFOT || honeypot?.isHoneypot) && (
+            <Flex
+              sx={{
+                borderRadius: '16px',
+                background: rgba(theme.warning, 0.1),
+                padding: '12px',
+                gap: '8px',
+              }}
+            >
+              <WarningIcon color={theme.warning} size={20} />
+              <Text fontSize={14} flex={1}>
+                {honeypot.isHoneypot
+                  ? `Our simulation detects that ${adaptedCurrencyOut?.symbol} token cannot be sold immediately or has an extremely high sell fee after being bought. Please check further before buying!`
+                  : `Our simulation detects that ${adaptedCurrencyOut?.symbol} has ${
+                      honeypot.tax * 100
+                    }% fee on transfer. Please check further before buying.`}
+              </Text>
+            </Flex>
+          )}
+
+          <PriceImpactNote priceImpact={openOceanRouteSummary?.priceImpact} showLimitOrderLink />
+
+          <SwapActionButton
+            isGettingRoute={openOceanLoading}
+            parsedAmountFromTypedValue={parsedAmount}
+            balanceIn={adaptedBalanceIn}
+            balanceOut={adaptedBalanceOut}
+            typedValue={typedValue}
+            currencyIn={adaptedCurrencyIn}
+            currencyOut={adaptedCurrencyOut}
+            routeSummary={openOceanRouteSummary}
+            isProcessingSwap={isProcessingSwap}
+            setProcessingSwap={setProcessingSwap}
+            buildRoute={openOceanBuildRoute}
+            swapInputError={finalSwapInputError}
+            customChainId={customChainId}
+            isDegenMode={false}
+            wrapInputError={undefined}
+            wrapType={WrapType.NOT_APPLICABLE}
+            onWrap={undefined}
+          />
+        </SwapFormContent>
+      </SwapFormInner>
+    </SwapFormWrapper>
+  )
+}
+
+export default SwapForm
+
+
+// ----- End of File -----
+
+
+// ----- File: InputCurrencyPanel.tsx -----
+import { Currency, CurrencyAmount } from '../../types/currency'
+import { InputCurrencyPanelProps } from './types'
+
+const InputCurrencyPanel: React.FC<InputCurrencyPanelProps> = ({
+  typedValue,
+  setTypedValue,
+  currencyIn,
+  currencyOut,
+  balanceIn,
+  onChangeCurrencyIn,
+  customChainId,
+}) => {
+  return (
+    <div>
+      <input
+        type="text"
+        value={typedValue}
+        onChange={(e) => setTypedValue(e.target.value)}
+        placeholder="0.0"
+      />
+      <button onClick={() => currencyIn && onChangeCurrencyIn(currencyIn)}>
+        {currencyIn?.symbol || 'Select a token'}
+      </button>
+      {balanceIn && (
+        <div>
+          Balance: {balanceIn.toExact()} {currencyIn?.symbol}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default InputCurrencyPanel
+
+
+// ----- End of File -----
+
+
+// ----- File: MultichainKNCNote.tsx -----
+import { Currency } from '@kyberswap/ks-sdk-core'
+import { Trans } from '@lingui/macro'
+import { FC } from 'react'
+import { Text } from 'rebass'
+import styled from 'styled-components'
+
+import WarningNote from 'components/WarningNote'
+import { mKNC } from 'constants/tokens'
+import { useActiveWeb3React } from 'hooks'
+
+const TextUnderlineColor = styled(Text)`
+  border-bottom: 1px solid ${({ theme }) => theme.text};
+  width: fit-content;
+  cursor: pointer;
+  color: ${({ theme }) => theme.text};
+  font-weight: 500;
+  margin-right: 0.5ch;
+`
+
+type Props = {
+  currencyIn: Currency | undefined
+  currencyOut: Currency | undefined
+}
+
+const MultichainKNCNote: FC<Props> = ({ currencyIn, currencyOut }) => {
+  const { chainId } = useActiveWeb3React()
+  const mknc = mKNC[chainId]
+  if (
+    mknc &&
+    [currencyIn?.wrapped.address?.toLowerCase(), currencyOut?.wrapped.address?.toLowerCase()].includes(
+      mknc.toLowerCase(),
+    )
+  ) {
+    const shortText = (
+      <div>
+        <Trans>
+          Multichain team ceased operations, and we discourage user interaction with the deployed Wrapped KNC token
+          contracts on various chains. See more{' '}
+          <TextUnderlineColor
+            style={{ minWidth: 'max-content' }}
+            as="a"
+            href="https://twitter.com/MultichainOrg/status/1679768407628185600"
+            target="_blank"
+            rel="noreferrer"
+          >
+            here
+          </TextUnderlineColor>
+        </Trans>
+      </div>
+    )
+    return <WarningNote shortText={shortText} />
+  }
+
+  return null
+}
+
+export default MultichainKNCNote
+
+
+// ----- End of File -----
+
+
+// ----- File: OpenOceanSwapForm.tsx -----
+import { Currency, CurrencyAmount, Token } from '@kyberswap/ks-sdk-core'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Box, Flex, Text } from 'rebass'
+import styled from 'styled-components'
+import { rgba } from 'polished'
+
+import { NetworkSelector } from 'components/NetworkSelector'
+import InputCurrencyPanel from 'components/SwapForm/InputCurrencyPanel'
+import OutputCurrencyPanel from 'components/SwapForm/OutputCurrencyPanel'
+import SlippageSettingGroup from 'components/SwapForm/SlippageSettingGroup'
+import { SwapFormContextProvider } from 'components/SwapForm/SwapFormContext'
+import { Wrapper } from 'components/swapv2/styleds'
+import { TutorialIds } from 'components/Tutorial/TutorialSwap/constant'
+import { useActiveWeb3React } from 'hooks'
+import useTheme from 'hooks/useTheme'
+import { Field } from 'state/swap/actions'
+import { useAppDispatch } from 'state/hooks'
+import { useSwapActionHandlers, useSwapState } from 'state/swap/hooks'
+import { OPENOCEAN_PRICE_IMPACT_ERROR, OPENOCEAN_PRICE_IMPACT_WARNING } from 'constants/openocean'
+import { useOpenOceanQuote, useOpenOceanSwapCallback, OpenOceanSwapCallbackState } from 'hooks/useOpenOceanSwap'
+import useParsedAmount from 'components/SwapForm/hooks/useParsedAmount'
+import WarningIcon from 'components/Icons/WarningIcon'
+import { useWalletModalToggle } from 'state/application/hooks'
+import { WrapType } from 'hooks/useWrapCallback'
+import { OpenOceanDetailedRouteSummary, OpenOceanBuildRouteResult } from 'types/openocean'
+
+import ReverseTokenSelectionButton from './ReverseTokenSelectionButton'
+import SwapActionButton from './SwapActionButton'
+
+export type OpenOceanSwapFormProps = {
+  hidden: boolean
+  currencyIn: Currency | undefined
+  currencyOut: Currency | undefined
+  balanceIn: CurrencyAmount<Currency> | undefined
+  balanceOut: CurrencyAmount<Currency> | undefined
+  isDegenMode: boolean
+  slippage: number
+  transactionTimeout: number
+  onChangeCurrencyIn: (c: Currency) => void
+  onChangeCurrencyOut: (c: Currency) => void
+  customChainId?: number
+  omniView?: boolean
+}
+
+const OpenOceanSwapForm: React.FC<OpenOceanSwapFormProps> = ({
+  hidden,
+  currencyIn,
+  currencyOut,
+  balanceIn,
+  balanceOut,
+  isDegenMode,
+  slippage,
+  transactionTimeout,
+  onChangeCurrencyIn,
+  onChangeCurrencyOut,
+  customChainId,
+  omniView,
+}) => {
+  const { account, chainId: walletChainId } = useActiveWeb3React()
+  const chainId = customChainId || walletChainId
+  const [isProcessingSwap, setProcessingSwap] = useState(false)
+  const { typedValue } = useSwapState()
+  const theme = useTheme()
+  const dispatch = useAppDispatch()
+  const toggleWalletModal = useWalletModalToggle()
+
+  const { onUserInput: updateInputAmount } = useSwapActionHandlers()
+  const onUserInput = useCallback(
+    (value: string) => {
+      updateInputAmount(Field.INPUT, value)
+    },
+    [updateInputAmount],
+  )
+
+  const parsedAmount = useParsedAmount(currencyIn, typedValue)
+
+  const { loading: quoteLoading, quote, error: quoteError } = useOpenOceanQuote(
+    currencyIn,
+    currencyOut,
+    parsedAmount,
+    slippage,
+  )
+
+  const { state: swapCallbackState, callback: swapCallback, error: swapCallbackError } = useOpenOceanSwapCallback(
+    currencyIn,
+    currencyOut,
+    parsedAmount,
+    slippage,
+    null, // No recipient for now
+  )
+
+  const priceImpact = quote?.priceImpact ? parseFloat(quote.priceImpact) : 0
+  const showPriceImpactWarning = priceImpact >= OPENOCEAN_PRICE_IMPACT_WARNING
+  const showPriceImpactError = priceImpact >= OPENOCEAN_PRICE_IMPACT_ERROR
+
+  const handleSwap = useCallback(async () => {
+    if (!swapCallback) return
+    try {
+      setProcessingSwap(true)
+      const txHash = await swapCallback()
+      return txHash
+    } catch (error) {
+      console.error('Failed to swap:', error)
+      throw error
+    } finally {
+      setProcessingSwap(false)
+    }
+  }, [swapCallback])
+
+  const swapInputError = useMemo(() => {
+    if (!account) return 'Connect Wallet'
+    if (!currencyIn || !currencyOut) return 'Select a token'
+    if (!parsedAmount || parsedAmount.equalTo(0)) return 'Enter an amount'
+    if (quoteError) return quoteError
+    if (showPriceImpactError) return 'Price Impact Too High'
+    if (swapCallbackError) return swapCallbackError
+    return undefined
+  }, [account, currencyIn, currencyOut, parsedAmount, quoteError, showPriceImpactError, swapCallbackError])
+
+  const isValid = !swapInputError && swapCallbackState === OpenOceanSwapCallbackState.VALID
+
+  // Create a detailed route summary for context provider
+  const routeSummary: OpenOceanDetailedRouteSummary | undefined = useMemo(() => {
+    if (!quote || !currencyOut || !currencyIn) return undefined
+    return {
+      tokenIn: currencyIn.wrapped as Token,
+      tokenOut: currencyOut.wrapped as Token,
+      amountIn: parsedAmount?.toExact() || '0',
+      amountOut: quote.amountOut,
+      amountInUsd: '0',
+      amountOutUsd: '0',
+      priceImpact: quote.priceImpact,
+      parsedAmountIn: parsedAmount || CurrencyAmount.fromRawAmount(currencyIn, '0'),
+      parsedAmountOut: CurrencyAmount.fromRawAmount(currencyOut, quote.amountOut),
+      routerAddress: '',
+      gasUsd: '0',
+      gasAmount: quote.estimatedGas,
+      extraFee: {
+        feeAmount: '0',
+        feeAmountUsd: '0',
+        chargeFeeBy: '',
+        isInBps: false,
+        feeReceiver: '',
+      },
+    }
+  }, [quote, currencyIn, currencyOut, parsedAmount])
+
+  const buildRoute = useCallback(async (): Promise<OpenOceanBuildRouteResult> => {
+    if (!swapCallback) throw new Error('Swap callback not ready')
+    const txHash = await swapCallback()
+    return {
+      data: '',
+      value: '0',
+      to: '',
+      gasLimit: quote?.estimatedGas || '0',
+    }
+  }, [swapCallback, quote])
+
+  return (
+    <SwapFormContextProvider
+      slippage={slippage}
+      typedValue={typedValue}
+      recipient={null}
+      routeSummary={routeSummary}
+      isStablePairSwap={false}
+      isCorrelatedPair={false}
+      isAdvancedMode={isDegenMode}
+    >
+      <Box sx={{ flexDirection: 'column', gap: '16px', display: hidden ? 'none' : 'flex' }}>
+        <Wrapper id={TutorialIds.SWAP_FORM_CONTENT}>
+          <Flex flexDirection="column" sx={{ gap: '0.75rem' }}>
+            {omniView ? <NetworkSelector chainId={chainId} /> : null}
+
+            <Flex flexDirection="column" sx={{ gap: '0.5rem' }}>
+              <InputCurrencyPanel
+                wrapType={WrapType.NOT_APPLICABLE}
+                typedValue={typedValue}
+                setTypedValue={onUserInput}
+                currencyIn={currencyIn}
+                currencyOut={currencyOut}
+                balanceIn={balanceIn}
+                onChangeCurrencyIn={onChangeCurrencyIn}
+                customChainId={customChainId}
+              />
+
+              <ReverseTokenSelectionButton
+                onClick={() => {
+                  if (currencyIn && quote) {
+                    onChangeCurrencyOut(currencyIn)
+                    onUserInput(quote.amountOut)
+                  }
+                }}
+              />
+
+              <OutputCurrencyPanel
+                wrapType={WrapType.NOT_APPLICABLE}
+                parsedAmountIn={parsedAmount}
+                parsedAmountOut={quote ? CurrencyAmount.fromRawAmount(currencyOut!, quote.amountOut) : undefined}
+                currencyIn={currencyIn}
+                currencyOut={currencyOut}
+                amountOutUsd="0"
+                onChangeCurrencyOut={onChangeCurrencyOut}
+                customChainId={customChainId}
+              />
+            </Flex>
+
+            <SlippageSettingGroup
+              isStablePairSwap={false}
+              isCorrelatedPair={false}
+              isWrapOrUnwrap={false}
+            />
+          </Flex>
+        </Wrapper>
+
+        <Flex flexDirection="column" style={{ gap: '1.25rem' }}>
+          {showPriceImpactWarning && (
+            <Flex
+              sx={{
+                borderRadius: '1rem',
+                background: rgba(theme.warning, 0.3),
+                padding: '10px 12px',
+                gap: '8px',
+              }}
+            >
+              <WarningIcon color={theme.warning} size={20} />
+              <Text fontSize={14} flex={1}>
+                {showPriceImpactError
+                  ? 'Price impact is too high. You may receive significantly less tokens.'
+                  : 'Price impact is high. You may receive significantly less tokens than expected.'}
+              </Text>
+            </Flex>
+          )}
+
+          {quoteError && (
+            <Flex
+              sx={{
+                borderRadius: '1rem',
+                background: rgba(theme.red, 0.3),
+                padding: '10px 12px',
+                gap: '8px',
+              }}
+            >
+              <WarningIcon color={theme.red} size={20} />
+              <Text fontSize={14} flex={1}>
+                {quoteError}
+              </Text>
+            </Flex>
+          )}
+
+          <SwapActionButton
+            isGettingRoute={quoteLoading}
+            parsedAmountFromTypedValue={parsedAmount}
+            balanceIn={balanceIn}
+            balanceOut={balanceOut}
+            isDegenMode={isDegenMode}
+            typedValue={typedValue}
+            currencyIn={currencyIn}
+            currencyOut={currencyOut}
+            isProcessingSwap={isProcessingSwap}
+            setProcessingSwap={setProcessingSwap}
+            wrapType={WrapType.NOT_APPLICABLE}
+            routeSummary={routeSummary}
+            buildRoute={buildRoute}
+            onWrap={handleSwap}
+            swapInputError={swapInputError}
+            customChainId={customChainId}
+          />
+        </Flex>
+      </Box>
+    </SwapFormContextProvider>
+  )
+}
+
+export default OpenOceanSwapForm
+
+
+// ----- End of File -----
+
+
+// ----- File: OutputCurrencyPanel.tsx -----
+import { Currency, CurrencyAmount } from '../../types/currency'
+import { OutputCurrencyPanelProps } from './types'
+
+const OutputCurrencyPanel: React.FC<OutputCurrencyPanelProps> = ({
+  parsedAmountIn,
+  parsedAmountOut,
+  currencyIn,
+  currencyOut,
+  amountOutUsd,
+  onChangeCurrencyOut,
+  customChainId,
+}) => {
+  return (
+    <div>
+      <div>
+        {parsedAmountOut ? parsedAmountOut.toExact() : '0.0'}
+      </div>
+      <button onClick={() => currencyOut && onChangeCurrencyOut(currencyOut)}>
+        {currencyOut?.symbol || 'Select a token'}
+      </button>
+      {amountOutUsd && (
+        <div>
+          ≈ ${amountOutUsd}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default OutputCurrencyPanel
+
+
+// ----- End of File -----
+
+
+// ----- File: PriceImpactNote.tsx -----
+import React from 'react'
+
+interface Props {
+  priceImpact?: string
+  showLimitOrderLink?: boolean
+}
+
+const PriceImpactNote: React.FC<Props> = ({ priceImpact, showLimitOrderLink }) => {
+  if (!priceImpact) return null
+
+  const priceImpactNumber = parseFloat(priceImpact)
+  const isHighImpact = priceImpactNumber > 15
+  const isMediumImpact = priceImpactNumber > 5 && priceImpactNumber <= 15
+
+  return (
+    <div>
+      {isHighImpact && (
+        <div>
+          Price Impact Warning: High impact ({priceImpact}%)
+          {showLimitOrderLink && (
+            <div>
+              Consider using a limit order to get better pricing
+            </div>
+          )}
+        </div>
+      )}
+      {isMediumImpact && (
+        <div>
+          Price Impact Note: Medium impact ({priceImpact}%)
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default PriceImpactNote
+
+
+// ----- End of File -----
+
+
+// ----- File: ReverseTokenSelectionButton.tsx -----
+import React from 'react'
+import styled from 'styled-components'
+
+const Button = styled.button`
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -6px auto;
+  z-index: 2;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  &:active {
+    transform: rotate(180deg);
+  }
+`
+
+interface Props {
+  onClick: () => void
+}
+
+const ReverseTokenSelectionButton: React.FC<Props> = ({ onClick }) => {
+  return (
+    <Button onClick={onClick}>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M12 4L12 20M12 4L8 8M12 4L16 8M12 20L8 16M12 20L16 16"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </Button>
+  )
+}
+
+export default ReverseTokenSelectionButton
+
+
+// ----- End of File -----
+
+
+// ----- File: SlippageSetting.tsx -----
+import { Trans, t } from '@lingui/macro'
+import { ReactNode, useState } from 'react'
+import { Flex, Text } from 'rebass'
+import styled from 'styled-components'
+
+import { ReactComponent as DropdownSVG } from 'assets/svg/down.svg'
+import SlippageControl from 'components/SlippageControl'
+import SlippageWarningNote from 'components/SlippageWarningNote'
+import { MouseoverTooltip, TextDashed } from 'components/Tooltip'
+import useTheme from 'hooks/useTheme'
+import { useDegenModeManager, useSlippageSettingByPage } from 'state/user/hooks'
+import { ExternalLink } from 'theme'
+import { checkWarningSlippage, formatSlippage, getDefaultSlippage } from 'utils/slippage'
+
+const DropdownIcon = styled(DropdownSVG)`
+  transition: transform 300ms;
+  color: ${({ theme }) => theme.subText};
+  &[data-flip='true'] {
+    transform: rotate(180deg);
+  }
+`
+
+type Props = {
+  isStablePairSwap: boolean
+  isCorrelatedPair: boolean
+  rightComponent?: ReactNode
+  tooltip?: ReactNode
+}
+const SlippageSetting = ({ isStablePairSwap, isCorrelatedPair, rightComponent, tooltip }: Props) => {
+  const theme = useTheme()
+  const [expanded, setExpanded] = useState(false)
+  const [isDegenMode] = useDegenModeManager()
+
+  const { rawSlippage, setRawSlippage, isSlippageControlPinned } = useSlippageSettingByPage()
+  const defaultRawSlippage = getDefaultSlippage(isStablePairSwap, isCorrelatedPair)
+
+  const isWarningSlippage = checkWarningSlippage(rawSlippage, isStablePairSwap, isCorrelatedPair)
+  if (!isSlippageControlPinned) {
+    return null
+  }
+
+  return (
+    <Flex
+      sx={{
+        flexDirection: 'column',
+        width: '100%',
+      }}
+    >
+      <Flex
+        sx={{
+          alignItems: 'center',
+          color: theme.subText,
+          gap: '4px',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Flex sx={{ gap: '4px' }} alignItems="center">
+          <TextDashed
+            color={theme.subText}
+            fontSize={12}
+            fontWeight={500}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              lineHeight: '1',
+              height: 'fit-content',
+            }}
+          >
+            <MouseoverTooltip
+              placement="right"
+              text={
+                tooltip || (
+                  <Text>
+                    <Trans>
+                      During your swap if the price changes by more than this %, your transaction will revert. Read more{' '}
+                      <ExternalLink
+                        href={
+                          'https://docs.kyberswap.com/getting-started/foundational-topics/decentralized-finance/slippage'
+                        }
+                      >
+                        here ↗
+                      </ExternalLink>
+                    </Trans>
+                  </Text>
+                )
+              }
+            >
+              <Trans>Max Slippage</Trans>:
+            </MouseoverTooltip>
+          </TextDashed>
+          <Flex
+            sx={{
+              alignItems: 'center',
+              gap: '4px',
+              cursor: 'pointer',
+            }}
+            role="button"
+            onClick={() => setExpanded(e => !e)}
+          >
+            <Text
+              sx={{
+                fontSize: '14px',
+                fontWeight: 500,
+                lineHeight: '1',
+                color: isWarningSlippage ? theme.warning : theme.text,
+                borderBottom: isWarningSlippage ? `1px dashed ${theme.warning}` : 'none',
+              }}
+            >
+              <MouseoverTooltip
+                text={
+                  isWarningSlippage
+                    ? isStablePairSwap
+                      ? t`Your slippage setting might be high compared to typical stable pair trades. Consider adjusting it to reduce the risk of front-running.`
+                      : isCorrelatedPair
+                      ? t`Your slippage setting might be high compared with other similar trades. You might want to adjust it to avoid potential front-running.`
+                      : t`Your slippage setting might be high. You might want to adjust it to avoid potential front-running.`
+                    : ''
+                }
+              >
+                {formatSlippage(rawSlippage)}
+              </MouseoverTooltip>
+            </Text>
+
+            <DropdownIcon data-flip={expanded} />
+          </Flex>
+        </Flex>
+        {rightComponent}
+      </Flex>
+      <Flex
+        sx={{
+          transition: 'all 100ms linear',
+          paddingTop: expanded ? '8px' : '0px',
+          height: expanded ? 'max-content' : '0px',
+          overflow: 'hidden',
+          flexDirection: 'column',
+          gap: '1rem',
+        }}
+      >
+        <SlippageControl
+          rawSlippage={rawSlippage}
+          setRawSlippage={setRawSlippage}
+          isWarning={isWarningSlippage}
+          defaultRawSlippage={defaultRawSlippage}
+        />
+        {isDegenMode && expanded && (
+          <Text fontSize="12px" fontWeight="500" color={theme.subText} padding="4px 6px" marginTop="-12px">
+            Maximum Slippage allow for Degen mode is 50%
+          </Text>
+        )}
+
+        <SlippageWarningNote
+          rawSlippage={rawSlippage}
+          isStablePairSwap={isStablePairSwap}
+          isCorrelatedPair={isCorrelatedPair}
+        />
+      </Flex>
+    </Flex>
+  )
+}
+
+export default SlippageSetting
+
+
+// ----- End of File -----
+
+
+// ----- File: SlippageSettingGroup.tsx -----
+import { ChainId } from '@kyberswap/ks-sdk-core'
+import { Trans } from '@lingui/macro'
+import { rgba } from 'polished'
+import { useCallback, useState } from 'react'
+import { isMobile, isTablet } from 'react-device-detect'
+import { useMedia } from 'react-use'
+import { Flex, Text } from 'rebass'
+import styled from 'styled-components'
+
+import { ReactComponent as DropdownSVG } from 'assets/svg/down.svg'
+import { Shield } from 'components/Icons'
+import InfoHelper from 'components/InfoHelper'
+import SlippageSetting from 'components/SwapForm/SlippageSetting'
+import { MouseoverTooltip, TextDashed } from 'components/Tooltip'
+import { APP_PATHS } from 'constants/index'
+import { useActiveWeb3React, useWeb3React } from 'hooks'
+import useMixpanel, { MIXPANEL_TYPE } from 'hooks/useMixpanel'
+import useTheme from 'hooks/useTheme'
+import { usePaymentToken, useSlippageSettingByPage } from 'state/user/hooks'
+import { MEDIA_WIDTHS } from 'theme'
+
+import AddMEVProtectionModal from './AddMEVProtectionModal'
+
+export const PriceAlertButton = styled.div`
+  background: ${({ theme }) => rgba(theme.subText, 0.2)};
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+`
+
+export default function SlippageSettingGroup({
+  isStablePairSwap,
+  isCorrelatedPair,
+  isWrapOrUnwrap,
+  onOpenGasToken,
+}: {
+  isStablePairSwap: boolean
+  isCorrelatedPair: boolean
+  isWrapOrUnwrap: boolean
+  onOpenGasToken?: () => void
+}) {
+  const upToXXSmall = useMedia(`(max-width: ${MEDIA_WIDTHS.upToXXSmall}px)`)
+  const theme = useTheme()
+  const { chainId } = useActiveWeb3React()
+  const { active } = useWeb3React()
+  const [showMevModal, setShowMevModal] = useState(false)
+  const { mixpanelHandler } = useMixpanel()
+
+  const addMevProtectionHandler = useCallback(() => {
+    setShowMevModal(true)
+    mixpanelHandler(MIXPANEL_TYPE.MEV_CLICK_ADD_MEV)
+  }, [mixpanelHandler])
+
+  const onClose = useCallback(() => {
+    setShowMevModal(false)
+  }, [])
+
+  const [paymentToken] = usePaymentToken()
+  const { isSlippageControlPinned } = useSlippageSettingByPage()
+  const isPartnerSwap = window.location.pathname.startsWith(APP_PATHS.PARTNER_SWAP)
+  let rightButton =
+    chainId === ChainId.MAINNET && active && !isPartnerSwap && !isMobile && !isTablet ? (
+      <PriceAlertButton onClick={addMevProtectionHandler}>
+        <Shield size={14} color={theme.subText} />
+        <Text color={theme.subText} style={{ whiteSpace: 'nowrap' }}>
+          {upToXXSmall ? <Trans>MEV Protection</Trans> : <Trans>Add MEV Protection</Trans>}
+          <InfoHelper size={14} text="Add MEV Protection to safeguard you from front-running attacks." />
+        </Text>
+      </PriceAlertButton>
+    ) : null
+
+  if (chainId === ChainId.ZKSYNC && !isPartnerSwap) {
+    rightButton = (
+      <Flex alignItems="center" width="fit-content" role="button" sx={{ cursor: 'pointer' }} onClick={onOpenGasToken}>
+        <svg focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="EvStationRoundedIcon" width="16px">
+          <path
+            d="m19.77 7.23.01-.01-3.19-3.19c-.29-.29-.77-.29-1.06 0-.29.29-.29.77 0 1.06l1.58 1.58c-1.05.4-1.76 1.47-1.58 2.71.16 1.1 1.1 1.99 2.2 2.11.47.05.88-.03 1.27-.2v7.21c0 .55-.45 1-1 1s-1-.45-1-1V14c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v15c0 .55.45 1 1 1h8c.55 0 1-.45 1-1v-6.5h1.5v4.86c0 1.31.94 2.5 2.24 2.63 1.5.15 2.76-1.02 2.76-2.49V9c0-.69-.28-1.32-.73-1.77zM18 10c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zM8 16.12V13.5H6.83c-.38 0-.62-.4-.44-.74l2.67-5c.24-.45.94-.28.94.24v3h1.14c.38 0 .62.41.43.75l-2.64 4.62c-.25.44-.93.26-.93-.25z"
+            fill="#A8ABFF"
+          />
+        </svg>
+
+        <MouseoverTooltip text="Pay network fees in the token of your choice." placement="top">
+          <TextDashed marginLeft="6px" lineHeight="16px" fontWeight="500" marginTop="2px">
+            <Trans>Gas Token</Trans>
+          </TextDashed>
+        </MouseoverTooltip>
+        <Text fontWeight="500" marginLeft="6px" color={theme.text}>
+          {paymentToken ? paymentToken.symbol : 'ETH'}
+        </Text>
+        <DropdownSVG />
+      </Flex>
+    )
+  }
+
+  return (
+    <Flex alignItems="flex-start" fontSize={12} color={theme.subText} justifyContent="space-between">
+      {isWrapOrUnwrap || !isSlippageControlPinned ? (
+        <>
+          <div />
+          {rightButton}
+        </>
+      ) : (
+        <SlippageSetting
+          isStablePairSwap={isStablePairSwap}
+          rightComponent={rightButton}
+          isCorrelatedPair={isCorrelatedPair}
+        />
+      )}
+      <AddMEVProtectionModal isOpen={showMevModal} onClose={onClose} />
+    </Flex>
+  )
+}
+
+
+// ----- End of File -----
+
+
+// ----- File: SwapFormContext.tsx -----
+import { createContext, useContext, ReactNode } from 'react'
+import { DetailedRouteSummary } from 'types/route'
+import { CurrencyAmount, Currency } from 'types/currency'
+
+type SwapFormContextProps = {
+  slippage: number
+  routeSummary: DetailedRouteSummary | undefined
+  typedValue: string
+  recipient: string | null
+  isStablePairSwap: boolean
+  isCorrelatedPair: boolean
+  isAdvancedMode: boolean
+}
+
+type SwapFormContextProviderProps = SwapFormContextProps & {
+  children: ReactNode
+}
+
+const SwapFormContext = createContext<SwapFormContextProps | undefined>(undefined)
+
+const SwapFormContextProvider = ({ children, ...props }: SwapFormContextProviderProps) => {
+  const contextValue: SwapFormContextProps = props
+  return <SwapFormContext.Provider value={contextValue}>{children}</SwapFormContext.Provider>
+}
+
+const useSwapFormContext = (): SwapFormContextProps => {
+  const context = useContext(SwapFormContext)
+  if (!context) {
+    throw new Error('hook is used outside of SwapFormContext')
+  }
+
+  return context
+}
+
+export type { SwapFormContextProps }
+export { SwapFormContextProvider, useSwapFormContext }
+
+
+// ----- End of File -----
+
+
+// ----- File: SwapFormWrapper.tsx -----
+import React from 'react'
+import { DetailedRouteSummary } from 'types/route'
+import { SwapFormContextProvider } from './SwapFormContext'
+
+type SwapFormWrapperProps = {
+  slippage: number
+  routeSummary: DetailedRouteSummary | undefined
+  typedValue: string
+  recipient: string | undefined | null
+  isStablePairSwap: boolean
+  isCorrelatedPair: boolean
+  isAdvancedMode: boolean
+  children: React.ReactNode
+}
+
+export const SwapFormWrapper: React.FC<SwapFormWrapperProps> = ({
+  slippage,
+  routeSummary,
+  typedValue,
+  recipient,
+  isStablePairSwap,
+  isCorrelatedPair,
+  isAdvancedMode,
+  children,
+}) => {
+  // Convert undefined to null for SwapFormContextProvider
+  const recipientValue = recipient === undefined ? null : recipient
+
+  return (
+    <SwapFormContextProvider
+      slippage={slippage}
+      routeSummary={routeSummary}
+      typedValue={typedValue}
+      recipient={recipientValue}
+      isStablePairSwap={isStablePairSwap}
+      isCorrelatedPair={isCorrelatedPair}
+      isAdvancedMode={isAdvancedMode}
+    >
+      {children}
+    </SwapFormContextProvider>
+  )
+}
+
+
+// ----- End of File -----
+
+
+// ----- File: TradeSummary.tsx -----
+import React from 'react'
+import { DetailedRouteSummary } from '../../types/route'
+
+interface Props {
+  routeSummary: DetailedRouteSummary | undefined
+  slippage: number
+  disableRefresh: boolean
+  refreshCallback: () => void
+}
+
+const TradeSummary: React.FC<Props> = ({
+  routeSummary,
+  slippage,
+  disableRefresh,
+  refreshCallback,
+}) => {
+  if (!routeSummary) return null
+
+  return (
+    <div>
+      <div>
+        <span>Rate</span>
+        <span>{routeSummary.executionPrice}</span>
+      </div>
+      <div>
+        <span>Price Impact</span>
+        <span>{routeSummary.priceImpact}%</span>
+      </div>
+      <div>
+        <span>Minimum Received</span>
+        <span>
+          {routeSummary.parsedAmountOut.toExact()} {routeSummary.parsedAmountOut.currency.symbol}
+        </span>
+      </div>
+      <div>
+        <span>Network Fee</span>
+        <span>{routeSummary.gasUsd}</span>
+      </div>
+      {!disableRefresh && (
+        <button onClick={refreshCallback}>
+          Refresh Rate
+        </button>
+      )}
+    </div>
+  )
+}
+
+export default TradeSummary
+
+
+// ----- End of File -----
+
+
+// ----- File: types.ts -----
+import { Currency, CurrencyAmount } from '../../types/currency'
+import { DetailedRouteSummary } from '../../types/route'
+import { WrapType } from '../../state/swap/types'
+
+export interface SwapFormProps {
+  hidden?: boolean
+  currencyIn?: Currency
+  currencyOut?: Currency
+  balanceIn?: CurrencyAmount<Currency>
+  balanceOut?: CurrencyAmount<Currency>
+  onChangeCurrencyIn: (currency: Currency) => void
+  onChangeCurrencyOut: (currency: Currency) => void
+  customChainId?: number
+  omniView?: boolean
+  onOpenGasToken?: () => void
+}
+
+export interface InputCurrencyPanelProps {
+  typedValue: string
+  setTypedValue: (value: string) => void
+  currencyIn: Currency | undefined
+  currencyOut: Currency | undefined
+  balanceIn: CurrencyAmount<Currency> | undefined
+  onChangeCurrencyIn: (currency: Currency) => void
+  customChainId?: number
+}
+
+export interface OutputCurrencyPanelProps {
+  parsedAmountIn: CurrencyAmount<Currency> | undefined
+  parsedAmountOut: CurrencyAmount<Currency> | undefined
+  currencyIn: Currency | undefined
+  currencyOut: Currency | undefined
+  amountOutUsd: string | undefined
+  onChangeCurrencyOut: (currency: Currency) => void
+  customChainId?: number
+}
+
+export interface SwapActionButtonProps {
+  isGettingRoute: boolean
+  parsedAmountFromTypedValue: CurrencyAmount<Currency> | undefined
+  balanceIn: CurrencyAmount<Currency> | undefined
+  balanceOut: CurrencyAmount<Currency> | undefined
+  typedValue: string
+  currencyIn: Currency | undefined
+  currencyOut: Currency | undefined
+  routeSummary: DetailedRouteSummary | undefined
+  isProcessingSwap: boolean
+  setProcessingSwap: (processing: boolean) => void
+  buildRoute: () => Promise<{ error: string }>
+  swapInputError: string | undefined
+  customChainId?: number
+  isDegenMode: boolean
+  wrapInputError: string | undefined
+  wrapType: WrapType
+  onWrap: (() => Promise<void>) | undefined
+}
+
+export interface TradeSummaryProps {
+  routeSummary: DetailedRouteSummary | undefined
+  slippage: number
+  disableRefresh: boolean
+  refreshCallback: () => void
+}
+
+export interface SlippageSettingGroupProps {
+  isWrapOrUnwrap: boolean
+  isStablePairSwap: boolean
+  isCorrelatedPair: boolean
+  onOpenGasToken?: () => void
+}
+
+export interface SwapFormContextProps {
+  slippage: number
+  routeSummary: DetailedRouteSummary | undefined
+  typedValue: string
+  recipient: string | null
+  isStablePairSwap: boolean
+  isCorrelatedPair: boolean
+  isAdvancedMode: boolean
+}
+
+export interface DetailedRouteSummaryExtended extends DetailedRouteSummary {
+  parsedAmountOut: CurrencyAmount<Currency>
+  amountOutUsd?: string
+}
+
+
+// ----- End of File -----
+
+
+// ----- File: useBuildRoute.tsx -----
+import { useCallback } from 'react'
+import { Currency, CurrencyAmount } from '../../../types/currency'
+import { useOpenOceanSwapForm } from '../../../hooks/useOpenOceanSwapForm'
+import { adaptAnyCurrency, ensureCurrencyAmount } from '../../../utils/currency'
+
+interface Args {
+  currencyIn: Currency | undefined
+  currencyOut: Currency | undefined
+  typedValue: string
+  recipient: string | null
+  slippage: number
+}
+
+export default function useBuildRoute({
+  currencyIn,
+  currencyOut,
+  typedValue,
+  recipient,
+  slippage,
+}: Args) {
+  const adaptedCurrencyIn = adaptAnyCurrency(currencyIn)
+  const adaptedCurrencyOut = adaptAnyCurrency(currencyOut)
+
+  const parsedAmount = typedValue && adaptedCurrencyIn 
+    ? CurrencyAmount.fromRaw(adaptedCurrencyIn, typedValue)
+    : undefined
+
+  const {
+    isLoading,
+    routeSummary,
+    buildRoute,
+    error,
+  } = useOpenOceanSwapForm(adaptedCurrencyIn, adaptedCurrencyOut, parsedAmount, slippage)
+
+  const onBuildRoute = useCallback(async () => {
+    try {
+      const result = await buildRoute()
+      return result
+    } catch (error) {
+      console.error('Build route error:', error)
+      return { error: error.message || 'Failed to build route' }
+    }
+  }, [buildRoute])
+
+  return {
+    isLoading,
+    routeSummary,
+    buildRoute: onBuildRoute,
+    error,
+  }
+}
+
+
+// ----- End of File -----
+
+
+// ----- File: useCheckStablePairSwap.ts -----
+import { Currency } from '@kyberswap/ks-sdk-core'
+
+import { useStableCoins } from 'hooks/Tokens'
+
+const useCheckStablePairSwap = (currencyIn: Currency | undefined, currencyOut: Currency | undefined) => {
+  const { isStableCoin } = useStableCoins(currencyIn?.chainId)
+  const isStablePairSwap = isStableCoin(currencyIn?.wrapped?.address) && isStableCoin(currencyOut?.wrapped?.address)
+  return isStablePairSwap
+}
+
+export default useCheckStablePairSwap
+
+
+// ----- End of File -----
+
+
+// ----- File: useGetFeeConfig.tsx -----
+import { ChainId } from '@kyberswap/ks-sdk-core'
+import { useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
+
+import { MAX_FEE_IN_BIPS } from 'constants/index'
+import { SUPPORTED_NETWORKS } from 'constants/networks'
+import { NativeCurrencies } from 'constants/tokens'
+import { ChargeFeeBy } from 'types/route'
+import { isAddressString } from 'utils'
+import { convertStringToBoolean } from 'utils/string'
+
+const useGetFeeConfig = () => {
+  const [searchParams] = useSearchParams()
+
+  let feeAmount = searchParams.get('feeAmount') || ''
+  if (feeAmount && +feeAmount > MAX_FEE_IN_BIPS) {
+    feeAmount = MAX_FEE_IN_BIPS.toString()
+  }
+
+  const clientId = searchParams.get('clientId') || ''
+  const chargeFeeByFromParam = (searchParams.get('chargeFeeBy') as ChargeFeeBy) || ChargeFeeBy.NONE
+  const preferredFeeTokensParam = searchParams.get('preferredFeeTokens') || ''
+  const preferredFeeTokens = preferredFeeTokensParam
+    .split(',')
+    .filter(item => isAddressString(item))
+    .map(item => item.toLowerCase())
+
+  const chainIdFromParam = searchParams.get('chainId')
+  const expectedChainId =
+    chainIdFromParam && SUPPORTED_NETWORKS.includes(+chainIdFromParam) ? +chainIdFromParam : ChainId.MAINNET
+  const native = NativeCurrencies[expectedChainId as ChainId]
+
+  const inputCurrency =
+    searchParams.get('inputCurrency')?.toLowerCase() === native.symbol?.toLowerCase()
+      ? native.wrapped.address.toLowerCase()
+      : searchParams.get('inputCurrency')?.toLowerCase()
+
+  const outputCurrency =
+    searchParams.get('outputCurrency')?.toLowerCase() === native.symbol?.toLowerCase()
+      ? native.wrapped.address.toLowerCase()
+      : searchParams.get('outputCurrency')?.toLowerCase()
+
+  let chargeFeeBy = ChargeFeeBy.NONE
+
+  if (preferredFeeTokens?.includes(inputCurrency)) {
+    chargeFeeBy = ChargeFeeBy.CURRENCY_IN
+  } else if (preferredFeeTokens?.includes(outputCurrency)) {
+    chargeFeeBy = ChargeFeeBy.CURRENCY_OUT
+  } else {
+    chargeFeeBy = chargeFeeByFromParam
+  }
+
+  const enableTip = convertStringToBoolean(searchParams.get('enableTip') || '')
+  const isInBps = searchParams.get('isInBps') || ''
+  const feeReceiver = searchParams.get('feeReceiver') || ''
+
+  const feeConfigFromUrl = useMemo(() => {
+    if (feeAmount && chargeFeeBy && (enableTip || isInBps) && feeReceiver)
+      return {
+        feeAmount,
+        chargeFeeBy,
+        enableTip,
+        isInBps: enableTip ? '1' : isInBps,
+        feeReceiver,
+        clientId,
+      }
+    return null
+  }, [feeAmount, chargeFeeBy, enableTip, isInBps, feeReceiver, clientId])
+
+  return feeConfigFromUrl
+}
+
+export default useGetFeeConfig
+
+
+// ----- End of File -----
+
+
+// ----- File: useGetInputError.tsx -----
+import { useMemo } from 'react'
+import { Currency, CurrencyAmount } from '../../../types/currency'
+
+interface Args {
+  currencyIn: Currency | undefined
+  currencyOut: Currency | undefined
+  typedValue: string
+  recipient: string | null
+  balanceIn: CurrencyAmount<Currency> | undefined
+  parsedAmountFromTypedValue: CurrencyAmount<Currency> | undefined
+}
+
+export default function useGetInputError({
+  currencyIn,
+  currencyOut,
+  typedValue,
+  recipient,
+  balanceIn,
+  parsedAmountFromTypedValue,
+}: Args): string | undefined {
+  return useMemo(() => {
+    if (!currencyIn || !currencyOut) {
+      return 'Select a token'
+    }
+
+    if (!typedValue) {
+      return 'Enter an amount'
+    }
+
+    if (!parsedAmountFromTypedValue) {
+      return 'Invalid amount'
+    }
+
+    if (balanceIn && parsedAmountFromTypedValue.greaterThan(balanceIn)) {
+      return `Insufficient ${currencyIn.symbol} balance`
+    }
+
+    if (recipient !== null) {
+      if (!recipient || recipient.length === 0) {
+        return 'Enter a recipient'
+      }
+      const address = recipient.toLowerCase()
+      if (address.length !== 42 || !address.startsWith('0x')) {
+        return 'Enter a valid recipient'
+      }
+    }
+
+    return undefined
+  }, [currencyIn, currencyOut, typedValue, recipient, balanceIn, parsedAmountFromTypedValue])
+}
+
+
+// ----- End of File -----
+
+
+// ----- File: useGetRoute.ts -----
+import { ChainId, Currency, CurrencyAmount } from '@kyberswap/ks-sdk-core'
+import debounce from 'lodash/debounce'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
+import routeApi from 'services/route'
+import { GetRouteParams } from 'services/route/types/getRoute'
+
+import useGetFeeConfig from 'components/SwapForm/hooks/useGetFeeConfig'
+import useGetSwapFeeConfig, { SwapFeeConfig } from 'components/SwapForm/hooks/useGetSwapFeeConfig'
+import useSelectedDexes from 'components/SwapForm/hooks/useSelectedDexes'
+import { AGGREGATOR_API } from 'constants/env'
+import { AGGREGATOR_API_PATHS, ETHER_ADDRESS, INPUT_DEBOUNCE_TIME, SWAP_FEE_RECEIVER_ADDRESS } from 'constants/index'
+import { NETWORKS_INFO } from 'constants/networks'
+import { useActiveWeb3React } from 'hooks'
+import { useKyberswapGlobalConfig } from 'hooks/useKyberSwapConfig'
+import { useSessionInfo } from 'state/authen/hooks'
+import { useAppDispatch } from 'state/hooks'
+import { ChargeFeeBy } from 'types/route'
+
+export type ArgsGetRoute = {
+  parsedAmount: CurrencyAmount<Currency> | undefined
+  currencyIn: Currency | undefined
+  currencyOut: Currency | undefined
+
+  customChain?: ChainId
+  isProcessingSwap?: boolean
+  clientId?: string
+}
+
+export const getRouteTokenAddressParam = (currency: Currency) =>
+  currency.isNative ? ETHER_ADDRESS : currency.wrapped.address
+
+const getFeeConfigParams = (
+  swapFeeConfig: SwapFeeConfig | undefined,
+  tokenIn: string,
+  tokenOut: string,
+): Pick<GetRouteParams, 'feeAmount' | 'feeReceiver' | 'isInBps' | 'chargeFeeBy'> => {
+  if (!swapFeeConfig) {
+    return {
+      feeAmount: '',
+      chargeFeeBy: ChargeFeeBy.NONE,
+      isInBps: '',
+      feeReceiver: '',
+    }
+  }
+
+  const chargeFeeBy =
+    swapFeeConfig.token === tokenIn
+      ? ChargeFeeBy.CURRENCY_IN
+      : swapFeeConfig.token === tokenOut
+      ? ChargeFeeBy.CURRENCY_OUT
+      : ChargeFeeBy.NONE
+
+  if (!chargeFeeBy || !swapFeeConfig.feeBips) {
+    return {
+      feeAmount: '',
+      chargeFeeBy: ChargeFeeBy.NONE,
+      isInBps: '',
+      feeReceiver: '',
+    }
+  }
+
+  return {
+    feeAmount: String(swapFeeConfig.feeBips),
+    chargeFeeBy,
+    isInBps: '1',
+    feeReceiver: SWAP_FEE_RECEIVER_ADDRESS,
+  }
+}
+
+// default use aggregator, utils the first time sign-in successfully (guest/sign in eth) => use meta
+export const useRouteApiDomain = () => {
+  const { aggregatorDomain } = useKyberswapGlobalConfig()
+  const { authenticationSuccess } = useSessionInfo()
+  return authenticationSuccess ? aggregatorDomain : AGGREGATOR_API
+}
+
+const useGetRoute = (args: ArgsGetRoute) => {
+  const { isEnableAuthenAggregator } = useKyberswapGlobalConfig()
+  const { parsedAmount, currencyIn, currencyOut, customChain, isProcessingSwap, clientId } = args
+  const { chainId: currentChain } = useActiveWeb3React()
+  const chainId = customChain || currentChain
+
+  const feeConfigFromUrl = useGetFeeConfig()
+
+  const [trigger, _result] = routeApi.useLazyGetRouteQuery()
+  const aggregatorDomain = useRouteApiDomain()
+
+  const getSwapFeeConfig = useGetSwapFeeConfig()
+
+  const dexes = useSelectedDexes()
+
+  // If user has just dismissed swap modal, we want to set current route summary = undefined by setting this flag = true.
+  // After receive new route summary, we reset this flag to false.s
+  const dismissSwapModalFlag = useRef(false)
+  const result: typeof _result = useMemo(() => {
+    if (dismissSwapModalFlag.current) {
+      return {
+        ..._result,
+        data: undefined,
+      } as typeof _result
+    }
+    return _result
+  }, [_result])
+
+  const dispatch = useAppDispatch()
+  useEffect(() => {
+    if (!parsedAmount) {
+      dispatch(routeApi.util.resetApiState())
+    }
+  }, [dispatch, parsedAmount])
+
+  useEffect(() => {
+    if (!isProcessingSwap) {
+      dismissSwapModalFlag.current = true
+    }
+  }, [isProcessingSwap])
+
+  const triggerDebounced = useMemo(
+    () =>
+      debounce(
+        async (args: { url: string; params: GetRouteParams; authentication: boolean }) => {
+          await trigger({ ...args, clientId })
+          dismissSwapModalFlag.current = false
+        },
+        INPUT_DEBOUNCE_TIME,
+        {
+          leading: true,
+        },
+      ),
+    [trigger, clientId],
+  )
+
+  const fetcher = useCallback(async () => {
+    const amountIn = parsedAmount?.quotient?.toString() || ''
+
+    if (!currencyIn || !currencyOut || !amountIn || !parsedAmount?.currency?.equals(currencyIn)) {
+      return undefined
+    }
+
+    const tokenInAddress = getRouteTokenAddressParam(currencyIn)
+    const tokenOutAddress = getRouteTokenAddressParam(currencyOut)
+
+    const swapFeeConfig = await getSwapFeeConfig(chainId, tokenInAddress, tokenOutAddress)
+    const feeConfigParams = feeConfigFromUrl || getFeeConfigParams(swapFeeConfig, tokenInAddress, tokenOutAddress)
+
+    const params: GetRouteParams = {
+      tokenIn: tokenInAddress,
+      tokenOut: tokenOutAddress,
+      tokenInDecimals: currencyIn.decimals,
+      tokenOutDecimals: currencyOut.decimals,
+      amountIn,
+      includedSources: dexes,
+      gasInclude: 'true', // default
+      gasPrice: '', // default
+      chainId,
+      ...feeConfigParams,
+    }
+
+    ;(Object.keys(params) as (keyof typeof params)[]).forEach(key => {
+      if (!params[key]) {
+        delete params[key]
+      }
+    })
+    const url = `${aggregatorDomain}/${NETWORKS_INFO[chainId].aggregatorRoute}${AGGREGATOR_API_PATHS.GET_ROUTE}`
+
+    triggerDebounced({
+      url,
+      params,
+      authentication: isEnableAuthenAggregator,
+    })
+
+    return undefined
+  }, [
+    aggregatorDomain,
+    chainId,
+    currencyIn,
+    currencyOut,
+    dexes,
+    getSwapFeeConfig,
+    isEnableAuthenAggregator,
+    parsedAmount?.currency,
+    parsedAmount?.quotient,
+    triggerDebounced,
+    feeConfigFromUrl,
+  ])
+
+  return { fetcher, result }
+}
+
+export default useGetRoute
+
+
+// ----- End of File -----
+
+
+// ----- File: useGetSwapFeeConfig.ts -----
+import { ChainId, WETH } from '@kyberswap/ks-sdk-core'
+import { useCallback } from 'react'
+import tokenApi from 'services/token'
+
+import { CHAINS_SUPPORT_FEE_CONFIGS, ETHER_ADDRESS, TOKEN_SCORE_TTL } from 'constants/index'
+import {
+  DEFAULT_SWAP_FEE_NOT_STABLE_PAIRS,
+  DEFAULT_SWAP_FEE_STABLE_PAIRS,
+  STABLE_COIN_ADDRESSES_TO_TAKE_FEE,
+  TOKENS_WITH_FEE_TIER_1,
+} from 'constants/tokens'
+import { useKyberswapGlobalConfig } from 'hooks/useKyberSwapConfig'
+import { timeoutReject } from 'utils/retry'
+import { getTokenScore as getTokenScoreFromLocal, saveTokenScore } from 'utils/tokenScore'
+
+export type SwapFeeConfig = {
+  token: string
+  feeBips: number
+}
+
+const checkBothTokensAreStable = (chainId: ChainId, tokenIn: string, tokenOut: string) => {
+  return (
+    STABLE_COIN_ADDRESSES_TO_TAKE_FEE[chainId].includes(tokenIn) &&
+    STABLE_COIN_ADDRESSES_TO_TAKE_FEE[chainId].includes(tokenOut)
+  )
+}
+
+const getFeeConfigIfTokensDifferentTier = (
+  chainId: ChainId,
+  tokenIn: string,
+  tokenOut: string,
+): SwapFeeConfig | undefined => {
+  const isTokenInTier1 = TOKENS_WITH_FEE_TIER_1[chainId].includes(tokenIn)
+  const isTokenOutTier1 = TOKENS_WITH_FEE_TIER_1[chainId].includes(tokenOut)
+
+  if (isTokenInTier1 === isTokenOutTier1) {
+    return undefined
+  }
+
+  // either isTokenInTier1 or isTokenOutTier1 is true
+  const tokenToTakeFee = isTokenInTier1 ? tokenIn : tokenOut
+
+  return {
+    token: tokenToTakeFee,
+    feeBips: DEFAULT_SWAP_FEE_NOT_STABLE_PAIRS,
+  }
+}
+
+const useGetSwapFeeConfig = () => {
+  const { isEnableAuthenAggregator } = useKyberswapGlobalConfig()
+
+  const [triggerGetTokenScoreQuery] = tokenApi.useLazyGetTokenScoreQuery()
+
+  const getSingleTokenScore = useCallback(
+    async (chainId: ChainId, tokenAddress: string): Promise<string | undefined> => {
+      const now = Math.floor(Date.now() / 1000)
+
+      const { score, savedAt } = getTokenScoreFromLocal(chainId, tokenAddress) || {}
+      if (score && savedAt && now - savedAt < TOKEN_SCORE_TTL) {
+        return score
+      }
+
+      if (tokenAddress === ETHER_ADDRESS || tokenAddress === WETH[chainId].address) {
+        return undefined
+      }
+
+      const { data, isError } = await triggerGetTokenScoreQuery({
+        params: {
+          chainId,
+          tokenAddress,
+        },
+        authentication: isEnableAuthenAggregator,
+      })
+
+      if (isError || !data?.data?.score) {
+        return undefined
+      }
+
+      saveTokenScore(chainId, tokenAddress, data.data.score)
+
+      return data.data.score
+    },
+    [isEnableAuthenAggregator, triggerGetTokenScoreQuery],
+  )
+
+  const getSingleTokenScoreWithTimeout = useCallback(
+    async (chainId: ChainId, tokenAddress: string): Promise<string | undefined> => {
+      try {
+        const result = await Promise.race([getSingleTokenScore(chainId, tokenAddress), timeoutReject(1_000)])
+        if (result) {
+          return result
+        }
+
+        return undefined
+      } catch (e) {
+        console.error(e)
+        return undefined
+      }
+    },
+    [getSingleTokenScore],
+  )
+
+  const getTokenScores = useCallback(
+    (chainId: ChainId, tokenIn: string, tokenOut: string) => {
+      return Promise.all([
+        getSingleTokenScoreWithTimeout(chainId, tokenIn),
+        getSingleTokenScoreWithTimeout(chainId, tokenOut),
+      ])
+    },
+    [getSingleTokenScoreWithTimeout],
+  )
+
+  const getSwapFeeConfig = useCallback(
+    async (chainId: ChainId, tokenIn: string, tokenOut: string): Promise<SwapFeeConfig | undefined> => {
+      if (!CHAINS_SUPPORT_FEE_CONFIGS.includes(chainId)) {
+        return undefined
+      }
+
+      const feeConfig = getFeeConfigIfTokensDifferentTier(chainId, tokenIn, tokenOut)
+      if (feeConfig) {
+        return feeConfig
+      }
+
+      // This means they're in the same tier
+      const isTokensBothStable = checkBothTokensAreStable(chainId, tokenIn, tokenOut)
+      const feeBips = isTokensBothStable ? DEFAULT_SWAP_FEE_STABLE_PAIRS : DEFAULT_SWAP_FEE_NOT_STABLE_PAIRS
+
+      const [tokenInScore, tokenOutScore] = await getTokenScores(chainId, tokenIn, tokenOut)
+
+      if (!tokenInScore && !tokenOutScore) {
+        return {
+          token: tokenIn,
+          feeBips,
+        }
+      } else if (!tokenInScore || !tokenOutScore) {
+        if (tokenInScore) {
+          return {
+            token: tokenIn,
+            feeBips,
+          }
+        }
+
+        return {
+          token: tokenOut,
+          feeBips,
+        }
+      }
+
+      return {
+        token: tokenInScore > tokenOutScore ? tokenIn : tokenOut,
+        feeBips,
+      }
+    },
+    [getTokenScores],
+  )
+
+  return getSwapFeeConfig
+}
+
+export default useGetSwapFeeConfig
+
+
+// ----- End of File -----
+
+
+// ----- File: useParsedAmount.ts -----
+import { Currency } from '@kyberswap/ks-sdk-core'
+import { useMemo } from 'react'
+
+import { tryParseAmount } from 'state/swap/hooks'
+
+const useParsedAmount = (currency: Currency | undefined, typedValue: string) => {
+  const parsedAmount = useMemo(() => {
+    return tryParseAmount(typedValue, currency)
+  }, [typedValue, currency])
+
+  return parsedAmount
+}
+
+export default useParsedAmount
+
+
+// ----- End of File -----
+
+
+// ----- File: useSelectedDexes.ts -----
+import { useAllDexes, useExcludeDexes } from 'state/customizeDexes/hooks'
+
+const useSelectedDexes = () => {
+  const allDexes = useAllDexes()
+  const [excludeDexes] = useExcludeDexes()
+
+  const selectedDexes = allDexes?.filter(item => !excludeDexes.includes(item.id)).map(item => item.id)
+
+  const dexes =
+    selectedDexes?.length === allDexes?.length
+      ? ''
+      : selectedDexes?.join(',').replace('kyberswapv1', 'kyberswap,kyberswap-static') || ''
+
+  return dexes
+}
+
+export default useSelectedDexes
+
+
+// ----- End of File -----
+
+
+// ----- File: index.tsx -----
+import React, { useEffect, useRef } from 'react'
+import styled from 'styled-components'
+
+import { ENABLE_CLICK_TO_REFRESH_GET_ROUTE, TIME_TO_REFRESH_SWAP_RATE } from 'constants/index'
+
+import LoadingIcon from './LoadingIcon'
+
+const IconButton = styled.button`
+  position: relative;
+  width: 16px;
+  height: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  background-color: transparent;
+  margin: 0;
+  padding: 0;
+  border-radius: 999px;
+  cursor: default;
+  outline: none;
+
+  :hover {
+    cursor: default;
+    outline: none;
+  }
+`
+type Props = {
+  shouldDisable: boolean
+  callback: () => void
+  size?: number
+  skipFirst?: boolean
+}
+const RefreshButton: React.FC<Props> = ({ shouldDisable, callback, size, skipFirst }) => {
+  const svgRef = useRef<SVGSVGElement>(null)
+
+  useEffect(() => {
+    let interval: any
+    const element = svgRef?.current
+    if (!element) {
+      return
+    }
+
+    if (shouldDisable) {
+      // reset svg animate duration to 0 and PAUSE animations
+      element.setCurrentTime(0)
+      element.pauseAnimations()
+    } else {
+      // reset svg animate duration to 0 and UNPAUSE animations
+
+      element.setCurrentTime(0)
+      element.unpauseAnimations()
+      if (!skipFirst) callback()
+      interval = setInterval(() => {
+        callback()
+      }, TIME_TO_REFRESH_SWAP_RATE * 1000)
+    }
+
+    return () => {
+      clearInterval(interval)
+    }
+  }, [callback, shouldDisable, skipFirst])
+
+  return (
+    <IconButton
+      onClick={() => {
+        if (!ENABLE_CLICK_TO_REFRESH_GET_ROUTE) {
+          return
+        }
+        callback()
+      }}
+    >
+      <LoadingIcon
+        size={size}
+        ref={svgRef}
+        clickable={ENABLE_CLICK_TO_REFRESH_GET_ROUTE}
+        durationInSeconds={TIME_TO_REFRESH_SWAP_RATE}
+      />
+    </IconButton>
+  )
+}
+
+export default RefreshButton
+
+
+// ----- End of File -----
+
+
+// ----- File: LoadingIcon.tsx -----
+import React from 'react'
+
+import useTheme from 'hooks/useTheme'
+
+type Props = {
+  clickable: boolean
+  durationInSeconds: number
+  size?: number
+}
+
+const LoadingIcon = React.forwardRef<SVGSVGElement, Props>((props, ref) => {
+  const { size = 20 } = props
+  const theme = useTheme()
+  return (
+    <svg
+      ref={ref}
+      id="arrow_loading"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="2 2 20 20"
+      className="arrow-loading"
+      width={size}
+      height={size}
+      color={theme.text}
+    >
+      <path
+        stroke="none"
+        fill={theme.disableText}
+        d="M16.2751 7.78995C13.932 5.44681 10.133 5.44681 7.78986 7.78995C7.02853 8.55128 6.51457 9.4663 6.24798 10.4351C6.24473 10.4499 6.24114 10.4646 6.23719 10.4793C6.17635 10.7064 6.12938 10.9339 6.09577 11.161C5.83159 12.9457 6.39255 14.7026 7.52624 15.9944C7.61054 16.0901 7.69842 16.1838 7.78986 16.2752C8.08307 16.5685 8.39909 16.825 8.7322 17.0448C9.25533 17.3892 9.84172 17.6568 10.4798 17.8278C10.7386 17.8971 10.9979 17.9484 11.2565 17.9825C12.9537 18.2061 14.6187 17.6866 15.8747 16.6415C16.0123 16.5265 16.1459 16.4044 16.2751 16.2752C16.2848 16.2655 16.2947 16.2561 16.3047 16.2469C17.0123 15.531 17.5491 14.627 17.8283 13.5851C17.9712 13.0517 18.5196 12.7351 19.053 12.878C19.5865 13.021 19.9031 13.5693 19.7602 14.1028C19.3141 15.7676 18.3745 17.1684 17.1409 18.1899C16.1883 18.9822 15.0949 19.5189 13.9515 19.8002C11.8607 20.3147 9.6028 19.9749 7.7328 18.7809C7.06855 18.3579 6.47841 17.8432 5.97519 17.2589C5.12341 16.2738 4.55173 15.1302 4.26015 13.9324C4.01698 12.9416 3.96104 11.8931 4.12168 10.8379C4.36697 9.20484 5.1183 7.63309 6.37564 6.37574C9.49984 3.25154 14.5652 3.25154 17.6894 6.37574L18.2332 6.91959L18.2337 5.49951C18.2338 5.05769 18.5921 4.69964 19.034 4.69979C19.4758 4.69995 19.8338 5.05825 19.8337 5.50007L19.8325 9.03277L19.8322 9.8325L19.0325 9.83249L18.9401 9.83249C18.8146 9.85665 18.6854 9.85665 18.5599 9.83248L15.5005 9.83245C15.0587 9.83245 14.7005 9.47427 14.7005 9.03244C14.7005 8.59062 15.0587 8.23245 15.5005 8.23245L16.7176 8.23246L16.2751 7.78995Z"
+      />
+      <defs>
+        <path
+          id="arrow"
+          stroke="none"
+          fill="none"
+          d="M16.2751 7.78995C13.932 5.44681 10.133 5.44681 7.78986 7.78995C7.02853 8.55128 6.51457 9.4663 6.24798 10.4351C6.24473 10.4499 6.24114 10.4646 6.23719 10.4793C6.17635 10.7064 6.12938 10.9339 6.09577 11.161C5.83159 12.9457 6.39255 14.7026 7.52624 15.9944C7.61054 16.0901 7.69842 16.1838 7.78986 16.2752C8.08307 16.5685 8.39909 16.825 8.7322 17.0448C9.25533 17.3892 9.84172 17.6568 10.4798 17.8278C10.7386 17.8971 10.9979 17.9484 11.2565 17.9825C12.9537 18.2061 14.6187 17.6866 15.8747 16.6415C16.0123 16.5265 16.1459 16.4044 16.2751 16.2752C16.2848 16.2655 16.2947 16.2561 16.3047 16.2469C17.0123 15.531 17.5491 14.627 17.8283 13.5851C17.9712 13.0517 18.5196 12.7351 19.053 12.878C19.5865 13.021 19.9031 13.5693 19.7602 14.1028C19.3141 15.7676 18.3745 17.1684 17.1409 18.1899C16.1883 18.9822 15.0949 19.5189 13.9515 19.8002C11.8607 20.3147 9.6028 19.9749 7.7328 18.7809C7.06855 18.3579 6.47841 17.8432 5.97519 17.2589C5.12341 16.2738 4.55173 15.1302 4.26015 13.9324C4.01698 12.9416 3.96104 11.8931 4.12168 10.8379C4.36697 9.20484 5.1183 7.63309 6.37564 6.37574C9.49984 3.25154 14.5652 3.25154 17.6894 6.37574L18.2332 6.91959L18.2337 5.49951C18.2338 5.05769 18.5921 4.69964 19.034 4.69979C19.4758 4.69995 19.8338 5.05825 19.8337 5.50007L19.8325 9.03277L19.8322 9.8325L19.0325 9.83249L18.9401 9.83249C18.8146 9.85665 18.6854 9.85665 18.5599 9.83248L15.5005 9.83245C15.0587 9.83245 14.7005 9.47427 14.7005 9.03244C14.7005 8.59062 15.0587 8.23245 15.5005 8.23245L16.7176 8.23246L16.2751 7.78995Z"
+        />
+        <clipPath id="arrow-clip">
+          <use xlinkHref="#arrow" />
+        </clipPath>
+      </defs>
+      <g clipPath="url(#arrow-clip)">
+        <circle
+          cx="12"
+          cy="12"
+          r="5"
+          transform="rotate(365,12,12)"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="16"
+          strokeDasharray="30"
+          strokeDashoffset="0"
+        >
+          <animate
+            attributeName="stroke-dashoffset"
+            values="0;-30"
+            begin={props.clickable ? 'arrow_loading.click; 0.7s' : '0s'}
+            repeatCount="indefinite"
+            dur={`${props.durationInSeconds}s`}
+          />
+        </circle>
+      </g>
+      <use xlinkHref="#arrow" />
+      <animateTransform
+        id="transform_0"
+        attributeName="transform"
+        attributeType="XML"
+        type="rotate"
+        from="0 0 0"
+        to="-10 0 0"
+        dur="0.07s"
+        begin={props.clickable ? 'arrow_loading.click;' : 'transform_0.start'}
+        repeatCount="1"
+      />
+      <animateTransform
+        id="transform_1"
+        attributeName="transform"
+        attributeType="XML"
+        type="rotate"
+        from="-45 0 0"
+        to="390 0 0"
+        dur="0.6s"
+        begin="transform_0.end"
+        repeatCount="1"
+      />
+      <animateTransform
+        id="transform_2"
+        attributeName="transform"
+        attributeType="XML"
+        type="rotate"
+        from="390 0 0"
+        to="360 0 0"
+        dur="0.15s"
+        begin="transform_1.end"
+        repeatCount="1"
+      />
+    </svg>
+  )
+})
+
+LoadingIcon.displayName = 'LoadingIcon'
+
+export default LoadingIcon
+
+
+// ----- End of File -----
+
+
+// ----- File: index.tsx -----
+import React from 'react'
+import { Currency, CurrencyAmount } from '../../../types/currency'
+import { DetailedRouteSummary } from '../../../types/route'
+import { WrapType } from '../../../state/swap/slice'
+
+interface Props {
+  isGettingRoute: boolean
+  parsedAmountFromTypedValue: CurrencyAmount<Currency> | undefined
+  balanceIn: CurrencyAmount<Currency> | undefined
+  balanceOut: CurrencyAmount<Currency> | undefined
+  typedValue: string
+  currencyIn: Currency | undefined
+  currencyOut: Currency | undefined
+  routeSummary: DetailedRouteSummary | undefined
+  isProcessingSwap: boolean
+  setProcessingSwap: (processing: boolean) => void
+  buildRoute: () => Promise<{ error: string }>
+  swapInputError: string | undefined
+  customChainId?: number
+  isDegenMode: boolean
+  wrapInputError: string | undefined
+  wrapType: WrapType
+  onWrap: (() => Promise<void>) | undefined
+}
+
+const SwapActionButton: React.FC<Props> = ({
+  isGettingRoute,
+  parsedAmountFromTypedValue,
+  balanceIn,
+  balanceOut,
+  typedValue,
+  currencyIn,
+  currencyOut,
+  routeSummary,
+  isProcessingSwap,
+  setProcessingSwap,
+  buildRoute,
+  swapInputError,
+  customChainId,
+  isDegenMode,
+  wrapInputError,
+  wrapType,
+  onWrap,
+}) => {
+  const handleClick = async () => {
+    if (isProcessingSwap) return
+    setProcessingSwap(true)
+    try {
+      if (wrapType !== WrapType.NOT_APPLICABLE && onWrap) {
+        await onWrap()
+      } else {
+        const { error } = await buildRoute()
+        if (error) {
+          console.error('Swap error:', error)
+        }
+      }
+    } finally {
+      setProcessingSwap(false)
+    }
+  }
+
+  let buttonText = 'Swap'
+  if (isGettingRoute) buttonText = 'Loading...'
+  else if (swapInputError) buttonText = swapInputError
+  else if (wrapInputError) buttonText = wrapInputError
+  else if (isProcessingSwap) buttonText = 'Processing...'
+
+  const disabled = Boolean(
+    isGettingRoute ||
+    swapInputError ||
+    wrapInputError ||
+    isProcessingSwap ||
+    !parsedAmountFromTypedValue ||
+    !currencyIn ||
+    !currencyOut ||
+    (!routeSummary && wrapType === WrapType.NOT_APPLICABLE)
+  )
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={disabled}
+      style={{
+        width: '100%',
+        padding: '12px',
+        borderRadius: '20px',
+        fontSize: '16px',
+        fontWeight: 500,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.6 : 1,
+      }}
+    >
+      {buttonText}
+    </button>
+  )
+}
+
+export default SwapActionButton
+
+
+// ----- End of File -----
+
+
+// ----- File: SwapButtonWithPriceImpact.tsx -----
+import { Trans, t } from '@lingui/macro'
+import { ReactNode } from 'react'
+import { Info } from 'react-feather'
+import { useSearchParams } from 'react-router-dom'
+import { Text } from 'rebass'
+import styled from 'styled-components'
+
+import { ButtonPrimary } from 'components/Button'
+import { MouseoverTooltip } from 'components/Tooltip'
+import { Dots } from 'components/swapv2/styleds'
+import useTheme from 'hooks/useTheme'
+import { useDegenModeManager } from 'state/user/hooks'
+import { checkShouldDisableByPriceImpact } from 'utils/priceImpact'
+import { checkPriceImpact } from 'utils/prices'
+
+const CustomPrimaryButton = styled(ButtonPrimary).attrs({
+  id: 'swap-button',
+})<{ $minimal?: boolean }>`
+  border: none;
+  font-weight: 500;
+  flex: 1;
+  &:disabled {
+    border: none;
+  }
+`
+export const SwapButtonWithPriceImpact = ({
+  isProcessingSwap,
+  minimal,
+  showLoading,
+  onClick,
+  priceImpact,
+  isApproved,
+  route,
+  disabled,
+  showNoteGetRoute,
+  disabledText,
+  text,
+  showTooltipPriceImpact = true,
+}: {
+  isProcessingSwap: boolean
+  minimal: boolean
+  showLoading: boolean
+  onClick: () => void
+  priceImpact: number | undefined
+  isApproved: boolean
+  route: any
+  disabled?: boolean
+  showNoteGetRoute?: boolean
+  disabledText?: ReactNode
+  text?: ReactNode
+  showTooltipPriceImpact?: boolean
+}) => {
+  const theme = useTheme()
+  const [isDegenMode] = useDegenModeManager()
+  const priceImpactResult = checkPriceImpact(priceImpact)
+
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  if (isProcessingSwap) {
+    return (
+      <CustomPrimaryButton disabled $minimal={minimal}>
+        <Dots>
+          <Trans>Processing</Trans>
+        </Dots>
+      </CustomPrimaryButton>
+    )
+  }
+
+  if (showLoading) {
+    return (
+      <CustomPrimaryButton disabled $minimal={minimal}>
+        <Dots>
+          <Trans>Calculating</Trans>
+        </Dots>
+      </CustomPrimaryButton>
+    )
+  }
+
+  const shouldDisableByPriceImpact = checkShouldDisableByPriceImpact(isDegenMode, priceImpact)
+  const shouldDisable = !route || !isApproved || disabled
+
+  if ((priceImpactResult.isVeryHigh || priceImpactResult.isInvalid) && isDegenMode) {
+    return (
+      <CustomPrimaryButton
+        onClick={onClick}
+        disabled={shouldDisable}
+        $minimal={minimal}
+        style={shouldDisable ? undefined : { background: theme.red, color: theme.text }}
+      >
+        <Trans>Swap Anyway</Trans>
+      </CustomPrimaryButton>
+    )
+  }
+
+  return (
+    <CustomPrimaryButton
+      disabled={shouldDisable}
+      onClick={() => {
+        if (shouldDisableByPriceImpact && !isDegenMode) {
+          searchParams.set('enableDegenMode', 'true')
+          setSearchParams(searchParams)
+        } else {
+          onClick()
+        }
+      }}
+      $minimal={minimal}
+      style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+    >
+      {shouldDisableByPriceImpact && showTooltipPriceImpact ? (
+        <MouseoverTooltip
+          text={
+            <Trans>
+              By clicking this, you will proceed by enabling Degen Mode. We recommend double-checking the minimum
+              received amount before confirming the swap.
+            </Trans>
+          }
+        >
+          <Info size={14} />
+        </MouseoverTooltip>
+      ) : showNoteGetRoute && showTooltipPriceImpact ? (
+        <MouseoverTooltip
+          text={
+            <Trans>
+              There was an issue while trying to find a price for these tokens. Please try again. Otherwise, you may
+              select some other tokens to swap.
+            </Trans>
+          }
+        >
+          <Info size={14} />
+        </MouseoverTooltip>
+      ) : null}
+      <Text>
+        {shouldDisable
+          ? disabledText || t`Swap Disabled`
+          : text || (shouldDisableByPriceImpact ? t`Swap Anyway` : t`Swap`)}
+      </Text>
+    </CustomPrimaryButton>
+  )
+}
+export default SwapButtonWithPriceImpact
+
+
+// ----- End of File -----
+
+
+// ----- File: SwapOnlyButton.tsx -----
+import { Currency, CurrencyAmount, Price } from '@kyberswap/ks-sdk-core'
+import React, { useCallback, useMemo, useState } from 'react'
+
+import SwapButtonWithPriceImpact from 'components/SwapForm/SwapActionButton/SwapButtonWithPriceImpact'
+import SwapModal from 'components/SwapForm/SwapModal'
+import { BuildRouteResult } from 'components/SwapForm/hooks/useBuildRoute'
+import useMixpanel, { MIXPANEL_TYPE } from 'hooks/useMixpanel'
+import useSwapCallbackV3 from 'hooks/useSwapCallbackV3'
+import { Field } from 'state/swap/actions'
+import { ChargeFeeBy, DetailedRouteSummary } from 'types/route'
+import { toCurrencyAmount } from 'utils/currencyAmount'
+
+const getFeeInfoForMixPanel = (routeSummary: DetailedRouteSummary | undefined) => {
+  if (!routeSummary?.fee) {
+    return undefined
+  }
+
+  return {
+    chargeTokenIn: routeSummary.extraFee.chargeFeeBy === ChargeFeeBy.CURRENCY_IN,
+    tokenSymbol: routeSummary.fee.currency.symbol || '',
+    feeUsd: routeSummary.extraFee.feeAmountUsd,
+    feeAmount: routeSummary.fee.currencyAmount.toExact(),
+  }
+}
+
+export type Props = {
+  minimal?: boolean
+  isDegenMode: boolean
+  routeSummary: DetailedRouteSummary | undefined
+  isGettingRoute: boolean
+  isProcessingSwap: boolean
+  isApproved?: boolean
+
+  currencyIn: Currency | undefined
+  currencyOut: Currency | undefined
+  balanceIn: CurrencyAmount<Currency> | undefined
+  balanceOut: CurrencyAmount<Currency> | undefined
+  parsedAmount: CurrencyAmount<Currency> | undefined
+  isPermitSwap?: boolean
+
+  setProcessingSwap: React.Dispatch<React.SetStateAction<boolean>>
+  setErrorWhileSwap: (e: string) => void
+  buildRoute: () => Promise<BuildRouteResult>
+}
+
+const SwapOnlyButton: React.FC<Props> = ({
+  minimal,
+  routeSummary,
+  isGettingRoute,
+  isProcessingSwap,
+  isApproved,
+
+  currencyIn,
+  currencyOut,
+  balanceIn,
+  balanceOut,
+  parsedAmount,
+  isPermitSwap,
+
+  setProcessingSwap,
+  setErrorWhileSwap,
+  buildRoute,
+}) => {
+  const { mixpanelHandler } = useMixpanel({
+    [Field.INPUT]: currencyIn,
+    [Field.OUTPUT]: currencyOut,
+  })
+  const [buildResult, setBuildResult] = useState<BuildRouteResult>()
+  const [isBuildingRoute, setBuildingRoute] = useState(false)
+  const { priceImpact } = routeSummary || {}
+
+  // the callback to execute the swap
+  const swapCallback = useSwapCallbackV3(isPermitSwap)
+  const userHasSpecifiedInputOutput = Boolean(currencyIn && currencyOut && parsedAmount)
+  const showLoading = isGettingRoute || isBuildingRoute || ((!balanceIn || !balanceOut) && userHasSpecifiedInputOutput)
+
+  const handleClickSwapForNormalMode = async () => {
+    if (!swapCallback || isBuildingRoute) {
+      return
+    }
+
+    setProcessingSwap(true)
+    // dismiss the modal will setProcessingSwap to false
+
+    setBuildingRoute(true)
+    setBuildResult(undefined)
+    const result = await buildRoute()
+    setBuildingRoute(false)
+    setBuildResult(result)
+  }
+
+  const mixpanelSwapInit = () => {
+    mixpanelHandler(MIXPANEL_TYPE.SWAP_INITIATED, {
+      gasUsd: routeSummary?.gasUsd,
+      inputAmount: routeSummary?.parsedAmountIn,
+      priceImpact: routeSummary?.priceImpact,
+      feeInfo: getFeeInfoForMixPanel(routeSummary),
+    })
+  }
+
+  const handleClickSwapButton = () => {
+    mixpanelSwapInit()
+
+    setErrorWhileSwap('')
+
+    handleClickSwapForNormalMode()
+  }
+
+  const swapCallbackForModal = useMemo(() => {
+    if (buildResult?.data?.data && buildResult?.data?.routerAddress && swapCallback) {
+      return () => {
+        let outputAmountDescription = ''
+        if (buildResult.data?.amountOut !== undefined && buildResult.data?.outputChange?.percent !== undefined) {
+          const amountOut = buildResult.data?.amountOut
+          const percent = buildResult.data?.outputChange?.percent
+          if (percent === 0) {
+            outputAmountDescription = 'Unchanged'
+          } else if (percent > 0) {
+            outputAmountDescription = 'New output amt is better than initial output amt'
+          } else if (percent > -1) {
+            outputAmountDescription = `New output amt is ${amountOut} to < 1% worse than initial output amt`
+          } else if (percent >= -5) {
+            outputAmountDescription = `New output amt is ${amountOut} to >= 1% to <= 5% worse than initial output amt`
+          } else {
+            outputAmountDescription = `New output amt is ${amountOut} to > 5% worse than initial output amt`
+          }
+        }
+
+        let currentPrice = ''
+        if (routeSummary !== undefined) {
+          const { amountIn, amountOut } = buildResult.data
+          const parsedAmountIn = toCurrencyAmount(routeSummary.parsedAmountIn.currency, amountIn)
+          const parsedAmountOut = toCurrencyAmount(routeSummary.parsedAmountOut.currency, amountOut)
+          const executionPrice = new Price(
+            parsedAmountIn.currency,
+            parsedAmountOut.currency,
+            parsedAmountIn.quotient,
+            parsedAmountOut.quotient,
+          )
+          const inputSymbol = executionPrice.baseCurrency?.symbol
+          const outputSymbol = executionPrice.quoteCurrency?.symbol
+          const formattedPrice = executionPrice?.toSignificant(6)
+          currentPrice = `1 ${inputSymbol} = ${formattedPrice} ${outputSymbol}`
+        }
+
+        mixpanelHandler(MIXPANEL_TYPE.SWAP_CONFIRMED, {
+          gasUsd: routeSummary?.gasUsd,
+          inputAmount: routeSummary?.parsedAmountIn,
+          priceImpact: routeSummary?.priceImpact,
+          outputAmountDescription,
+          currentPrice,
+          feeInfo: getFeeInfoForMixPanel(routeSummary),
+        })
+
+        return swapCallback(buildResult.data.routerAddress, buildResult.data.data)
+      }
+    }
+
+    return undefined
+  }, [buildResult?.data, mixpanelHandler, routeSummary, swapCallback])
+
+  const onDismissModal = useCallback(() => {
+    setProcessingSwap(false)
+  }, [setProcessingSwap])
+
+  return (
+    <>
+      <SwapButtonWithPriceImpact
+        isProcessingSwap={isProcessingSwap}
+        route={routeSummary}
+        onClick={handleClickSwapButton}
+        isApproved={!!isApproved}
+        minimal={!!minimal}
+        showLoading={showLoading}
+        priceImpact={priceImpact}
+        showNoteGetRoute={!routeSummary}
+      />
+      <SwapModal
+        isOpen={isProcessingSwap}
+        tokenAddToMetaMask={currencyOut}
+        buildResult={buildResult}
+        isBuildingRoute={isBuildingRoute}
+        onDismiss={onDismissModal}
+        swapCallback={swapCallbackForModal}
+      />
+    </>
+  )
+}
+
+export default SwapOnlyButton
+
+
+// ----- End of File -----
+
+
+// ----- File: ConfirmSwapModalContent.tsx -----
+import { Currency, CurrencyAmount, Price } from '@kyberswap/ks-sdk-core'
+import { Trans } from '@lingui/macro'
+import { transparentize } from 'polished'
+import { useMemo, useState } from 'react'
+import { Check, Info } from 'react-feather'
+import { Flex, Text } from 'rebass'
+import { calculatePriceImpact } from 'services/route/utils'
+import styled from 'styled-components'
+
+import { ButtonPrimary } from 'components/Button'
+import { AutoColumn } from 'components/Column'
+import Loader from 'components/Loader'
+import { RowBetween } from 'components/Row'
+import SlippageWarningNote from 'components/SlippageWarningNote'
+import PriceImpactNote from 'components/SwapForm/PriceImpactNote'
+import { useSwapFormContext } from 'components/SwapForm/SwapFormContext'
+import { Level } from 'components/SwapForm/SwapModal/SwapDetails/UpdatedBadge'
+import SwapModalAreYouSure from 'components/SwapForm/SwapModal/SwapModalAreYouSure'
+import { BuildRouteResult } from 'components/SwapForm/hooks/useBuildRoute'
+import { MouseoverTooltip } from 'components/Tooltip'
+import WarningNote from 'components/WarningNote'
+import { Dots } from 'components/swapv2/styleds'
+import useMixpanel, { MIXPANEL_TYPE } from 'hooks/useMixpanel'
+import useTheme from 'hooks/useTheme'
+import { useDegenModeManager } from 'state/user/hooks'
+import { CloseIcon } from 'theme/components'
+import { minimumAmountAfterSlippage, toCurrencyAmount } from 'utils/currencyAmount'
+import { checkShouldDisableByPriceImpact } from 'utils/priceImpact'
+import { checkPriceImpact } from 'utils/prices'
+
+import SwapBrief from './SwapBrief'
+import SwapDetails, { Props as SwapDetailsProps } from './SwapDetails'
+
+const SHOW_ACCEPT_NEW_AMOUNT_THRESHOLD = -1
+const AMOUNT_OUT_FROM_BUILD_ERROR_THRESHOLD = -5
+const SHOW_CONFIRM_MODAL_AFTER_CLICK_SWAP_THRESHOLD = -10
+
+const Wrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 24px;
+  gap: 16px;
+  border-radius: 20px;
+`
+
+const PriceUpdateWarning = styled.div<{ isAccepted: boolean; $level: 'warning' | 'error' }>`
+  margin-top: 1rem;
+  border-radius: 16px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  background: ${({ $level, theme, isAccepted }) =>
+    isAccepted
+      ? transparentize(0.8, theme.subText)
+      : $level === 'warning'
+      ? transparentize(0.7, theme.warning)
+      : transparentize(0.7, theme.red)};
+  color: ${({ theme, isAccepted }) => (isAccepted ? theme.subText : theme.text)};
+`
+
+type Props = {
+  buildResult: BuildRouteResult | undefined
+  isBuildingRoute: boolean
+  errorWhileBuildRoute: string | undefined
+  onDismiss: () => void
+  onSwap: () => void
+}
+
+export default function ConfirmSwapModalContent({
+  buildResult,
+  isBuildingRoute,
+  errorWhileBuildRoute,
+  onDismiss,
+  onSwap,
+}: Props) {
+  const theme = useTheme()
+  const { routeSummary, slippage, isStablePairSwap, isCorrelatedPair, isAdvancedMode } = useSwapFormContext()
+  const [hasAcceptedNewAmount, setHasAcceptedNewAmount] = useState(false)
+  const [showAreYouSureModal, setShowAreYouSureModal] = useState(false)
+  const [isDegenMode] = useDegenModeManager()
+
+  const shouldDisableConfirmButton = isBuildingRoute || !!errorWhileBuildRoute
+
+  const errorText = useMemo(() => {
+    if (!errorWhileBuildRoute) return
+    if (errorWhileBuildRoute.toLowerCase().includes('permit')) {
+      return (
+        <Text>
+          <Trans>
+            There was an issue while trying to confirm your price. <b>Permit signature invalid</b>
+          </Trans>
+        </Text>
+      )
+    }
+    if (
+      errorWhileBuildRoute.includes('enough') ||
+      errorWhileBuildRoute.includes('min') ||
+      errorWhileBuildRoute.includes('smaller')
+    ) {
+      return (
+        <Text>
+          <Trans>
+            There was an issue while confirming your price and minimum amount received. You may consider adjusting your{' '}
+            <b>Max Slippage</b> and then trying to swap again.
+          </Trans>
+        </Text>
+      )
+    }
+    if (
+      errorWhileBuildRoute.includes(
+        'Please use a different wallet to fill an order that you created via the KyberSwap Limit Order',
+      )
+    )
+      return <Text>{errorWhileBuildRoute}</Text>
+
+    return (
+      <Text>
+        <Trans>There was an issue while trying to confirm your price. Please try to swap again.</Trans>
+      </Text>
+    )
+  }, [errorWhileBuildRoute])
+
+  const priceImpactFromBuild = buildResult?.data
+    ? calculatePriceImpact(Number(buildResult?.data?.amountInUsd || 0), Number(buildResult?.data?.amountOutUsd || 0))
+    : undefined
+
+  const priceImpactResult = checkPriceImpact(priceImpactFromBuild)
+
+  const outputChangePercent = Number(buildResult?.data?.outputChange?.percent) || 0
+  const formattedOutputChangePercent =
+    -0.001 < outputChangePercent && outputChangePercent < 0
+      ? '> -0.001'
+      : 0 < outputChangePercent && outputChangePercent < 0.001
+      ? '< 0.001'
+      : outputChangePercent.toFixed(3)
+
+  const getSwapDetailsProps = (): SwapDetailsProps => {
+    if (!buildResult?.data || !routeSummary) {
+      return {
+        isLoading: isBuildingRoute,
+
+        gasUsd: undefined,
+        minimumAmountOut: undefined,
+        executionPrice: undefined,
+        priceImpact: undefined,
+
+        buildData: undefined,
+      }
+    }
+
+    const { amountIn, amountOut, gasUsd } = buildResult.data
+    const parsedAmountIn = toCurrencyAmount(routeSummary.parsedAmountIn.currency, amountIn)
+    const parsedAmountOut = toCurrencyAmount(routeSummary.parsedAmountOut.currency, amountOut)
+    const executionPrice = new Price(
+      parsedAmountIn.currency,
+      parsedAmountOut.currency,
+      parsedAmountIn.quotient,
+      parsedAmountOut.quotient,
+    )
+    // Min amount out is calculated from get route api amount out.
+    const minimumAmountOut = minimumAmountAfterSlippage(routeSummary.parsedAmountOut, slippage)
+
+    return {
+      isLoading: isBuildingRoute,
+
+      gasUsd,
+      executionPrice,
+      minimumAmountOut,
+      priceImpact: priceImpactFromBuild,
+
+      buildData: buildResult.data,
+    }
+  }
+
+  let parsedAmountIn: CurrencyAmount<Currency> | undefined
+  let parsedAmountOut: CurrencyAmount<Currency> | undefined
+  let parsedAmountOutFromBuild: CurrencyAmount<Currency> | undefined
+  let amountInUsd: string | undefined
+  let amountOutUsdFromBuild: string | undefined
+  if (routeSummary) {
+    parsedAmountIn = routeSummary.parsedAmountIn
+    parsedAmountOut = routeSummary.parsedAmountOut
+    amountInUsd = routeSummary.amountInUsd
+
+    if (buildResult?.data) {
+      const { amountOut } = buildResult.data
+      parsedAmountOutFromBuild = toCurrencyAmount(routeSummary.parsedAmountOut.currency, amountOut)
+
+      amountOutUsdFromBuild = buildResult.data.amountOutUsd
+    }
+  }
+
+  const renderSwapBrief = () => {
+    if (!parsedAmountIn || amountInUsd === undefined || !parsedAmountOut) {
+      return null
+    }
+
+    let level: Level
+    if (0 < outputChangePercent) {
+      level = 'better'
+    } else if (AMOUNT_OUT_FROM_BUILD_ERROR_THRESHOLD < outputChangePercent && outputChangePercent < 0) {
+      level = 'worse'
+    } else if (outputChangePercent <= -5) {
+      level = 'worst'
+    }
+
+    return (
+      <SwapBrief
+        $level={level}
+        inputAmount={parsedAmountIn}
+        amountInUsd={amountInUsd}
+        outputAmount={parsedAmountOut}
+        outputAmountFromBuild={parsedAmountOutFromBuild}
+        amountOutUsdFromBuild={amountOutUsdFromBuild}
+        currencyOut={parsedAmountOut.currency}
+        isLoading={isBuildingRoute}
+      />
+    )
+  }
+
+  const warningStyle =
+    priceImpactResult.isVeryHigh || priceImpactResult.isInvalid
+      ? { background: theme.red, color: theme.text }
+      : undefined
+
+  const shouldDisableByPriceImpact = checkShouldDisableByPriceImpact(isAdvancedMode, priceImpactFromBuild)
+
+  const isShowAcceptNewAmount =
+    outputChangePercent < SHOW_ACCEPT_NEW_AMOUNT_THRESHOLD || (isStablePairSwap && outputChangePercent < 0)
+  const disableSwap =
+    (isShowAcceptNewAmount && !hasAcceptedNewAmount) || shouldDisableConfirmButton || shouldDisableByPriceImpact
+
+  const { mixpanelHandler } = useMixpanel()
+
+  const handleClickAcceptNewAmount = () => {
+    mixpanelHandler(MIXPANEL_TYPE.ACCEPT_NEW_AMOUNT)
+    if (outputChangePercent > SHOW_CONFIRM_MODAL_AFTER_CLICK_SWAP_THRESHOLD) {
+      setHasAcceptedNewAmount(true)
+      return
+    }
+
+    setShowAreYouSureModal(true)
+  }
+
+  return (
+    <>
+      <SwapModalAreYouSure
+        show={showAreYouSureModal}
+        setShow={setShowAreYouSureModal}
+        setHasAcceptedNewAmount={setHasAcceptedNewAmount}
+        parsedAmountOut={parsedAmountOut}
+        parsedAmountOutFromBuild={parsedAmountOutFromBuild}
+        formattedOutputChangePercent={formattedOutputChangePercent}
+      />
+
+      <Wrapper>
+        <AutoColumn>
+          <RowBetween>
+            <Text fontWeight={500} fontSize={20}>
+              <Trans>Confirm Swap Details</Trans>
+            </Text>
+            <CloseIcon onClick={onDismiss} />
+          </RowBetween>
+
+          <RowBetween mt="12px">
+            <Text fontWeight={400} fontSize={12} color={theme.subText}>
+              <Trans>Please review the details of your swap:</Trans>
+            </Text>
+            {isBuildingRoute && (
+              <Flex width="fit-content" height="100%" alignItems="center" sx={{ gap: '4px' }}>
+                <Loader size="14px" stroke={theme.primary} />
+                <Text as="span" fontSize={12} color={theme.subText}>
+                  <Dots>
+                    <Trans>Checking price</Trans>
+                  </Dots>
+                </Text>
+              </Flex>
+            )}
+          </RowBetween>
+
+          {outputChangePercent < 0 && (
+            <PriceUpdateWarning
+              $level={outputChangePercent <= AMOUNT_OUT_FROM_BUILD_ERROR_THRESHOLD ? 'error' : 'warning'}
+              isAccepted={hasAcceptedNewAmount}
+            >
+              {hasAcceptedNewAmount && <Check size={20} color={theme.text} />}
+              <Text flex={1} color={theme.text}>
+                {hasAcceptedNewAmount ? (
+                  <Trans>New Amount Accepted</Trans>
+                ) : (
+                  <Trans>
+                    Due to market conditions, your output has been updated from{' '}
+                    {parsedAmountOut?.toSignificant(10) || ''} {parsedAmountOut?.currency?.symbol} to{' '}
+                    {parsedAmountOutFromBuild?.toSignificant(10) || ''} {parsedAmountOut?.currency?.symbol} (
+                    {formattedOutputChangePercent}%){' '}
+                    {isShowAcceptNewAmount ? '. Please accept the new amount before swapping' : ''}
+                  </Trans>
+                )}
+              </Text>
+            </PriceUpdateWarning>
+          )}
+
+          {renderSwapBrief()}
+        </AutoColumn>
+
+        <SwapDetails {...getSwapDetailsProps()} />
+
+        <Flex sx={{ flexDirection: 'column', gap: '16px' }}>
+          <SlippageWarningNote
+            rawSlippage={slippage}
+            isStablePairSwap={isStablePairSwap}
+            isCorrelatedPair={isCorrelatedPair}
+          />
+
+          <PriceImpactNote isDegenMode={isAdvancedMode} priceImpact={priceImpactFromBuild} />
+
+          {errorWhileBuildRoute && <WarningNote shortText={errorText} />}
+
+          {errorWhileBuildRoute ? (
+            <ButtonPrimary onClick={onDismiss}>
+              <Text fontSize={14} fontWeight={500} as="span" lineHeight={1}>
+                <Trans>Dismiss</Trans>
+              </Text>
+            </ButtonPrimary>
+          ) : (
+            <Flex sx={{ gap: '8px', width: '100%' }}>
+              {isShowAcceptNewAmount && (
+                <ButtonPrimary
+                  style={
+                    hasAcceptedNewAmount || (priceImpactResult.isVeryHigh && !isDegenMode)
+                      ? undefined
+                      : {
+                          backgroundColor:
+                            priceImpactResult.isVeryHigh ||
+                            priceImpactResult.isInvalid ||
+                            outputChangePercent <= AMOUNT_OUT_FROM_BUILD_ERROR_THRESHOLD
+                              ? theme.red
+                              : theme.warning,
+                        }
+                  }
+                  onClick={handleClickAcceptNewAmount}
+                  disabled={hasAcceptedNewAmount || (priceImpactResult.isVeryHigh && !isDegenMode)}
+                >
+                  Accept New Amount
+                </ButtonPrimary>
+              )}
+
+              <ButtonPrimary
+                onClick={onSwap}
+                disabled={disableSwap}
+                id="confirm-swap-or-send"
+                style={{
+                  ...(disableSwap ? undefined : warningStyle),
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                {shouldDisableConfirmButton ? (
+                  <Text fontSize={14} fontWeight={500} as="span" lineHeight={1}>
+                    <Trans>Swap</Trans>
+                  </Text>
+                ) : disableSwap ? (
+                  <>
+                    {shouldDisableByPriceImpact && (
+                      <MouseoverTooltip
+                        text={
+                          <Trans>
+                            To ensure you dont lose funds due to very high price impact (≥10%), swap has been disabled
+                            for this trade. If you still wish to continue, you can turn on Degen Mode from Settings.
+                          </Trans>
+                        }
+                      >
+                        <Info size={14} />
+                      </MouseoverTooltip>
+                    )}
+                    <Text>
+                      {shouldDisableByPriceImpact ? <Trans>Swap Disabled</Trans> : <Trans>Confirm Swap</Trans>}
+                    </Text>
+                  </>
+                ) : (
+                  <Text fontSize={14} fontWeight={500} as="span" lineHeight={1}>
+                    <Trans>Confirm Swap</Trans>
+                  </Text>
+                )}
+              </ButtonPrimary>
+            </Flex>
+          )}
+        </Flex>
+      </Wrapper>
+    </>
+  )
+}
+
+
+// ----- End of File -----
+
+
+// ----- File: index.tsx -----
+import { Currency, CurrencyAmount, Token } from '@kyberswap/ks-sdk-core'
+import { t } from '@lingui/macro'
+import { useCallback, useEffect, useState } from 'react'
+import { useDispatch } from 'react-redux'
+
+import Modal from 'components/Modal'
+import { useSwapFormContext } from 'components/SwapForm/SwapFormContext'
+import { BuildRouteResult } from 'components/SwapForm/hooks/useBuildRoute'
+import {
+  ConfirmationPendingContent,
+  TransactionErrorContent,
+  TransactionSubmittedContent,
+} from 'components/TransactionConfirmationModal'
+import { useActiveWeb3React } from 'hooks'
+import { permitError } from 'state/user/actions'
+import { captureSwapError } from 'utils/sentry'
+
+import ConfirmSwapModalContent from './ConfirmSwapModalContent'
+
+type Props = {
+  isOpen: boolean
+  tokenAddToMetaMask: Currency | undefined
+  buildResult: BuildRouteResult | undefined
+  isBuildingRoute: boolean
+
+  onDismiss: () => void
+  swapCallback: (() => Promise<string>) | undefined
+}
+
+const SwapModal: React.FC<Props> = props => {
+  const { isOpen, tokenAddToMetaMask, onDismiss, swapCallback, buildResult, isBuildingRoute } = props
+  const { chainId, account } = useActiveWeb3React()
+
+  const dispatch = useDispatch()
+  // modal and loading
+  const [{ error, isAttemptingTx, txHash }, setSwapState] = useState<{
+    error: string
+    isAttemptingTx: boolean
+    txHash: string
+  }>({
+    error: '',
+    isAttemptingTx: false,
+    txHash: '',
+  })
+
+  const { routeSummary } = useSwapFormContext()
+  const currencyIn = routeSummary?.parsedAmountIn?.currency
+  const currencyOut = routeSummary?.parsedAmountOut?.currency
+
+  const amountOut = currencyOut && CurrencyAmount.fromRawAmount(currencyOut, buildResult?.data?.amountOut || '0')
+  const amountInDisplay = routeSummary?.parsedAmountIn?.toSignificant(6)
+  const symbolIn = currencyIn?.symbol
+  const amountOutDisplay = amountOut?.toSignificant(6)
+  const symbolOut = currencyOut?.symbol
+
+  // text to show while loading
+  const pendingText = t`Swapping ${amountInDisplay} ${symbolIn} for ${amountOutDisplay} ${symbolOut}`
+
+  const handleDismiss = useCallback(() => {
+    onDismiss()
+    setSwapState({
+      error: '',
+      isAttemptingTx: false,
+      txHash: '',
+    })
+  }, [onDismiss])
+
+  const handleAttemptSendTx = () => {
+    setSwapState({
+      error: '',
+      isAttemptingTx: true,
+      txHash: '',
+    })
+  }
+
+  const handleTxSubmitted = (txHash: string) => {
+    setSwapState({
+      error: '',
+      txHash,
+      isAttemptingTx: false,
+    })
+  }
+
+  const handleError = (error: string) => {
+    setSwapState({
+      error,
+      txHash: '',
+      isAttemptingTx: false,
+    })
+  }
+
+  const handleErrorDismiss = () => {
+    if (
+      ((buildResult?.error && buildResult.error.toLowerCase().includes('permit')) ||
+        (error && error.toLowerCase().includes('permit'))) &&
+      routeSummary &&
+      account
+    ) {
+      dispatch(permitError({ chainId, address: routeSummary.parsedAmountIn.currency.wrapped.address, account }))
+    }
+    handleDismiss()
+  }
+
+  const handleConfirmSwap = async () => {
+    if (!swapCallback) {
+      return
+    }
+
+    handleAttemptSendTx()
+    try {
+      const hash = await swapCallback()
+      handleTxSubmitted(hash)
+    } catch (e) {
+      captureSwapError(e)
+      handleError(e.message)
+    }
+  }
+
+  const renderModalContent = () => {
+    if (isAttemptingTx) {
+      return <ConfirmationPendingContent onDismiss={handleDismiss} pendingText={pendingText} />
+    }
+
+    if (txHash) {
+      return (
+        <TransactionSubmittedContent
+          showTxBanner
+          chainId={chainId}
+          hash={txHash}
+          onDismiss={handleDismiss}
+          tokenAddToMetaMask={tokenAddToMetaMask as Token}
+        />
+      )
+    }
+
+    if (error) {
+      return <TransactionErrorContent onDismiss={handleErrorDismiss} message={error} />
+    }
+
+    return (
+      <ConfirmSwapModalContent
+        isBuildingRoute={isBuildingRoute}
+        errorWhileBuildRoute={buildResult?.error}
+        onDismiss={handleErrorDismiss}
+        onSwap={handleConfirmSwap}
+        buildResult={buildResult}
+      />
+    )
+  }
+
+  useEffect(() => {
+    // dismiss the modal when user switches network
+    handleDismiss()
+  }, [chainId, handleDismiss])
+
+  return (
+    <Modal isOpen={isOpen} onDismiss={handleDismiss} maxHeight={90}>
+      {renderModalContent()}
+    </Modal>
+  )
+}
+
+export default SwapModal
+
+
+// ----- End of File -----
+
+
+// ----- File: SwapBrief.tsx -----
+import { Currency, CurrencyAmount } from '@kyberswap/ks-sdk-core'
+import { Trans } from '@lingui/macro'
+import React from 'react'
+import { ArrowDown } from 'react-feather'
+import Skeleton from 'react-loading-skeleton'
+import { Flex, Text } from 'rebass'
+import styled from 'styled-components'
+
+import { AutoColumn } from 'components/Column'
+import CurrencyLogo from 'components/CurrencyLogo'
+import { RowBetween } from 'components/Row'
+import { useSwapFormContext } from 'components/SwapForm/SwapFormContext'
+import UpdatedBadge, { Props as UpdatedBadgeProps } from 'components/SwapForm/SwapModal/SwapDetails/UpdatedBadge'
+import { CHAINS_SUPPORT_FEE_CONFIGS, RESERVE_USD_DECIMALS } from 'constants/index'
+import { useActiveWeb3React } from 'hooks'
+import useTheme from 'hooks/useTheme'
+import { formattedNum } from 'utils'
+
+type Props = {
+  inputAmount: CurrencyAmount<Currency>
+  amountInUsd: string
+  outputAmount: CurrencyAmount<Currency>
+  outputAmountFromBuild: CurrencyAmount<Currency> | undefined
+  amountOutUsdFromBuild: string | undefined
+  isLoading: boolean
+  currencyOut: Currency
+} & UpdatedBadgeProps
+
+const TruncatedText = styled(Text)`
+  text-overflow: ellipsis;
+  overflow: hidden;
+  font-size: 24px;
+  font-weight: 500;
+`
+
+export const CurrencyInputAmountWrapper = styled(Flex)`
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 16px;
+  border: 1px solid ${({ theme }) => theme.border};
+  padding: 12px 16px;
+`
+
+export const ArrowDownWrapper = styled.div`
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.buttonGray};
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: calc(76px - 6px);
+  left: 50%;
+  transform: translateX(-50%);
+`
+
+export default function SwapBrief({
+  inputAmount,
+  amountInUsd,
+  outputAmount,
+  outputAmountFromBuild,
+  amountOutUsdFromBuild,
+  $level,
+  isLoading,
+  currencyOut,
+}: Props) {
+  const theme = useTheme()
+  const { chainId } = useActiveWeb3React()
+  const { typedValue } = useSwapFormContext()
+
+  const renderOutputAmount = () => {
+    if (isLoading) {
+      return (
+        <Skeleton
+          width="108px"
+          // there's border of 1px
+          height="26.5px"
+          baseColor={theme.border}
+          highlightColor={theme.buttonGray}
+          borderRadius="80px"
+        />
+      )
+    }
+
+    if (!outputAmountFromBuild) {
+      return <TruncatedText>--</TruncatedText>
+    }
+
+    return <TruncatedText>{outputAmountFromBuild.toSignificant(RESERVE_USD_DECIMALS)}</TruncatedText>
+  }
+
+  const renderAmountOutUsd = () => {
+    if (isLoading) {
+      return (
+        <Skeleton
+          width="64px"
+          // there's border of 1px
+          height="15px"
+          baseColor={theme.border}
+          highlightColor={theme.buttonGray}
+          borderRadius="80px"
+        />
+      )
+    }
+
+    if (!amountOutUsdFromBuild) {
+      return (
+        <Text fontSize={14} fontWeight={500} color={theme.subText}>
+          --
+        </Text>
+      )
+    }
+
+    return (
+      <Text fontSize={14} fontWeight={500} color={theme.subText}>
+        ~{formattedNum(amountOutUsdFromBuild, true)}
+      </Text>
+    )
+  }
+
+  return (
+    <AutoColumn gap="sm" style={{ marginTop: '16px', position: 'relative' }}>
+      <CurrencyInputAmountWrapper>
+        <Text fontSize={12} fontWeight={500} color={theme.subText}>
+          <Trans>Input Amount</Trans>
+        </Text>
+        <RowBetween>
+          <TruncatedText>{typedValue}</TruncatedText>
+          <Flex alignItems="center" sx={{ gap: '8px' }} minWidth="fit-content">
+            <Text fontSize={14} fontWeight={500} color={theme.subText}>
+              ~{formattedNum(amountInUsd, true)}
+            </Text>
+            <CurrencyLogo currency={inputAmount.currency} size="24px" />
+            <Text fontSize={20} fontWeight={500} color={theme.subText}>
+              {inputAmount.currency.symbol}
+            </Text>
+          </Flex>
+        </RowBetween>
+      </CurrencyInputAmountWrapper>
+
+      <ArrowDownWrapper>
+        <ArrowDown size="12" color={theme.subText} />
+      </ArrowDownWrapper>
+
+      <CurrencyInputAmountWrapper>
+        <Flex alignItems="center" style={{ gap: '4px' }}>
+          <Text fontSize={12} fontWeight={500} color={theme.subText}>
+            {CHAINS_SUPPORT_FEE_CONFIGS.includes(chainId) ? (
+              <Trans>Output Amount (incl. fee)</Trans>
+            ) : (
+              <Trans>Output Amount</Trans>
+            )}
+          </Text>
+          <UpdatedBadge $level={$level} outputAmount={outputAmount} />
+        </Flex>
+        <RowBetween>
+          {renderOutputAmount()}
+          <Flex alignItems="center" sx={{ gap: '8px' }} minWidth="fit-content">
+            {renderAmountOutUsd()}
+            <CurrencyLogo currency={currencyOut} size="24px" />
+            <Text fontSize={20} fontWeight={500} color={theme.subText}>
+              {currencyOut.symbol}
+            </Text>
+          </Flex>
+        </RowBetween>
+      </CurrencyInputAmountWrapper>
+    </AutoColumn>
+  )
+}
+
+
+// ----- End of File -----
+
+
+// ----- File: SwapModalAreYouSure.tsx -----
+import { Currency, CurrencyAmount } from '@kyberswap/ks-sdk-core'
+import { Trans } from '@lingui/macro'
+import React, { Dispatch, SetStateAction, useState } from 'react'
+import { X } from 'react-feather'
+import { Flex, Text } from 'rebass'
+import styled from 'styled-components'
+
+import { ButtonErrorStyle, ButtonOutlined } from 'components/Button'
+import Modal from 'components/Modal'
+import useTheme from 'hooks/useTheme'
+
+const ModalContentWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 24px 24px 28px;
+  background-color: ${({ theme }) => theme.tableHeader};
+`
+
+const StyledInput = styled.input`
+  margin-top: 24px;
+  background: ${({ theme }) => theme.buttonBlack};
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 16px;
+  outline: none;
+  color: ${({ theme }) => theme.text};
+  border: none;
+  &::placeholder {
+    color: ${({ theme }) => theme.disableText};
+  }
+`
+
+const StyledCloseIcon = styled(X)`
+  height: 28px;
+  width: 28px;
+  :hover {
+    cursor: pointer;
+  }
+`
+
+export default function SwapModalAreYouSure({
+  show,
+  setShow,
+  setHasAcceptedNewAmount,
+  parsedAmountOut,
+  parsedAmountOutFromBuild,
+  formattedOutputChangePercent,
+}: {
+  show: boolean
+  setShow: Dispatch<SetStateAction<boolean>>
+  setHasAcceptedNewAmount: Dispatch<SetStateAction<boolean>>
+  parsedAmountOut: CurrencyAmount<Currency> | undefined
+  parsedAmountOutFromBuild: CurrencyAmount<Currency> | undefined
+  formattedOutputChangePercent: string
+}) {
+  const [confirmText, setConfirmText] = useState('')
+
+  const handleConfirm = () => {
+    if (confirmText.trim().toLowerCase() === 'confirm') {
+      setHasAcceptedNewAmount(true)
+      setConfirmText('')
+      setShow(false)
+    }
+  }
+
+  const theme = useTheme()
+
+  return (
+    <Modal
+      isOpen={show}
+      onDismiss={() => {
+        setConfirmText('')
+        setShow(false)
+      }}
+      maxHeight={100}
+    >
+      <ModalContentWrapper>
+        <Flex alignItems="center" justifyContent="space-between">
+          <Text fontSize="20px" fontWeight={500}>
+            <Trans>Are you sure?</Trans>
+          </Text>
+
+          <StyledCloseIcon color={theme.text} onClick={() => setShow(false)} />
+        </Flex>
+
+        <Text fontSize={14} marginTop="28px">
+          <Trans>
+            Due to market conditions, your output has been updated from {parsedAmountOut?.toSignificant(10)}{' '}
+            {parsedAmountOut?.currency?.symbol} to {parsedAmountOutFromBuild?.toSignificant(10)}{' '}
+            {parsedAmountOut?.currency?.symbol} ({formattedOutputChangePercent}%).
+          </Trans>
+        </Text>
+
+        <Text fontSize={14} marginTop="28px">
+          <Trans>
+            If you&apos;re okay with this, please type the word &apos;confirm&apos; below to accept this new amount.
+          </Trans>
+        </Text>
+
+        <StyledInput
+          placeholder="confirm"
+          value={confirmText}
+          onChange={e => setConfirmText(e.target.value)}
+          onKeyUp={e => {
+            if (e.key === 'Enter') {
+              handleConfirm()
+            }
+          }}
+        />
+        <Flex sx={{ gap: '16px' }} marginTop="28px" justifyContent={'center'}>
+          <ButtonOutlined
+            style={{
+              flex: 1,
+              fontSize: '14px',
+              padding: '10px',
+            }}
+            onClick={() => {
+              setConfirmText('')
+              setShow(false)
+            }}
+          >
+            <Trans>No, go back</Trans>
+          </ButtonOutlined>
+          <ButtonErrorStyle
+            disabled={confirmText.trim().toLowerCase() !== 'confirm'}
+            style={{ fontSize: '14px', flex: 1, padding: '10px' }}
+            onClick={handleConfirm}
+          >
+            <Trans>Confirm</Trans>
+          </ButtonErrorStyle>
+        </Flex>
+      </ModalContentWrapper>
+    </Modal>
+  )
+}
+
+
+// ----- End of File -----
+
+
+// ----- File: index.tsx -----
+import { ChainId, Currency, CurrencyAmount, Price } from '@kyberswap/ks-sdk-core'
+import { Trans } from '@lingui/macro'
+import { rgba } from 'polished'
+import { useCallback, useState } from 'react'
+import { isMobile, isTablet } from 'react-device-detect'
+import { ExternalLink as ExternalLinkIcon, Repeat } from 'react-feather'
+import { useMedia } from 'react-use'
+import { Flex, Text } from 'rebass'
+import { BuildRouteData } from 'services/route/types/buildRoute'
+
+import { TruncatedText } from 'components'
+import { AutoColumn } from 'components/Column'
+import CopyHelper from 'components/Copy'
+import Divider from 'components/Divider'
+import { Shield } from 'components/Icons'
+import InfoHelper from 'components/InfoHelper'
+import { RowBetween, RowFixed } from 'components/Row'
+import AddMEVProtectionModal from 'components/SwapForm/AddMEVProtectionModal'
+import { PriceAlertButton } from 'components/SwapForm/SlippageSettingGroup'
+import { useSwapFormContext } from 'components/SwapForm/SwapFormContext'
+import ValueWithLoadingSkeleton from 'components/SwapForm/SwapModal/SwapDetails/ValueWithLoadingSkeleton'
+import { TooltipTextOfSwapFee } from 'components/SwapForm/TradeSummary'
+import useCheckStablePairSwap from 'components/SwapForm/hooks/useCheckStablePairSwap'
+import { MouseoverTooltip, TextDashed } from 'components/Tooltip'
+import { StyledBalanceMaxMini } from 'components/swapv2/styleds'
+import { APP_PATHS } from 'constants/index'
+import { useActiveWeb3React, useWeb3React } from 'hooks'
+import useENS from 'hooks/useENS'
+import useMixpanel, { MIXPANEL_TYPE } from 'hooks/useMixpanel'
+import useTheme from 'hooks/useTheme'
+import { useCheckCorrelatedPair } from 'state/swap/hooks'
+import { usePaymentToken, useSlippageSettingByPage } from 'state/user/hooks'
+import { ExternalLink, MEDIA_WIDTHS, TYPE } from 'theme'
+import { DetailedRouteSummary } from 'types/route'
+import { formattedNum, shortenAddress } from 'utils'
+import { calculateFeeFromBuildData } from 'utils/fee'
+import { checkPriceImpact, formatPriceImpact } from 'utils/prices'
+import { SLIPPAGE_STATUS, checkRangeSlippage, checkWarningSlippage, formatSlippage } from 'utils/slippage'
+
+interface ExecutionPriceProps {
+  executionPrice?: Price<Currency, Currency>
+  showInverted?: boolean
+}
+
+function ExecutionPrice({ executionPrice, showInverted }: ExecutionPriceProps) {
+  if (!executionPrice) {
+    return null
+  }
+
+  const inputSymbol = executionPrice.baseCurrency?.symbol
+  const outputSymbol = executionPrice.quoteCurrency?.symbol
+
+  const formattedPrice = showInverted ? executionPrice?.invert()?.toSignificant(6) : executionPrice?.toSignificant(6)
+  const value = showInverted
+    ? `1 ${outputSymbol} = ${formattedPrice} ${inputSymbol}`
+    : `1 ${inputSymbol} = ${formattedPrice} ${outputSymbol}`
+
+  return (
+    <Text fontWeight={500} style={{ whiteSpace: 'nowrap', minWidth: 'max-content' }}>
+      {value}
+    </Text>
+  )
+}
+
+type Optional<T> = {
+  [key in keyof T]: T[key] | undefined
+}
+
+export type Props = {
+  isLoading: boolean
+  buildData: BuildRouteData | undefined
+  minimumAmountOut: CurrencyAmount<Currency> | undefined
+} & Optional<Pick<DetailedRouteSummary, 'gasUsd' | 'executionPrice' | 'priceImpact'>>
+
+export default function SwapDetails({
+  isLoading,
+  gasUsd,
+  minimumAmountOut,
+  executionPrice,
+  priceImpact,
+  buildData,
+}: Props) {
+  const { chainId, networkInfo, account } = useActiveWeb3React()
+  const { active } = useWeb3React()
+  const [showInverted, setShowInverted] = useState<boolean>(false)
+  const [showMevModal, setShowMevModal] = useState(false)
+  const theme = useTheme()
+  const { slippage, routeSummary } = useSwapFormContext()
+
+  const currencyIn = routeSummary?.parsedAmountIn?.currency
+  const currencyOut = routeSummary?.parsedAmountOut?.currency
+
+  const minimumAmountOutStr =
+    minimumAmountOut && currencyOut ? (
+      <Flex style={{ color: theme.text, fontWeight: 500, whiteSpace: 'nowrap' }}>
+        <TruncatedText style={{ width: '-webkit-fill-available' }}>
+          {formattedNum(minimumAmountOut.toSignificant(10), false, 10)}
+        </TruncatedText>
+        <Text style={{ minWidth: 'auto' }}>&nbsp;{currencyOut.symbol}</Text>
+      </Flex>
+    ) : (
+      ''
+    )
+
+  const priceImpactResult = checkPriceImpact(priceImpact)
+  const isStablePair = useCheckStablePairSwap(currencyIn, currencyOut)
+  const isCorrelated = useCheckCorrelatedPair()
+
+  const { formattedAmountUsd: feeAmountUsdFromGet = '' } = routeSummary?.fee || {}
+
+  const {
+    feeAmount: feeAmountFromBuild = '',
+    feeAmountUsd: feeAmountUsdFromBuild = '',
+    currency: currencyFromBuild = undefined,
+  } = calculateFeeFromBuildData(routeSummary, buildData)
+
+  const feeAmountWithSymbol =
+    feeAmountFromBuild && currencyFromBuild?.symbol ? `${feeAmountFromBuild} ${currencyFromBuild.symbol}` : ''
+
+  const feeAmount = routeSummary?.extraFee?.feeAmount
+
+  const [paymentToken] = usePaymentToken()
+  const isHold = paymentToken?.address.toLowerCase() === '0xed4040fD47629e7c8FBB7DA76bb50B3e7695F0f2'.toLowerCase()
+
+  const { recipient: recipientAddressOrName } = useSwapFormContext()
+  const { address: recipientAddress } = useENS(recipientAddressOrName)
+  const recipient = recipientAddressOrName === null || recipientAddressOrName === '' ? account : recipientAddress
+
+  const { mixpanelHandler } = useMixpanel()
+
+  const addMevProtectionHandler = useCallback(() => {
+    setShowMevModal(true)
+    mixpanelHandler(MIXPANEL_TYPE.MEV_CLICK_ADD_MEV)
+  }, [mixpanelHandler])
+
+  const onClose = useCallback(() => {
+    setShowMevModal(false)
+  }, [])
+
+  const { rawSlippage } = useSlippageSettingByPage()
+  const slippageStatus = checkRangeSlippage(rawSlippage, isStablePair, isCorrelated)
+  const upToXXSmall = useMedia(`(max-width: ${MEDIA_WIDTHS.upToXXSmall}px)`)
+  const isPartnerSwap = window.location.pathname.startsWith(APP_PATHS.PARTNER_SWAP)
+  const addMevButton =
+    chainId === ChainId.MAINNET &&
+    active &&
+    !isPartnerSwap &&
+    slippageStatus === SLIPPAGE_STATUS.HIGH &&
+    !isMobile &&
+    !isTablet ? (
+      <PriceAlertButton onClick={addMevProtectionHandler}>
+        <Shield size={14} color={theme.subText} />
+        <Text color={theme.subText} style={{ whiteSpace: 'nowrap' }}>
+          {upToXXSmall ? <Trans>MEV Protection</Trans> : <Trans>Add MEV Protection</Trans>}
+          <InfoHelper size={14} text="Add MEV Protection to safeguard you from front-running attacks." />
+        </Text>
+      </PriceAlertButton>
+    ) : null
+
+  return (
+    <>
+      <AddMEVProtectionModal isOpen={showMevModal} onClose={onClose} />
+
+      <AutoColumn
+        gap="0.5rem"
+        style={{ padding: '12px 16px', border: `1px solid ${theme.border}`, borderRadius: '16px' }}
+      >
+        <RowBetween align="center" height="20px" style={{ gap: '16px' }}>
+          <Text fontWeight={400} fontSize={12} color={theme.subText} minWidth="max-content">
+            <Trans>Current Price</Trans>
+          </Text>
+
+          <ValueWithLoadingSkeleton
+            skeletonStyle={{
+              width: '160px',
+              height: '19px',
+            }}
+            isShowingSkeleton={isLoading}
+            content={
+              executionPrice ? (
+                <Flex
+                  fontWeight={500}
+                  fontSize={12}
+                  color={theme.text}
+                  sx={{
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    textAlign: 'right',
+                  }}
+                >
+                  <ExecutionPrice executionPrice={executionPrice} showInverted={showInverted} />
+                  <StyledBalanceMaxMini onClick={() => setShowInverted(!showInverted)}>
+                    <Repeat size={14} color={theme.text} />
+                  </StyledBalanceMaxMini>
+                </Flex>
+              ) : (
+                <TYPE.black fontSize={12}>--</TYPE.black>
+              )
+            }
+          />
+        </RowBetween>
+
+        <RowBetween align="center" height="20px" style={{ gap: '16px' }}>
+          <RowFixed style={{ minWidth: 'max-content' }}>
+            <TextDashed fontSize={12} fontWeight={400} color={theme.subText} minWidth="max-content">
+              <MouseoverTooltip
+                width="200px"
+                text={<Trans>You will receive at least this amount or your transaction will revert.</Trans>}
+                placement="right"
+              >
+                <Trans>Minimum Received</Trans>
+              </MouseoverTooltip>
+            </TextDashed>
+          </RowFixed>
+
+          <ValueWithLoadingSkeleton
+            skeletonStyle={{
+              width: '108px',
+              height: '19px',
+            }}
+            isShowingSkeleton={isLoading}
+            content={
+              <TYPE.black fontSize={12} fontWeight={500}>
+                {minimumAmountOutStr || '--'}
+              </TYPE.black>
+            }
+          />
+        </RowBetween>
+
+        <RowBetween height="20px" style={{ gap: '16px' }}>
+          <RowFixed>
+            <TextDashed fontSize={12} fontWeight={400} color={theme.subText}>
+              <MouseoverTooltip
+                text={
+                  <div>
+                    <Trans>Estimated change in price due to the size of your transaction.</Trans>
+                    <Text fontSize={12}>
+                      <Trans>
+                        Read more{' '}
+                        <a
+                          href="https://docs.kyberswap.com/getting-started/foundational-topics/decentralized-finance/price-impact"
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <b>here ↗</b>
+                        </a>
+                      </Trans>
+                    </Text>
+                  </div>
+                }
+                placement="right"
+              >
+                <Trans>Price Impact</Trans>
+              </MouseoverTooltip>
+            </TextDashed>
+          </RowFixed>
+
+          <ValueWithLoadingSkeleton
+            skeletonStyle={{
+              width: '64px',
+              height: '19px',
+            }}
+            isShowingSkeleton={isLoading}
+            content={
+              <TYPE.black
+                fontSize={12}
+                color={priceImpactResult.isVeryHigh ? theme.red : priceImpactResult.isHigh ? theme.warning : theme.text}
+              >
+                {priceImpactResult.isInvalid || typeof priceImpact !== 'number' ? '--' : formatPriceImpact(priceImpact)}
+              </TYPE.black>
+            }
+          />
+        </RowBetween>
+
+        <RowBetween height="20px" style={{ gap: '16px' }}>
+          <RowFixed>
+            <TextDashed fontSize={12} fontWeight={400} color={theme.subText}>
+              {buildData?.additionalCostUsd && buildData?.additionalCostUsd !== '0' ? (
+                <MouseoverTooltip text={<Trans>L2 execution fee</Trans>} placement="right">
+                  Est. L2 gas fee
+                </MouseoverTooltip>
+              ) : (
+                <MouseoverTooltip text={<Trans>Estimated network fee for your transaction.</Trans>} placement="right">
+                  Est. {paymentToken ? 'Paymaster' : ''} Gas Fee
+                </MouseoverTooltip>
+              )}
+            </TextDashed>
+          </RowFixed>
+
+          <ValueWithLoadingSkeleton
+            skeletonStyle={{
+              width: '64px',
+              height: '19px',
+            }}
+            isShowingSkeleton={isLoading}
+            content={
+              <Flex sx={{ gap: '4px' }}>
+                {isHold && !!gasUsd && (
+                  <Text sx={{ textDecoration: 'line-through' }} fontSize={12} color={theme.subText}>
+                    {formattedNum(gasUsd, true)}
+                  </Text>
+                )}
+                <TYPE.black color={theme.text} fontSize={12}>
+                  {gasUsd ? formattedNum(isHold ? +gasUsd * 0.8 : gasUsd, true) : '--'}
+                </TYPE.black>
+              </Flex>
+            }
+          />
+        </RowBetween>
+        {buildData?.additionalCostUsd && buildData?.additionalCostUsd !== '0' && (
+          <RowBetween>
+            <RowFixed>
+              <TextDashed fontSize={12} fontWeight={400} color={theme.subText}>
+                <MouseoverTooltip text={<Trans>L1 fee that pays for rolls up cost</Trans>} placement="right">
+                  Est. L1 gas fee
+                </MouseoverTooltip>
+              </TextDashed>
+            </RowFixed>
+            <ValueWithLoadingSkeleton
+              skeletonStyle={{
+                width: '64px',
+                height: '19px',
+              }}
+              isShowingSkeleton={isLoading}
+              content={
+                <Flex sx={{ gap: '4px' }}>
+                  <TYPE.black color={theme.text} fontSize={12}>
+                    {formattedNum(buildData.additionalCostUsd, true)}
+                  </TYPE.black>
+                </Flex>
+              }
+            />
+          </RowBetween>
+        )}
+
+        {!!feeAmount && feeAmount !== '0' && (
+          <RowBetween height="20px" style={{ gap: '16px' }}>
+            <RowFixed>
+              <TextDashed fontSize={12} fontWeight={400} color={theme.subText}>
+                <MouseoverTooltip
+                  text={
+                    <TooltipTextOfSwapFee
+                      feeAmountText={feeAmountWithSymbol}
+                      feeBips={routeSummary?.extraFee?.feeAmount}
+                    />
+                  }
+                  placement="right"
+                >
+                  <Trans>Est. Swap Fee</Trans>
+                </MouseoverTooltip>
+              </TextDashed>
+            </RowFixed>
+
+            <ValueWithLoadingSkeleton
+              skeletonStyle={{
+                width: '64px',
+                height: '19px',
+              }}
+              isShowingSkeleton={isLoading}
+              content={
+                <Flex
+                  sx={{
+                    alignItems: 'center',
+                    flexWrap: 'nowrap',
+                    gap: '4px',
+                  }}
+                >
+                  {buildData && feeAmountUsdFromGet !== feeAmountUsdFromBuild && (
+                    <Flex
+                      sx={{
+                        background: rgba(theme.warning, 0.3),
+                        color: theme.warning,
+                        borderRadius: '36px',
+                        fontSize: '10px',
+                        lineHeight: '12px',
+                        padding: '2px 4px',
+                      }}
+                    >
+                      <Trans>Updated</Trans>
+                    </Flex>
+                  )}
+                  <TYPE.black color={theme.text} fontWeight={500} fontSize={12}>
+                    {feeAmountUsdFromBuild || feeAmountWithSymbol || '--'}
+                  </TYPE.black>
+                </Flex>
+              }
+            />
+          </RowBetween>
+        )}
+
+        <RowBetween height={addMevButton !== null ? '45px' : '20px'} style={{ gap: '16px' }} align="flex-start">
+          <RowFixed>
+            <TextDashed fontSize={12} fontWeight={400} color={theme.subText}>
+              <MouseoverTooltip
+                text={
+                  <Text>
+                    <Trans>
+                      During your swap if the price changes by more than this %, your transaction will revert. Read more{' '}
+                      <ExternalLink href="https://docs.kyberswap.com/getting-started/foundational-topics/decentralized-finance/slippage">
+                        here ↗
+                      </ExternalLink>
+                    </Trans>
+                  </Text>
+                }
+                placement="right"
+              >
+                <Trans>Max Slippage</Trans>
+              </MouseoverTooltip>
+            </TextDashed>
+          </RowFixed>
+
+          <Flex flexDirection={'column'} alignItems={'flex-end'} sx={{ gap: '6px' }}>
+            <TYPE.black
+              fontSize={12}
+              color={checkWarningSlippage(slippage, isStablePair, isCorrelated) ? theme.warning : undefined}
+            >
+              {formatSlippage(slippage)}
+            </TYPE.black>
+            {addMevButton}
+          </Flex>
+        </RowBetween>
+
+        <Divider />
+        {recipient && (
+          <RowBetween>
+            <Text fontSize={12} color={theme.subText}>
+              <Trans>Recipient</Trans>
+            </Text>
+            <Flex fontSize={12} fontWeight="501" alignItems="center" sx={{ gap: '4px' }}>
+              <img src={networkInfo.icon} alt="network icon" width="12px" height="12px" />
+              <ExternalLink href={`${networkInfo.etherscanUrl}/address/${recipient}`}>
+                <Flex color={theme.text} sx={{ gap: '4px' }}>
+                  <Text fontSize={12}>{shortenAddress(chainId, recipient)}</Text>
+                  <ExternalLinkIcon size={12} />
+                </Flex>
+              </ExternalLink>
+            </Flex>
+          </RowBetween>
+        )}
+
+        <RowBetween>
+          <TextDashed fontSize={12} color={theme.subText}>
+            <MouseoverTooltip
+              text={
+                <Trans>
+                  The contract address that will be executing the swap. You can verify the contract in the block
+                  explorer.
+                </Trans>
+              }
+            >
+              <Trans>Contract Address</Trans>
+            </MouseoverTooltip>
+          </TextDashed>
+          {buildData?.routerAddress && (
+            <Flex alignItems="center">
+              <ExternalLink href={`${networkInfo.etherscanUrl}/address/${buildData.routerAddress}`}>
+                <Flex color={theme.text} sx={{ gap: '4px' }}>
+                  <Text fontSize={12}>{shortenAddress(chainId, buildData.routerAddress)}</Text>
+                  <ExternalLinkIcon size={12} />
+                </Flex>
+              </ExternalLink>
+
+              <CopyHelper toCopy={buildData.routerAddress} size="12px" />
+            </Flex>
+          )}
+        </RowBetween>
+      </AutoColumn>
+    </>
+  )
+}
+
+
+// ----- End of File -----
+
+
+// ----- File: UpdatedBadge.tsx -----
+import { Currency, CurrencyAmount } from '@kyberswap/ks-sdk-core'
+import { Trans } from '@lingui/macro'
+import { transparentize } from 'polished'
+import React from 'react'
+import { Text } from 'rebass'
+import styled from 'styled-components'
+
+import { AutoColumn } from 'components/Column'
+import InfoHelper from 'components/InfoHelper'
+import { RESERVE_USD_DECIMALS } from 'constants/index'
+import useTheme from 'hooks/useTheme'
+
+const BadgeWrapper = styled(AutoColumn).attrs<Pick<Props, '$level'>>(props => ({
+  'data-level': props['$level'],
+}))<Pick<Props, '$level'>>`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 4px 8px;
+  border-radius: 36px;
+
+  line-height: 1;
+  font-size: 12px;
+  font-weight: 400;
+
+  &[data-level='worst'] {
+    background-color: ${({ theme }) => transparentize(0.9, theme.red)};
+    color: ${({ theme }) => theme.red};
+  }
+
+  &[data-level='worse'] {
+    background-color: ${({ theme }) => transparentize(0.9, theme.warning)};
+    color: ${({ theme }) => theme.warning};
+  }
+
+  &[data-level='better'] {
+    background-color: ${({ theme }) => transparentize(0.9, theme.primary)};
+    color: ${({ theme }) => theme.primary};
+  }
+`
+
+export type Level = 'better' | 'worse' | 'worst' | undefined
+
+export interface Props {
+  $level: Level
+  outputAmount: CurrencyAmount<Currency>
+}
+
+export default function UpdatedBadge({ $level, outputAmount }: Props) {
+  const theme = useTheme()
+  const output = `${outputAmount.toSignificant(RESERVE_USD_DECIMALS)} ${outputAmount.currency.symbol}`
+
+  if (!$level) {
+    return null
+  }
+
+  return (
+    <BadgeWrapper $level={$level}>
+      {$level === 'better' && (
+        <InfoHelper
+          placement="top"
+          size={14}
+          color={theme.primary}
+          text={
+            <Text fontSize={12}>
+              <Trans>We got you a higher amount. The initial output amount was {output}</Trans>
+            </Text>
+          }
+        ></InfoHelper>
+      )}
+      <Trans>Updated</Trans>
+    </BadgeWrapper>
+  )
+}
+
+
+// ----- End of File -----
+
+
+// ----- File: ValueWithLoadingSkeleton.tsx -----
+import { CSSProperties } from 'react'
+import Skeleton from 'react-loading-skeleton'
+
+import useTheme from 'hooks/useTheme'
+
+type Props = {
+  content: React.ReactNode
+  isShowingSkeleton: boolean
+  skeletonStyle?: CSSProperties
+}
+
+const ValueWithLoadingSkeleton: React.FC<Props> = ({ content, isShowingSkeleton, skeletonStyle }) => {
+  const theme = useTheme()
+  if (isShowingSkeleton) {
+    return (
+      <Skeleton
+        style={skeletonStyle}
+        height="16px"
+        baseColor={theme.border}
+        highlightColor={theme.buttonGray}
+        borderRadius="5rem"
+      />
+    )
+  }
+
+  return <>{content}</>
+}
+
+export default ValueWithLoadingSkeleton
+
+
+// ----- End of File -----
