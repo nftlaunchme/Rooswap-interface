@@ -7,11 +7,12 @@ function createToken(tokenInfo: TokenInfo): Token {
   return {
     isToken: true,
     isNative: false,
-    chainId: tokenInfo.chainId,
-    address: tokenInfo.address,
+    chainId: tokenInfo.chainId || 25, // Default to Cronos if chainId is not provided
     decimals: tokenInfo.decimals,
     symbol: tokenInfo.symbol,
     name: tokenInfo.name,
+    address: tokenInfo.address,
+    logoURI: tokenInfo.logoURI,
     equals: function(other: Currency): boolean {
       return !other.isNative && other.getAddress().toLowerCase() === this.address.toLowerCase()
     },
@@ -82,7 +83,7 @@ export function useTokens() {
 
     const tokenObjects = tokenList.map(tokenInfo => {
       const token = createToken(tokenInfo)
-      const balance = balances[token.address]
+      const balance = balances[token.address.toLowerCase()]
       if (balance) {
         return {
           ...token,
@@ -109,7 +110,7 @@ export function useTokens() {
         ? CurrencyAmount.fromRaw(currency, balances[currency.getAddress()])
         : undefined
     }
-    const balance = balances[currency.getAddress()]
+    const balance = balances[currency.getAddress().toLowerCase()]
     if (!balance) return undefined
     return CurrencyAmount.fromRaw(currency, balance)
   }

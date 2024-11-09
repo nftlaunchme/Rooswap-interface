@@ -13,11 +13,14 @@ function getTokenAddress(currency: Currency): string {
 }
 
 export interface TokenInfo {
-  address: string
-  symbol: string
+  id?: number
+  code?: string
   name: string
+  address: string
   decimals: number
-  chainId: number
+  symbol: string
+  icon?: string
+  chainId?: number
   logoURI?: string
 }
 
@@ -33,7 +36,8 @@ interface OpenOceanBalanceResponse {
 
 export async function getTokenList(chainId: number): Promise<TokenInfo[]> {
   try {
-    const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/token/list`)
+    // Use the correct OpenOcean token list endpoint for Cronos
+    const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/tokenList`)
     const data = await response.json() as OpenOceanTokenListResponse
 
     console.log('OpenOcean token list response:', data)
@@ -42,13 +46,14 @@ export async function getTokenList(chainId: number): Promise<TokenInfo[]> {
       throw new Error('Failed to get token list')
     }
 
+    // Map the response to our TokenInfo format
     return data.data.map((token: TokenInfo) => ({
       address: token.address,
       symbol: token.symbol,
       name: token.name,
       decimals: token.decimals,
       chainId,
-      logoURI: token.logoURI,
+      logoURI: token.icon || token.logoURI, // OpenOcean uses 'icon' field
     }))
   } catch (error) {
     console.error('Failed to fetch token list:', error)
