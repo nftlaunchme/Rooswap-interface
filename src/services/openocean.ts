@@ -12,6 +12,76 @@ function getTokenAddress(currency: Currency): string {
   return currency.getAddress()
 }
 
+export interface TokenInfo {
+  address: string
+  symbol: string
+  name: string
+  decimals: number
+  chainId: number
+  logoURI?: string
+}
+
+export async function getTokenList(chainId: number): Promise<TokenInfo[]> {
+  try {
+    // Use the correct OpenOcean token list endpoint for Cronos
+    const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/tokenList`)
+    const data = await response.json()
+
+    console.log('OpenOcean token list response:', data)
+
+    if (data.code !== 200 || !data.data) {
+      throw new Error('Failed to get token list')
+    }
+
+    // Map the response to our TokenInfo format
+    return data.data.map((token: any) => ({
+      address: token.address,
+      symbol: token.symbol,
+      name: token.name,
+      decimals: parseInt(token.decimals),
+      chainId,
+      logoURI: token.logoURI,
+    }))
+  } catch (error) {
+    console.error('Failed to fetch token list:', error)
+    return []
+  }
+}
+
+export async function getTokenBalances(
+  chainId: number,
+  account: string,
+  tokens: string[]
+): Promise<{ [address: string]: string }> {
+  try {
+    const params = new URLSearchParams({
+      account,
+      chainId: chainId.toString(),
+      tokens: tokens.join(','),
+    })
+
+    const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/balance?${params}`)
+    const data = await response.json()
+
+    console.log('OpenOcean balance response:', data)
+
+    if (data.code !== 200 || !data.data) {
+      throw new Error('Failed to get token balances')
+    }
+
+    // Convert the response to our expected format
+    const balances: { [address: string]: string } = {}
+    Object.entries(data.data).forEach(([address, balance]) => {
+      balances[address.toLowerCase()] = balance.toString()
+    })
+
+    return balances
+  } catch (error) {
+    console.error('Failed to fetch token balances:', error)
+    return {}
+  }
+}
+
 export async function getOpenOceanQuote(
   chainId: number,
   currencyIn: Currency,
@@ -23,23 +93,18 @@ export async function getOpenOceanQuote(
     const inTokenAddress = getTokenAddress(currencyIn)
     const outTokenAddress = getTokenAddress(currencyOut)
 
-    // Convert amount to proper decimals
-    const rawAmount = amount.raw
-    const decimals = currencyIn.decimals
-
     console.log('Getting OpenOcean quote with params:', {
       chainId,
       inTokenAddress,
       outTokenAddress,
-      amount: rawAmount,
-      decimals,
-      slippage: slippage / 100, // Convert basis points to percentage
+      amount: amount.raw,
+      slippage: slippage / 100,
     })
 
     const params = new URLSearchParams({
       inTokenAddress,
       outTokenAddress,
-      amount: rawAmount,
+      amount: amount.raw,
       gasPrice: '5000000000000', // 5000 gwei for Cronos
       slippage: (slippage / 100).toString(),
       chainId: chainId.toString(),
@@ -52,34 +117,17 @@ export async function getOpenOceanQuote(
 
     console.log('OpenOcean quote response:', data)
 
-    if (data.code !== 200) {
-      console.error('OpenOcean quote error:', data)
+    if (data.code !== 200 || !data.data) {
       throw new Error(data.message || 'Failed to get quote')
     }
 
-    if (!data.data) {
-      console.error('OpenOcean quote missing data:', data)
-      throw new Error('Invalid quote response')
-    }
-
-    // Calculate price as outAmount/inAmount considering decimals
-    const inAmount = BigInt(data.data.inAmount || amount.raw)
-    const outAmount = BigInt(data.data.outAmount || '0')
-    const inDecimals = BigInt(currencyIn.decimals)
-    const outDecimals = BigInt(currencyOut.decimals)
-
-    // Normalize amounts to same decimal places (18) for price calculation
-    const normalizedInAmount = inAmount * BigInt(10) ** (18n - inDecimals)
-    const normalizedOutAmount = outAmount * BigInt(10) ** (18n - outDecimals)
-
-    // Calculate price with 6 decimal places
-    const price = normalizedOutAmount * BigInt(1000000) / normalizedInAmount
-    const priceString = (Number(price) / 1000000).toString()
+    // Use the price directly from the API
+    const price = data.data.price || '0'
 
     return {
       inAmount: data.data.inAmount || amount.raw,
       outAmount: data.data.outAmount || '0',
-      price: priceString,
+      price,
       priceImpact: data.data.priceImpact || '0',
       gasPrice: data.data.gasPrice || '5000000000000',
       gasUsd: data.data.gasUsd || '0',
@@ -136,14 +184,8 @@ export async function getOpenOceanSwapData(
 
     console.log('OpenOcean swap data response:', data)
 
-    if (data.code !== 200) {
-      console.error('OpenOcean swap quote error:', data)
+    if (data.code !== 200 || !data.data) {
       throw new Error(data.message || 'Failed to get swap data')
-    }
-
-    if (!data.data) {
-      console.error('OpenOcean swap quote missing data:', data)
-      throw new Error('Invalid swap quote response')
     }
 
     return {

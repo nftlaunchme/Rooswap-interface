@@ -4,8 +4,9 @@ import { Search } from 'react-feather'
 import { Flex, Text } from 'rebass'
 import styled from 'styled-components'
 
-import { Currency, Token, NATIVE_TOKEN } from '../../../types/currency'
+import { Currency, CurrencyAmount } from '../../../types/currency'
 import useTheme from 'hooks/useTheme'
+import { useTokens } from 'hooks/useTokens'
 
 const Modal = styled.div`
   position: fixed;
@@ -52,63 +53,64 @@ const TokenList = styled.div`
   gap: 8px;
 `
 
-const TokenItem = styled.button`
+const TokenItem = styled.button<{ hasBalance?: boolean }>`
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
   padding: 12px;
   background: transparent;
   border: 1px solid ${({ theme }) => theme.border};
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
 
   :hover {
     background: ${({ theme }) => rgba(theme.buttonBlack, 0.4)};
   }
+
+  :disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  ${({ hasBalance, theme }) =>
+    hasBalance &&
+    `
+    border-color: ${rgba(theme.primary, 0.5)};
+    background: ${rgba(theme.primary, 0.1)};
+  `}
 `
 
-const commonTokens: Currency[] = [
-  NATIVE_TOKEN,
-  {
-    isToken: true,
-    isNative: false,
-    chainId: 25,
-    address: '0x66e428c3f67a68878562e79A0234c1F83c208770',
-    decimals: 6,
-    symbol: 'USDC',
-    name: 'USD Coin',
-    equals: function(other: Currency): boolean {
-      return !other.isNative && other.getAddress().toLowerCase() === this.address.toLowerCase()
-    },
-    sortsBefore: function(other: Token): boolean {
-      return this.address.toLowerCase() < other.address.toLowerCase()
-    },
-    wrapped: {} as Token,
-    getAddress: function(): string {
-      return this.address
-    }
-  } as Token,
-  {
-    isToken: true,
-    isNative: false,
-    chainId: 25,
-    address: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-    decimals: 18,
-    symbol: 'DAI',
-    name: 'Dai Stablecoin',
-    equals: function(other: Currency): boolean {
-      return !other.isNative && other.getAddress().toLowerCase() === this.address.toLowerCase()
-    },
-    sortsBefore: function(other: Token): boolean {
-      return this.address.toLowerCase() < other.address.toLowerCase()
-    },
-    wrapped: {} as Token,
-    getAddress: function(): string {
-      return this.address
-    }
-  } as Token,
-]
+const TokenInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`
+
+const TokenLogo = styled.div<{ src?: string }>`
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: ${({ theme }) => theme.buttonBlack};
+  background-image: ${({ src }) => src ? `url(${src})` : 'none'};
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${({ theme }) => theme.text};
+  font-size: 12px;
+  font-weight: 500;
+`
+
+const TokenSymbol = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`
 
 interface Props {
   isOpen: boolean
@@ -127,17 +129,21 @@ const TokenSelector: React.FC<Props> = ({
 }) => {
   const theme = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
-  const [filteredTokens, setFilteredTokens] = useState<Currency[]>(commonTokens)
+  const { tokens, loading } = useTokens()
+  const [filteredTokens, setFilteredTokens] = useState<Currency[]>(tokens)
 
   useEffect(() => {
     // Filter tokens based on search query
-    const filtered = commonTokens.filter(token => 
-      token.symbol?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      token.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      token.getAddress().toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    const filtered = tokens.filter(token => {
+      const searchLower = searchQuery.toLowerCase()
+      return (
+        token.symbol?.toLowerCase().includes(searchLower) ||
+        token.name?.toLowerCase().includes(searchLower) ||
+        token.getAddress().toLowerCase() === searchLower
+      )
+    })
     setFilteredTokens(filtered)
-  }, [searchQuery])
+  }, [searchQuery, tokens])
 
   const handleSelect = useCallback((currency: Currency) => {
     onSelect(currency)
@@ -158,6 +164,7 @@ const TokenSelector: React.FC<Props> = ({
             placeholder="Search by name or paste address"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
+            autoFocus
           />
           <Search
             size={20}
@@ -172,21 +179,44 @@ const TokenSelector: React.FC<Props> = ({
         </Flex>
 
         <TokenList>
-          {filteredTokens.map((token, index) => (
-            <TokenItem
-              key={index}
-              onClick={() => handleSelect(token)}
-              disabled={
-                selectedCurrency?.equals(token) ||
-                otherCurrency?.equals(token)
-              }
-            >
-              <Text>{token.symbol}</Text>
-              <Text color={theme.subText} fontSize={14}>
-                {token.name}
-              </Text>
-            </TokenItem>
-          ))}
+          {loading ? (
+            <Text color={theme.subText} textAlign="center" padding="20px">
+              Loading tokens...
+            </Text>
+          ) : filteredTokens.length === 0 ? (
+            <Text color={theme.subText} textAlign="center" padding="20px">
+              No tokens found.
+            </Text>
+          ) : (
+            filteredTokens.map((token, index) => (
+              <TokenItem
+                key={index}
+                onClick={() => handleSelect(token)}
+                disabled={
+                  selectedCurrency?.equals(token) ||
+                  otherCurrency?.equals(token)
+                }
+                hasBalance={!!token.balance && !token.balance.equalTo(CurrencyAmount.fromRaw(token, '0'))}
+              >
+                <TokenInfo>
+                  <TokenLogo src={token.logoURI}>
+                    {!token.logoURI && token.symbol?.[0]}
+                  </TokenLogo>
+                  <TokenSymbol>
+                    <Text fontWeight={500}>{token.symbol}</Text>
+                    <Text color={theme.subText} fontSize={12}>
+                      {token.name}
+                    </Text>
+                  </TokenSymbol>
+                </TokenInfo>
+                {token.balance && !token.balance.equalTo(CurrencyAmount.fromRaw(token, '0')) && (
+                  <Text color={theme.primary} fontSize={14} fontWeight={500}>
+                    {token.balance.toSignificant(6)}
+                  </Text>
+                )}
+              </TokenItem>
+            ))
+          )}
         </TokenList>
       </ModalContent>
     </Modal>

@@ -3,6 +3,8 @@ interface BaseCurrency {
   decimals: number
   symbol?: string
   name?: string
+  balance?: CurrencyAmount<Currency>
+  logoURI?: string
 }
 
 export interface Token extends BaseCurrency {
@@ -198,10 +200,11 @@ const WCRO: Token = {
   isToken: true,
   isNative: false,
   chainId: 25,
-  address: '0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23',
   decimals: 18,
   symbol: 'WCRO',
   name: 'Wrapped CRO',
+  address: '0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23',
+  logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/14532.png',
   equals: function(other: Currency): boolean {
     return !other.isNative && other.getAddress().toLowerCase() === this.address.toLowerCase()
   },
@@ -224,6 +227,7 @@ export const NATIVE_TOKEN: NativeCurrency = {
   decimals: 18,
   symbol: 'CRO',
   name: 'Cronos',
+  logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/14532.png',
   equals: function(other: Currency): boolean {
     return other.isNative && other.chainId === this.chainId
   },

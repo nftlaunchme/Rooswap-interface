@@ -1,7 +1,29 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Currency, CurrencyAmount, NATIVE_TOKEN, Token } from '../types/currency'
-import { getTokenBalances, getTokenList, TokenInfo, createToken } from '../services/tokens'
+import { getTokenBalances, getTokenList, TokenInfo } from '../services/openocean'
 import { useActiveWeb3React } from '../hooks'
+
+function createToken(tokenInfo: TokenInfo): Token {
+  return {
+    isToken: true,
+    isNative: false,
+    chainId: tokenInfo.chainId,
+    address: tokenInfo.address,
+    decimals: tokenInfo.decimals,
+    symbol: tokenInfo.symbol,
+    name: tokenInfo.name,
+    equals: function(other: Currency): boolean {
+      return !other.isNative && other.getAddress().toLowerCase() === this.address.toLowerCase()
+    },
+    sortsBefore: function(other: Token): boolean {
+      return this.address.toLowerCase() < other.address.toLowerCase()
+    },
+    wrapped: {} as Token,
+    getAddress: function(): string {
+      return this.address
+    }
+  }
+}
 
 export function useTokens() {
   const { chainId, account } = useActiveWeb3React()
@@ -17,6 +39,7 @@ export function useTokens() {
       setLoading(true)
       try {
         const tokens = await getTokenList(chainId)
+        console.log('Fetched tokens:', tokens)
         setTokenList(tokens)
       } catch (error) {
         console.error('Failed to fetch tokens:', error)
@@ -36,6 +59,7 @@ export function useTokens() {
       try {
         const tokenAddresses = tokenList.map(token => token.address)
         const balances = await getTokenBalances(chainId, account, tokenAddresses)
+        console.log('Fetched balances:', balances)
         setBalances(balances)
       } catch (error) {
         console.error('Failed to fetch balances:', error)
@@ -49,15 +73,31 @@ export function useTokens() {
   }, [chainId, account, tokenList])
 
   const tokens = useMemo(() => {
-    return [
-      NATIVE_TOKEN,
-      ...tokenList.map(tokenInfo => {
-        const token = createToken(tokenInfo)
-        const balance = balances[token.address]
-        if (balance) {
-          token.balance = CurrencyAmount.fromRaw(token, balance)
+    const nativeToken = {
+      ...NATIVE_TOKEN,
+      balance: balances[NATIVE_TOKEN.getAddress()] 
+        ? CurrencyAmount.fromRaw(NATIVE_TOKEN, balances[NATIVE_TOKEN.getAddress()])
+        : undefined
+    }
+
+    const tokenObjects = tokenList.map(tokenInfo => {
+      const token = createToken(tokenInfo)
+      const balance = balances[token.address]
+      if (balance) {
+        return {
+          ...token,
+          balance: CurrencyAmount.fromRaw(token, balance)
         }
-        return token
+      }
+      return token
+    })
+
+    // Sort tokens: Native token first, then by symbol
+    return [
+      nativeToken,
+      ...tokenObjects.sort((a, b) => {
+        if (!a.symbol || !b.symbol) return 0
+        return a.symbol.localeCompare(b.symbol)
       })
     ]
   }, [tokenList, balances])
@@ -65,8 +105,9 @@ export function useTokens() {
   const getBalance = (currency: Currency | undefined) => {
     if (!currency) return undefined
     if (currency.isNative) {
-      // Native token balance would be handled separately
-      return undefined
+      return balances[currency.getAddress()] 
+        ? CurrencyAmount.fromRaw(currency, balances[currency.getAddress()])
+        : undefined
     }
     const balance = balances[currency.getAddress()]
     if (!balance) return undefined
