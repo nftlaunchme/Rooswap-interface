@@ -11,16 +11,27 @@ const DEFAULT_REFERRER_FEE = '0.01'
 // Default referrer address
 const DEFAULT_REFERRER = '0x0000000000000000000000000000000000000000'
 
-// Thresholds for route validation
-const MAX_PRICE_IMPACT = 15 // 15%
-const MIN_OUTPUT_USD = 0.001 // $0.001
-const MIN_LIQUIDITY_USD = 1000 // $1k
+// Maximum acceptable price impact for different trade sizes
+const PRICE_IMPACT_THRESHOLDS = {
+  SMALL: { maxUSD: 1000, maxImpact: 5 },    // Up to $1k, max 5% impact
+  MEDIUM: { maxUSD: 10000, maxImpact: 10 }, // Up to $10k, max 10% impact
+  LARGE: { maxUSD: 50000, maxImpact: 15 },  // Up to $50k, max 15% impact
+  HUGE: { maxUSD: Infinity, maxImpact: 20 } // Above $50k, max 20% impact
+}
 
 function getTokenAddress(currency: Currency): string {
   if (currency.isNative) {
     return '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
   }
   return currency.wrapped.address
+}
+
+function getMaxAcceptablePriceImpact(amountUsd: string): number {
+  const amount = parseFloat(amountUsd)
+  for (const { maxUSD, maxImpact } of Object.values(PRICE_IMPACT_THRESHOLDS)) {
+    if (amount <= maxUSD) return maxImpact
+  }
+  return PRICE_IMPACT_THRESHOLDS.HUGE.maxImpact
 }
 
 function isValidRoute(quote: OpenOceanQuote): boolean {
@@ -30,29 +41,26 @@ function isValidRoute(quote: OpenOceanQuote): boolean {
     inputUsd: '$' + quote.amountInUsd,
   })
 
-  // Skip if price impact is too high
-  if (parseFloat(quote.priceImpact) > MAX_PRICE_IMPACT) {
-    console.log(`Route rejected: Price impact too high (${quote.priceImpact}% > ${MAX_PRICE_IMPACT}%)`)
+  // Get max acceptable price impact based on trade size
+  const maxPriceImpact = getMaxAcceptablePriceImpact(quote.amountInUsd)
+  const priceImpact = parseFloat(quote.priceImpact)
+
+  // Skip if price impact is too high for trade size
+  if (priceImpact > maxPriceImpact) {
+    console.log(`Route rejected: Price impact too high for trade size (${priceImpact}% > ${maxPriceImpact}%)`)
     return false
   }
 
-  // Skip if output amount is too small
-  if (parseFloat(quote.amountOutUsd) < MIN_OUTPUT_USD) {
-    console.log(`Route rejected: Output too small ($${quote.amountOutUsd} < $${MIN_OUTPUT_USD})`)
-    return false
-  }
-
-  // Calculate implied liquidity
-  const impliedLiquidity = Math.sqrt(parseFloat(quote.amountInUsd || '0') * parseFloat(quote.amountOutUsd || '0')) * 100
-  if (impliedLiquidity < MIN_LIQUIDITY_USD) {
-    console.log(`Route rejected: Low liquidity ($${impliedLiquidity.toFixed(2)} < $${MIN_LIQUIDITY_USD})`)
-    return false
+  // For very small trades, any route is acceptable if impact is reasonable
+  if (parseFloat(quote.amountInUsd) < 10) {
+    return priceImpact <= maxPriceImpact
   }
 
   console.log('Route accepted:', {
     priceImpact: quote.priceImpact + '%',
+    maxAcceptableImpact: maxPriceImpact + '%',
     outputUsd: '$' + quote.amountOutUsd,
-    impliedLiquidity: '$' + impliedLiquidity.toFixed(2),
+    inputUsd: '$' + quote.amountInUsd,
   })
 
   return true
@@ -247,8 +255,12 @@ export async function getOpenOceanQuote(
         }
       })
 
-      // Use direct route if it's better
-      if (directNet.gt(openOceanNet)) {
+      // Calculate percentage difference
+      const difference = openOceanNet.sub(directNet).mul(10000).div(directNet)
+      console.log(`OpenOcean route is ${difference.toNumber() / 100}% better/worse than direct route`)
+
+      // Use direct route if it's better or very close (within 0.1%)
+      if (directNet.gt(openOceanNet) || difference.abs().lt(10)) {
         const directQuote = {
           inAmount: amount.raw.toString(),
           outAmount: bestDirectQuote.outAmount,
