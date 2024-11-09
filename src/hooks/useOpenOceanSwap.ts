@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
+import { ethers } from 'ethers'
 import { Currency, CurrencyAmount } from '../types/currency'
 import { OpenOceanQuote } from '../types/openocean'
 import { getOpenOceanQuote, getOpenOceanSwapData } from '../services/openocean'
 import { useActiveWeb3React } from '../hooks'
+import { useEthersProvider } from './useEthersProvider'
 
 export function useOpenOceanQuote(
   currencyIn: Currency | undefined,
@@ -72,10 +74,19 @@ export function useOpenOceanSwapCallback(
   recipient: string | null,
 ) {
   const { chainId, account } = useActiveWeb3React()
+  const provider = useEthersProvider({ chainId })
   const [error, setError] = useState<string>()
 
   const swap = useCallback(async () => {
-    if (!chainId || !account || !currencyIn || !currencyOut || !parsedAmount) {
+    if (!chainId || !account || !currencyIn || !currencyOut || !parsedAmount || !provider) {
+      console.error('Missing dependencies:', {
+        chainId,
+        account,
+        currencyIn: currencyIn?.symbol,
+        currencyOut: currencyOut?.symbol,
+        parsedAmount: parsedAmount?.toExact(),
+        provider: !!provider,
+      })
       throw new Error('Missing dependencies')
     }
 
@@ -91,16 +102,62 @@ export function useOpenOceanSwapCallback(
         recipient,
       )
 
-      // Here you would typically send the transaction using web3
-      console.log('Swap data:', swapData)
+      // Log the swap data for debugging
+      console.log('Sending transaction:', {
+        from: account,
+        to: swapData.to,
+        value: swapData.value,
+        gasPrice: swapData.gasPrice,
+        data: swapData.data.slice(0, 66) + '...' // Log first 66 chars of data
+      })
+
+      // Send the transaction
+      const signer = provider.getSigner(account)
+
+      // Estimate gas first
+      const gasEstimate = await signer.estimateGas({
+        from: account,
+        to: swapData.to,
+        data: swapData.data,
+        value: ethers.BigNumber.from(swapData.value),
+      })
+
+      // Add 20% buffer to gas estimate
+      const gasLimit = gasEstimate.mul(120).div(100)
+
+      // Send transaction with estimated gas limit
+      const tx = await signer.sendTransaction({
+        from: account,
+        to: swapData.to,
+        data: swapData.data,
+        value: ethers.BigNumber.from(swapData.value),
+        gasPrice: ethers.BigNumber.from(swapData.gasPrice),
+        gasLimit,
+      })
+
+      console.log('Transaction sent:', tx.hash)
       
-      return swapData
-    } catch (error) {
+      // Wait for transaction to be mined
+      const receipt = await tx.wait()
+      console.log('Transaction confirmed:', receipt)
+
+      return receipt
+    } catch (error: any) {
       console.error('Swap error:', error)
-      setError(error.message || 'Failed to swap')
-      throw error
+      let errorMessage = 'Transaction failed'
+
+      if (error.code === 'INSUFFICIENT_FUNDS') {
+        errorMessage = 'Insufficient funds for gas'
+      } else if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+        errorMessage = 'Unable to estimate gas'
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
+      setError(errorMessage)
+      throw new Error(errorMessage)
     }
-  }, [chainId, account, currencyIn, currencyOut, parsedAmount, slippage, recipient])
+  }, [chainId, account, provider, currencyIn, currencyOut, parsedAmount, slippage, recipient])
 
   return {
     swap,

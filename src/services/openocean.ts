@@ -31,7 +31,12 @@ interface OpenOceanTokenListResponse {
 
 interface OpenOceanBalanceResponse {
   code: number
-  data: { [address: string]: { balance: string } }
+  data: Array<{
+    symbol: string
+    tokenAddress: string
+    balance: number
+    raw: string
+  }>
 }
 
 export async function getTokenList(chainId: number): Promise<TokenInfo[]> {
@@ -74,7 +79,7 @@ export async function getTokenBalances(
     })
 
     const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/getBalance?${params}`)
-    const data = await response.json()
+    const data = await response.json() as OpenOceanBalanceResponse
 
     console.log('OpenOcean balance response:', data)
 
@@ -84,8 +89,10 @@ export async function getTokenBalances(
 
     // Convert the response to our expected format
     const balances: { [address: string]: string } = {}
-    data.data.forEach((token: any) => {
-      balances[token.tokenAddress.toLowerCase()] = token.raw.toString()
+    data.data.forEach(token => {
+      if (token.tokenAddress) {
+        balances[token.tokenAddress.toLowerCase()] = token.raw
+      }
     })
 
     return balances
@@ -162,6 +169,20 @@ export async function getOpenOceanQuote(
   }
 }
 
+async function getGasPrice(chainId: number): Promise<string> {
+  try {
+    const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/gasPrice`)
+    const data = await response.json()
+    if (data.code === 200 && data.data) {
+      return data.data.standard || '5000000000' // Default to 5 gwei if no gas price
+    }
+    return '5000000000'
+  } catch (error) {
+    console.error('Failed to fetch gas price:', error)
+    return '5000000000'
+  }
+}
+
 export async function getOpenOceanSwapData(
   chainId: number,
   currencyIn: Currency,
@@ -176,6 +197,7 @@ export async function getOpenOceanSwapData(
     const inTokenAddress = getTokenAddress(currencyIn)
     const outTokenAddress = getTokenAddress(currencyOut)
     const inAmount = amount.toExact()
+    const gasPrice = await getGasPrice(chainId)
 
     console.log('Getting OpenOcean swap data with params:', {
       chainId,
@@ -185,19 +207,22 @@ export async function getOpenOceanSwapData(
       slippage,
       account,
       recipient: effectiveRecipient,
+      gasPrice,
     })
 
     const params = new URLSearchParams({
       inTokenAddress,
       outTokenAddress,
       amount: inAmount,
-      gasPrice: '5', // 5 gwei
+      gasPrice,
       slippage: slippage.toString(),
       account,
       recipient: effectiveRecipient,
       chainId: chainId.toString(),
       referrer: '0x0000000000000000000000000000000000000000',
-      referrerFee: '0',
+      referrerFee: '0.01', // Minimum required fee
+      disabledDexIds: '', // Allow all DEXes
+      enabledDexIds: '', // Allow all DEXes
     })
 
     const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/swap_quote?${params}`)
@@ -205,15 +230,31 @@ export async function getOpenOceanSwapData(
 
     console.log('OpenOcean swap data response:', data)
 
-    if (data.code !== 200 || !data.data) {
-      throw new Error(data.message || 'Failed to get swap data')
+    if (!data || data.code !== 200 || !data.data) {
+      console.error('Invalid swap data response:', data)
+      throw new Error(data?.message || 'Failed to get swap data')
     }
 
-    return {
-      data: data.data.data || '',
-      to: data.data.to || '',
+    // Verify required fields are present
+    if (!data.data.to || !data.data.data) {
+      console.error('Missing required fields in swap data:', data.data)
+      throw new Error('Invalid swap data response')
+    }
+
+    // Log the swap data for debugging
+    console.log('Parsed swap data:', {
+      to: data.data.to,
       value: data.data.value || '0',
-      gasPrice: data.data.gasPrice || '5000000000',
+      gasPrice: data.data.gasPrice || gasPrice,
+      estimatedGas: data.data.estimatedGas,
+      data: data.data.data.slice(0, 66) + '...' // Log first 66 chars of data
+    })
+
+    return {
+      data: data.data.data,
+      to: data.data.to,
+      value: data.data.value || '0',
+      gasPrice: data.data.gasPrice || gasPrice,
     }
   } catch (error) {
     console.error('OpenOcean swap data error:', error)
