@@ -12,9 +12,9 @@ const DEFAULT_REFERRER_FEE = '0.01'
 const DEFAULT_REFERRER = '0x0000000000000000000000000000000000000000'
 
 // Thresholds for route validation
-const MAX_PRICE_IMPACT = 10 // 10%
-const MIN_OUTPUT_USD = 0.01 // $0.01
-const MIN_LIQUIDITY_USD = 10000 // $10k
+const MAX_PRICE_IMPACT = 15 // 15%
+const MIN_OUTPUT_USD = 0.001 // $0.001
+const MIN_LIQUIDITY_USD = 1000 // $1k
 
 function getTokenAddress(currency: Currency): string {
   if (currency.isNative) {
@@ -24,24 +24,36 @@ function getTokenAddress(currency: Currency): string {
 }
 
 function isValidRoute(quote: OpenOceanQuote): boolean {
-  // Check price impact
+  console.log('Validating route:', {
+    priceImpact: quote.priceImpact + '%',
+    outputUsd: '$' + quote.amountOutUsd,
+    inputUsd: '$' + quote.amountInUsd,
+  })
+
+  // Skip if price impact is too high
   if (parseFloat(quote.priceImpact) > MAX_PRICE_IMPACT) {
-    console.log(`Skipping route due to high price impact: ${quote.priceImpact}%`)
+    console.log(`Route rejected: Price impact too high (${quote.priceImpact}% > ${MAX_PRICE_IMPACT}%)`)
     return false
   }
 
-  // Check output value
+  // Skip if output amount is too small
   if (parseFloat(quote.amountOutUsd) < MIN_OUTPUT_USD) {
-    console.log(`Skipping route due to small output value: $${quote.amountOutUsd}`)
+    console.log(`Route rejected: Output too small ($${quote.amountOutUsd} < $${MIN_OUTPUT_USD})`)
     return false
   }
 
   // Calculate implied liquidity
-  const impliedLiquidity = Math.sqrt(parseFloat(quote.amountInUsd) * parseFloat(quote.amountOutUsd)) * 100
+  const impliedLiquidity = Math.sqrt(parseFloat(quote.amountInUsd || '0') * parseFloat(quote.amountOutUsd || '0')) * 100
   if (impliedLiquidity < MIN_LIQUIDITY_USD) {
-    console.log(`Skipping route due to low liquidity: $${impliedLiquidity.toFixed(2)}`)
+    console.log(`Route rejected: Low liquidity ($${impliedLiquidity.toFixed(2)} < $${MIN_LIQUIDITY_USD})`)
     return false
   }
+
+  console.log('Route accepted:', {
+    priceImpact: quote.priceImpact + '%',
+    outputUsd: '$' + quote.amountOutUsd,
+    impliedLiquidity: '$' + impliedLiquidity.toFixed(2),
+  })
 
   return true
 }
@@ -237,15 +249,15 @@ export async function getOpenOceanQuote(
 
       // Use direct route if it's better
       if (directNet.gt(openOceanNet)) {
-        return {
+        const directQuote = {
           inAmount: amount.raw.toString(),
           outAmount: bestDirectQuote.outAmount,
-          price: '0',
-          priceImpact: '0',
+          price: openOceanQuote.price,
+          priceImpact: '0', // Direct routes don't calculate price impact
           gasPrice: gasPrice.toString(),
-          gasUsd: '0',
-          amountInUsd: '0',
-          amountOutUsd: '0',
+          gasUsd: openOceanQuote.gasUsd,
+          amountInUsd: openOceanQuote.amountInUsd,
+          amountOutUsd: openOceanQuote.amountOutUsd,
           route: [JSON.stringify({
             dexId: bestDirectQuote.dex,
             dexName: bestDirectQuote.dex,
@@ -254,6 +266,14 @@ export async function getOpenOceanQuote(
           routerAddress: bestDirectQuote.routerAddress,
           estimatedGas: bestDirectQuote.gasEstimate,
         }
+
+        // Validate the direct route
+        if (!isValidRoute(directQuote)) {
+          console.log('Direct route failed validation, falling back to OpenOcean route')
+          return openOceanQuote
+        }
+
+        return directQuote
       }
     }
 
@@ -265,7 +285,7 @@ export async function getOpenOceanQuote(
     // If only direct route is available
     if (bestDirectQuote) {
       const gasPrice = await getGasPrice(chainId)
-      return {
+      const directQuote = {
         inAmount: amount.raw.toString(),
         outAmount: bestDirectQuote.outAmount,
         price: '0',
@@ -282,6 +302,13 @@ export async function getOpenOceanQuote(
         routerAddress: bestDirectQuote.routerAddress,
         estimatedGas: bestDirectQuote.gasEstimate,
       }
+
+      // Validate the direct route
+      if (!isValidRoute(directQuote)) {
+        throw new Error('No valid routes available')
+      }
+
+      return directQuote
     }
 
     throw new Error('No valid routes found')
