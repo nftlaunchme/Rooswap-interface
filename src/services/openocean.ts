@@ -21,11 +21,20 @@ export interface TokenInfo {
   logoURI?: string
 }
 
+interface OpenOceanTokenListResponse {
+  code: number
+  data: TokenInfo[]
+}
+
+interface OpenOceanBalanceResponse {
+  code: number
+  data: { [address: string]: { balance: string } }
+}
+
 export async function getTokenList(chainId: number): Promise<TokenInfo[]> {
   try {
-    // Use the correct OpenOcean token list endpoint for Cronos
-    const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/tokenList`)
-    const data = await response.json()
+    const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/token/list`)
+    const data = await response.json() as OpenOceanTokenListResponse
 
     console.log('OpenOcean token list response:', data)
 
@@ -33,12 +42,11 @@ export async function getTokenList(chainId: number): Promise<TokenInfo[]> {
       throw new Error('Failed to get token list')
     }
 
-    // Map the response to our TokenInfo format
-    return data.data.map((token: any) => ({
+    return data.data.map((token: TokenInfo) => ({
       address: token.address,
       symbol: token.symbol,
       name: token.name,
-      decimals: parseInt(token.decimals),
+      decimals: token.decimals,
       chainId,
       logoURI: token.logoURI,
     }))
@@ -57,10 +65,10 @@ export async function getTokenBalances(
     const params = new URLSearchParams({
       account,
       chainId: chainId.toString(),
-      tokens: tokens.join(','),
+      inTokenAddress: tokens.join(','),
     })
 
-    const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/balance?${params}`)
+    const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/getBalance?${params}`)
     const data = await response.json()
 
     console.log('OpenOcean balance response:', data)
@@ -71,8 +79,8 @@ export async function getTokenBalances(
 
     // Convert the response to our expected format
     const balances: { [address: string]: string } = {}
-    Object.entries(data.data).forEach(([address, balance]) => {
-      balances[address.toLowerCase()] = balance.toString()
+    data.data.forEach((token: any) => {
+      balances[token.tokenAddress.toLowerCase()] = token.raw.toString()
     })
 
     return balances
@@ -93,23 +101,24 @@ export async function getOpenOceanQuote(
     const inTokenAddress = getTokenAddress(currencyIn)
     const outTokenAddress = getTokenAddress(currencyOut)
 
+    // Convert to decimal format without decimals as per API docs
+    const inAmount = amount.toExact()
+
     console.log('Getting OpenOcean quote with params:', {
       chainId,
       inTokenAddress,
       outTokenAddress,
-      amount: amount.raw,
-      slippage: slippage / 100,
+      amount: inAmount,
+      slippage,
     })
 
     const params = new URLSearchParams({
       inTokenAddress,
       outTokenAddress,
-      amount: amount.raw,
-      gasPrice: '5000000000000', // 5000 gwei for Cronos
-      slippage: (slippage / 100).toString(),
+      amount: inAmount,
+      gasPrice: '5', // 5 gwei
+      slippage: slippage.toString(),
       chainId: chainId.toString(),
-      referrer: '0x0000000000000000000000000000000000000000',
-      referrerFee: '0',
     })
 
     const response = await fetch(`${OPENOCEAN_API_URL}/${chainId}/quote?${params}`)
@@ -121,18 +130,24 @@ export async function getOpenOceanQuote(
       throw new Error(data.message || 'Failed to get quote')
     }
 
-    // Use the price directly from the API
-    const price = data.data.price || '0'
+    // Get the raw amounts with decimals
+    const inAmountRaw = data.data.inAmount
+    const outAmountRaw = data.data.outAmount
+
+    // Calculate price using the token volumes from the API
+    const inVolume = Number(data.data.inToken.volume)
+    const outVolume = Number(data.data.outToken.volume)
+    const price = (outVolume / inVolume).toString()
 
     return {
-      inAmount: data.data.inAmount || amount.raw,
-      outAmount: data.data.outAmount || '0',
+      inAmount: inAmountRaw,
+      outAmount: outAmountRaw,
       price,
-      priceImpact: data.data.priceImpact || '0',
-      gasPrice: data.data.gasPrice || '5000000000000',
+      priceImpact: data.data.price_impact?.replace('%', '') || '0',
+      gasPrice: data.data.gasPrice || '5000000000',
       gasUsd: data.data.gasUsd || '0',
-      amountInUsd: data.data.inUSD || '0',
-      amountOutUsd: data.data.outUSD || '0',
+      amountInUsd: (inVolume * Number(data.data.inToken.usd)).toString(),
+      amountOutUsd: (outVolume * Number(data.data.outToken.usd)).toString(),
       route: data.data.path || [],
       routerAddress: data.data.to || '',
     }
@@ -155,13 +170,14 @@ export async function getOpenOceanSwapData(
     const effectiveRecipient = recipient || account
     const inTokenAddress = getTokenAddress(currencyIn)
     const outTokenAddress = getTokenAddress(currencyOut)
+    const inAmount = amount.toExact()
 
     console.log('Getting OpenOcean swap data with params:', {
       chainId,
       inTokenAddress,
       outTokenAddress,
-      amount: amount.raw,
-      slippage: slippage / 100,
+      amount: inAmount,
+      slippage,
       account,
       recipient: effectiveRecipient,
     })
@@ -169,9 +185,9 @@ export async function getOpenOceanSwapData(
     const params = new URLSearchParams({
       inTokenAddress,
       outTokenAddress,
-      amount: amount.raw,
-      gasPrice: '5000000000000', // 5000 gwei for Cronos
-      slippage: (slippage / 100).toString(),
+      amount: inAmount,
+      gasPrice: '5', // 5 gwei
+      slippage: slippage.toString(),
       account,
       recipient: effectiveRecipient,
       chainId: chainId.toString(),
@@ -192,7 +208,7 @@ export async function getOpenOceanSwapData(
       data: data.data.data || '',
       to: data.data.to || '',
       value: data.data.value || '0',
-      gasPrice: data.data.gasPrice || '5000000000000',
+      gasPrice: data.data.gasPrice || '5000000000',
     }
   } catch (error) {
     console.error('OpenOcean swap data error:', error)
