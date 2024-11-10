@@ -1,8 +1,8 @@
 import { rgba } from 'polished'
-import React, { useState } from 'react'
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { Flex, Text } from 'rebass'
 import styled from 'styled-components'
-
+import { useActiveWeb3React } from '../../hooks'
 import { Currency, CurrencyAmount } from '../../types/currency'
 import { InputCurrencyPanelProps } from './types'
 import useTheme from 'hooks/useTheme'
@@ -79,13 +79,32 @@ const BalanceRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
+  color: ${({ theme }) => theme.text};
+`
+
+const BalanceText = styled(Text)`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`
+
+const BalanceLabel = styled.span`
   color: ${({ theme }) => theme.subText};
 `
 
-const MaxButton = styled.button`
-  padding: 2px 8px;
+const BalanceAmount = styled.span`
+  color: ${({ theme }) => theme.text};
+`
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 8px;
+`
+
+const AmountButton = styled.button`
+  padding: 4px 8px;
   background: ${({ theme }) => rgba(theme.primary, 0.2)};
   border: none;
   border-radius: 12px;
@@ -98,6 +117,11 @@ const MaxButton = styled.button`
   :hover {
     background: ${({ theme }) => rgba(theme.primary, 0.4)};
   }
+
+  :disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `
 
 const InputCurrencyPanel: React.FC<InputCurrencyPanelProps> = ({
@@ -105,18 +129,62 @@ const InputCurrencyPanel: React.FC<InputCurrencyPanelProps> = ({
   setTypedValue,
   currencyIn,
   currencyOut,
-  balanceIn,
   onChangeCurrencyIn,
   customChainId,
 }) => {
   const theme = useTheme()
+  const { account } = useActiveWeb3React()
   const [showTokenSelector, setShowTokenSelector] = useState(false)
+  const [balance, setBalance] = useState<string>()
 
-  const handleMax = () => {
-    if (balanceIn) {
-      setTypedValue(balanceIn.toExact())
+  // Fetch balance directly from OpenOcean API
+  useEffect(() => {
+    if (!account || !currencyIn) return
+
+    const fetchBalance = async () => {
+      try {
+        const tokenAddress = currencyIn.isNative ? 
+          '0x0000000000000000000000000000000000000000' : 
+          currencyIn.wrapped.address
+
+        const params = new URLSearchParams({
+          account,
+          inTokenAddress: tokenAddress,
+        })
+
+        const response = await fetch(`https://open-api.openocean.finance/v3/cronos/getBalance?${params}`)
+        const data = await response.json()
+
+        if (data.code === 200 && data.data && data.data[0]) {
+          setBalance(data.data[0].raw)
+        }
+      } catch (error) {
+        console.error('Failed to fetch balance:', error)
+      }
     }
-  }
+
+    fetchBalance()
+    const interval = setInterval(fetchBalance, 10000)
+    return () => clearInterval(interval)
+  }, [account, currencyIn])
+
+  const formattedBalance = useMemo(() => {
+    if (!balance || !currencyIn) return undefined
+    return CurrencyAmount.fromRaw(currencyIn, balance)
+  }, [balance, currencyIn])
+
+  const handleMax = useCallback(() => {
+    if (formattedBalance) {
+      setTypedValue(formattedBalance.toSignificant(6))
+    }
+  }, [formattedBalance, setTypedValue])
+
+  const handleHalf = useCallback(() => {
+    if (formattedBalance) {
+      const half = parseFloat(formattedBalance.toExact()) / 2
+      setTypedValue(half.toString())
+    }
+  }, [formattedBalance, setTypedValue])
 
   return (
     <>
@@ -137,10 +205,20 @@ const InputCurrencyPanel: React.FC<InputCurrencyPanelProps> = ({
           <StyledInput
             type="text"
             value={typedValue}
-            onChange={(e) => setTypedValue(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value
+              if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                setTypedValue(value)
+              }
+            }}
             placeholder="0.0"
             pattern="^[0-9]*[.,]?[0-9]*$"
             inputMode="decimal"
+            autoComplete="off"
+            autoCorrect="off"
+            minLength={1}
+            maxLength={79}
+            spellCheck="false"
           />
           <TokenButton 
             hasToken={!!currencyIn} 
@@ -151,11 +229,22 @@ const InputCurrencyPanel: React.FC<InputCurrencyPanelProps> = ({
         </InputRow>
 
         <BalanceRow>
-          {balanceIn && (
-            <>
-              <Text>Balance: {balanceIn.toExact()} {currencyIn?.symbol}</Text>
-              <MaxButton onClick={handleMax}>MAX</MaxButton>
-            </>
+          <BalanceText>
+            <BalanceLabel>Balance:</BalanceLabel>
+            {formattedBalance ? (
+              <BalanceAmount>
+                {formattedBalance.toSignificant(6)} {currencyIn?.symbol}
+              </BalanceAmount>
+            ) : (
+              <BalanceAmount>-</BalanceAmount>
+            )}
+          </BalanceText>
+          
+          {formattedBalance && parseFloat(formattedBalance.toExact()) > 0 && (
+            <ButtonGroup>
+              <AmountButton onClick={handleHalf}>HALF</AmountButton>
+              <AmountButton onClick={handleMax}>MAX</AmountButton>
+            </ButtonGroup>
           )}
         </BalanceRow>
       </InputPanelWrapper>
