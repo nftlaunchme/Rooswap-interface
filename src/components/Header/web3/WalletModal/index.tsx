@@ -6,6 +6,7 @@ import { ChevronLeft } from 'react-feather'
 import { Text } from 'rebass'
 import styled from 'styled-components'
 import { useConnect } from 'wagmi'
+import { useAppKit } from '@reown/appkit/react'
 
 import { ReactComponent as Close } from 'assets/images/x.svg'
 import Modal from 'components/Modal'
@@ -25,6 +26,7 @@ import {
 } from 'state/application/hooks'
 import { useIsAcceptedTerm } from 'state/user/hooks'
 import { ExternalLink } from 'theme'
+import { CONNECTION } from 'components/Web3Provider'
 
 import Option from './Option'
 import { useOrderedConnections } from './useConnections'
@@ -104,6 +106,7 @@ const HoverText = styled.div`
 
 export default function WalletModal() {
   const { isWrongNetwork, account } = useActiveWeb3React()
+  const { open: openAppKit } = useAppKit()
 
   const theme = useTheme()
 
@@ -120,6 +123,7 @@ export default function WalletModal() {
   }
 
   const [isAcceptedTerm, setIsAcceptedTerm] = useIsAcceptedTerm()
+  const [isChecked, setIsChecked] = useState(!!isAcceptedTerm)
 
   const { mixpanelHandler } = useMixpanel()
 
@@ -132,6 +136,22 @@ export default function WalletModal() {
   const connectors = useOrderedConnections()
 
   const [isPinnedPopupWallet, setPinnedPopupWallet] = useState(false)
+
+  const handleTermsCheck = () => {
+    const newValue = !isChecked
+    setIsChecked(newValue)
+    if (!isAcceptedTerm && newValue) {
+      mixpanelHandler(MIXPANEL_TYPE.WALLET_CONNECT_ACCEPT_TERM_CLICK)
+    }
+    setIsAcceptedTerm(newValue)
+  }
+
+  const handleWalletClick = (connector: any) => {
+    if (connector.id === CONNECTION.WALLET_CONNECT_CONNECTOR_ID) {
+      closeWalletModal()
+      openAppKit()
+    }
+  }
 
   function getModalContent() {
     return (
@@ -160,17 +180,11 @@ export default function WalletModal() {
           </CloseIcon>
         </RowBetween>
         {isIdle && (
-          <TermAndCondition
-            onClick={() => {
-              if (!isAcceptedTerm) {
-                mixpanelHandler(MIXPANEL_TYPE.WALLET_CONNECT_ACCEPT_TERM_CLICK)
-              }
-              setIsAcceptedTerm(!isAcceptedTerm)
-            }}
-          >
+          <TermAndCondition onClick={handleTermsCheck}>
             <input
               type="checkbox"
-              checked={isAcceptedTerm}
+              checked={isChecked}
+              onChange={handleTermsCheck}
               data-testid="accept-term"
               style={{ marginRight: '12px', height: '14px', width: '14px', minWidth: '14px', cursor: 'pointer' }}
             />
@@ -193,7 +207,7 @@ export default function WalletModal() {
         <ContentWrapper>
           <OptionGrid>
             {connectors.map(c => (
-              <Option connector={c} key={c.uid} />
+              <Option connector={c} key={c.uid} onClick={() => handleWalletClick(c)} />
             ))}
           </OptionGrid>
         </ContentWrapper>
@@ -220,17 +234,8 @@ export default function WalletModal() {
       minHeight={false}
       maxHeight={90}
       maxWidth={600}
-      bypassScrollLock={
-        true
-        //isSomeOptionPending
-        //&& activationState.connection.type === ConnectionType.WALLET_CONNECT_V2
-      }
-      bypassFocusLock={
-        true
-        //isSomeOptionPending
-        //&& activationState.connection.type === ConnectionType.WALLET_CONNECT_V2
-        // walletView === WALLET_VIEWS.PENDING && ['WALLET_CONNECT', 'KRYSTAL_WC', 'BLOCTO'].includes(pendingWalletKey)
-      }
+      bypassScrollLock={true}
+      bypassFocusLock={true}
     >
       <Wrapper>{getModalContent()}</Wrapper>
     </Modal>
