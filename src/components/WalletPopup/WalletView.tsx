@@ -15,7 +15,6 @@ import AccountInfo from 'components/WalletPopup/AccountInfo'
 import MyAssets from 'components/WalletPopup/MyAssets'
 import PinButton from 'components/WalletPopup/PinButton'
 import SendToken from 'components/WalletPopup/SendToken'
-import { CONNECTOR_ICON_OVERRIDE_MAP } from 'components/Web3Provider'
 import { APP_PATHS } from 'constants/index'
 import { useActiveWeb3React, useWeb3React } from 'hooks'
 import useMixpanel, { MIXPANEL_TYPE } from 'hooks/useMixpanel'
@@ -54,20 +53,27 @@ const Wrapper = styled.div.attrs<WrapperProps>(props => ({
   'data-pinned': props.$pinned,
   'data-blur': props.$blur,
 }))<WrapperProps>`
-  width: 100%;
-  height: 100%;
+  position: fixed;
+  top: 70px;
+  right: 16px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  height: min(600px, calc(100vh - 100px));
   padding-top: 0px;
+  z-index: 100;
 
   display: flex;
 
-  border-radius: 20px 0px 0px 0px;
+  border-radius: 20px;
   background-color: ${({ theme }) => theme.tabActive};
   box-shadow: 0px 0px 12px 8px rgb(0 0 0 / 4%);
 
   overflow: hidden;
 
   &[data-pinned='true'] {
-    border-radius: 20px;
+    position: relative;
+    top: unset;
+    right: unset;
   }
 
   &[data-blur='true'] {
@@ -76,8 +82,10 @@ const Wrapper = styled.div.attrs<WrapperProps>(props => ({
   }
 
   ${({ theme }) => theme.mediaWidth.upToMedium`
-    padding-bottom: 0;
-    height: unset;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    right: unset;
   `};
 `
 
@@ -100,6 +108,17 @@ const ContentWrapper = styled.div`
   flex-direction: column;
   flex: 1 1 auto;
   gap: 14px;
+  overflow-y: auto;
+  padding: 0 20px;
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 `
 
 type Props = {
@@ -238,7 +257,6 @@ export default function WalletView({
 
   useLayoutEffect(() => {
     // handle minimal mode when width & height become small
-
     const { ResizeObserver } = window
     const node = nodeRef.current
     if (!node) {
@@ -267,8 +285,6 @@ export default function WalletView({
 
   const classNameForHandle = isPinned ? HANDLE_CLASS_NAME : ''
   const cursorForHandle = isPinned ? 'move' : undefined
-
-  const icon = CONNECTOR_ICON_OVERRIDE_MAP[connector?.id || ''] ?? connector?.icon
 
   return (
     <Wrapper ref={nodeRef} $pinned={isPinned} $blur={blurBackground}>
@@ -315,6 +331,7 @@ export default function WalletView({
               flex: '0 0 48px',
               alignItems: 'center',
               justifyContent: 'space-between',
+              padding: '0 20px',
             }}
           >
             {isShowBack ? (
@@ -331,7 +348,7 @@ export default function WalletView({
               <Flex alignItems={'center'} style={{ gap: 8 }} color={theme.subText}>
                 {walletKey && (
                   <IconWrapper>
-                    <img height={18} src={icon} alt="" />
+                    <img height={18} src={connector?.icon} alt="" />
                   </IconWrapper>
                 )}
                 <Text as="span" fontWeight="500">

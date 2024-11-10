@@ -46,6 +46,8 @@ const Wrapper = styled.div`
   margin: 0;
   padding: 0;
   width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
 `
 
 const ContentWrapper = styled.div`
@@ -78,19 +80,18 @@ const UpperSection = styled.div`
 
 const gap = '1rem'
 const OptionGrid = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: ${gap};
-  align-items: center;
-  flex-wrap: wrap;
   margin-top: 16px;
-  & > * {
-    width: calc(33.33% - ${gap} * 2 / 3);
-  }
+  padding-bottom: 20px;
 
   ${({ theme }) => theme.mediaWidth.upToSmall`
-    & > * {
-      width: calc(50% - ${gap} / 2);
-    }
+    grid-template-columns: 1fr 1fr;
+  `}
+
+  ${({ theme }) => theme.mediaWidth.upToExtraSmall`
+    grid-template-columns: 1fr;
   `}
 `
 
