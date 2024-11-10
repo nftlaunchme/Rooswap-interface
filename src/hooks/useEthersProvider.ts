@@ -2,7 +2,6 @@ import { Web3Provider } from '@ethersproject/providers'
 import { useMemo } from 'react'
 import type { Chain, Client, Transport } from 'viem'
 import { useClient, useConnectorClient } from 'wagmi'
-
 import { useAccount } from 'hooks/useAccount'
 
 const providers = new WeakMap<Client, Web3Provider>()
@@ -30,7 +29,11 @@ function clientToProvider(client?: Client<Transport, Chain>, chainId?: number) {
   if (providers?.has(client)) {
     return providers.get(client)
   } else {
-    const provider = new Web3Provider(transport, network)
+    const provider = new Web3Provider(transport, {
+      chainId: Number(network.chainId),
+      name: network.name,
+      ensAddress: network.ensAddress
+    })
     providers.set(client, provider)
     return provider
   }

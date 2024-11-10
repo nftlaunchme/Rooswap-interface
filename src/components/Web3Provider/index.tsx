@@ -10,6 +10,7 @@ import { useAppDispatch } from 'state/hooks'
 import { updateChainId } from 'state/user/actions'
 import { isSupportedChainId } from 'constants/networks'
 import { injected, walletConnect } from 'wagmi/connectors'
+import { ChainId } from 'constants/networks/chainIds'
 
 // Create QueryClient
 export const queryClient = new QueryClient()
@@ -32,52 +33,110 @@ export const CONNECTION = {
   SAFE_CONNECTOR_ID: 'safe',
 } as const
 
-// Metadata for the dApp
-const metadata = {
-  name: 'RooSwap',
-  description: 'RooSwap Interface',
-  url: window.location.origin,
-  icons: ['https://kyberswap.com/favicon.svg']
+// Icon overrides for different connectors
+export const CONNECTOR_ICON_OVERRIDE_MAP: { [key: string]: string } = {
+  [CONNECTION.METAMASK_RDNS]: '/images/wallets/metamask.png',
+  [CONNECTION.COINBASE_RDNS]: '/images/wallets/coinbase.svg',
+  [CONNECTION.DEFI_WALLET_ID]: '/images/wallets/defi.svg',
+  [CONNECTION.REOWN_ID]: '/images/wallets/reown.svg',
+  [CONNECTION.BLOCTO_ID]: '/images/wallets/blocto.svg',
+  [CONNECTION.SAFE_CONNECTOR_ID]: '/images/wallets/safe.svg'
 }
 
-// Create Wagmi Adapter with custom RPC URL for Cronos
+// Define supported chain
+const supportedChain = {
+  id: ChainId.CRONOS,
+  name: 'Cronos',
+  network: 'cronos',
+  nativeCurrency: {
+    name: 'Cronos',
+    symbol: 'CRO',
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: { http: ['https://evm.cronos.org'] },
+    public: { http: ['https://evm.cronos.org'] },
+  },
+  blockExplorers: {
+    default: { name: 'CronosScan', url: 'https://cronoscan.com' },
+  },
+  testnet: false,
+}
+
+// Helper function to get connector with ID
+export const getConnectorWithId = (id: string) => {
+  switch (id) {
+    case CONNECTION.WALLET_CONNECT_CONNECTOR_ID:
+      return walletConnect({
+        projectId,
+        showQrModal: true,
+        metadata: {
+          name: 'RooSwap',
+          description: 'RooSwap Interface',
+          url: window.location.origin,
+          icons: ['/logo.svg']
+        }
+      })
+    case CONNECTION.INJECTED_CONNECTOR_ID:
+      return injected()
+    default:
+      return injected()
+  }
+}
+
+// Create Wagmi Adapter
 const wagmiAdapter = new WagmiAdapter({
-  networks: [cronos],
+  networks: [supportedChain],
   projectId,
   ssr: true,
   transports: {
-    [cronos.id]: http('https://evm.cronos.org')
-  }
+    [ChainId.CRONOS]: http('https://evm.cronos.org')
+  },
+  connectors: [
+    injected(),
+    walletConnect({
+      projectId,
+      showQrModal: true,
+      metadata: {
+        name: 'RooSwap',
+        description: 'RooSwap Interface',
+        url: window.location.origin,
+        icons: ['/logo.svg']
+      }
+    })
+  ]
 })
 
 // Create AppKit instance
 createAppKit({
   adapters: [wagmiAdapter],
-  networks: [cronos],
+  networks: [supportedChain],
   projectId,
-  metadata,
+  metadata: {
+    name: 'RooSwap',
+    description: 'RooSwap Interface',
+    url: window.location.origin,
+    icons: ['/logo.svg']
+  },
   features: {
     analytics: true
   },
-  // Configure supported wallets
   featuredWalletIds: [
-    'reownapp', // Reown Wallet
-    'defiwallet', // DeFi Wallet
-    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96' // MetaMask
-  ],
-  // Only show our supported wallets
-  includeWalletIds: [
+    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
     'reownapp',
-    'defiwallet',
-    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96'
+    'defiwallet'
   ],
-  // Customize modal appearance
+  includeWalletIds: [
+    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
+    'reownapp',
+    'defiwallet'
+  ],
   themeMode: 'dark',
   themeVariables: {
     '--w3m-z-index': '1000',
     '--w3m-accent-color': '#31CB9E',
     '--w3m-accent-fill-color': '#222222',
-    '--w3m-background-color': '#0F0F0F',
+    '--w3m-background-color': '#0F0F0F'
   }
 })
 
@@ -92,11 +151,12 @@ export default function Web3Provider({ children }: { children: ReactNode }) {
   
   useEffect(() => {
     const unwatch = watchChainId(wagmiAdapter.wagmiConfig, {
-      onChange(chainId) {
-        if (isSupportedChainId(chainId)) {
-          dispatch(updateChainId(chainId as any))
+      onChange(chainId: number) {
+        // Only allow Cronos chain
+        if (chainId === ChainId.CRONOS) {
+          dispatch(updateChainId(chainId))
         }
-      },
+      }
     })
     return () => {
       unwatch()

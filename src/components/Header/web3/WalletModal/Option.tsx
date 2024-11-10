@@ -1,33 +1,9 @@
-import { darken } from 'polished'
 import React from 'react'
 import styled, { css } from 'styled-components'
-import { Connector, useConnect } from 'wagmi'
-
-import { useActiveWeb3React } from 'hooks'
-import { useCloseModal } from 'state/application/hooks'
-import { ApplicationModal } from 'state/application/types'
+import { Connector } from 'wagmi'
+import { useConnect } from 'wagmi'
 import { useIsAcceptedTerm } from 'state/user/hooks'
 import { CONNECTION } from 'components/Web3Provider'
-
-// Map of wallet IDs to their display names and icons
-const WALLET_DETAILS: { [key: string]: { name: string; icon: string } } = {
-  [CONNECTION.REOWN_ID]: { 
-    name: 'Reown Wallet', 
-    icon: '/swap-svgrepo-com.svg'
-  },
-  [CONNECTION.DEFI_WALLET_ID]: { 
-    name: 'DeFi Wallet', 
-    icon: '/swap-svgrepo-com.svg'
-  },
-  [CONNECTION.METAMASK_RDNS]: { 
-    name: 'MetaMask', 
-    icon: '/swap-svgrepo-com.svg'
-  },
-  [CONNECTION.WALLET_CONNECT_CONNECTOR_ID]: { 
-    name: 'WalletConnect', 
-    icon: '/swap-svgrepo-com.svg'
-  }
-}
 
 const IconWrapper = styled.div`
   display: flex;
@@ -89,7 +65,7 @@ const OptionCardClickable = styled.div<{
       installLink || isDisabled || overridden
         ? ''
         : css`
-            background-color: ${({ theme }) => darken(0.1, theme.tableHeader)};
+            background-color: ${({ theme }) => theme.buttonBlack};
             color: ${({ theme }) => theme.text} !important;
           `}
   }
@@ -118,40 +94,39 @@ interface OptionProps {
 
 const Option = ({ connector, onClick }: OptionProps) => {
   const [isAcceptedTerm] = useIsAcceptedTerm()
-  const { chainId } = useActiveWeb3React()
-  const closeWalletModal = useCloseModal(ApplicationModal.WALLET)
+  const { isPending, variables } = useConnect()
 
-  const {
-    variables,
-    isPending: isSomeOptionPending,
-    connect,
-  } = useConnect({
-    mutation: {
-      onSuccess: () => {
-        closeWalletModal()
-      },
-      onError: (error: Error) => {
-        console.log(error)
-      },
+  const isCurrentOptionPending = isPending && variables?.connector?.id === connector.id
+
+  // Map of wallet IDs to their display names and icons
+  const WALLET_DETAILS: { [key: string]: { name: string; icon: string } } = {
+    [CONNECTION.REOWN_ID]: { 
+      name: 'Reown Wallet', 
+      icon: '/images/wallets/reown.svg'
     },
-  })
-
-  const isCurrentOptionPending = isSomeOptionPending && variables.connector === connector
+    [CONNECTION.DEFI_WALLET_ID]: { 
+      name: 'DeFi Wallet', 
+      icon: '/images/wallets/defi.svg'
+    },
+    [CONNECTION.METAMASK_RDNS]: { 
+      name: 'MetaMask', 
+      icon: '/images/wallets/metamask.png'
+    },
+    [CONNECTION.WALLET_CONNECT_CONNECTOR_ID]: { 
+      name: 'WalletConnect', 
+      icon: '/images/wallets/walletconnect.svg'
+    }
+  }
 
   // Get wallet details from our map, fallback to connector's default values
   const walletDetails = WALLET_DETAILS[connector.id] || { name: connector.name, icon: connector.icon }
 
   const handleClick = () => {
     if (!isAcceptedTerm) return
-    
-    if (onClick) {
-      onClick(connector)
-    } else if (connector.id !== CONNECTION.WALLET_CONNECT_CONNECTOR_ID) {
-      connect({ connector, chainId: chainId as any })
-    }
+    if (onClick) onClick(connector)
   }
 
-  const content = (
+  return (
     <OptionCardClickable
       role="button"
       id={`connect-${walletDetails.name}`}
@@ -167,8 +142,6 @@ const Option = ({ connector, onClick }: OptionProps) => {
       </OptionCardLeft>
     </OptionCardClickable>
   )
-
-  return content
 }
 
 export default React.memo(Option)

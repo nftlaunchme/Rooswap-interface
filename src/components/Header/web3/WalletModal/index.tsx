@@ -117,7 +117,7 @@ export default function WalletModal() {
   const openWalletModal = useOpenModal(ApplicationModal.WALLET)
   const openNetworkModal = useOpenNetworkModal()
 
-  const { isPending: isSomeOptionPending, isIdle, isError, reset } = useConnect()
+  const { connect, isPending: isSomeOptionPending, isIdle, isError, reset } = useConnect()
   const onDismiss = () => {
     reset()
     closeWalletModal()
@@ -147,10 +147,19 @@ export default function WalletModal() {
     setIsAcceptedTerm(newValue)
   }
 
-  const handleWalletClick = (connector: any) => {
-    if (connector.id === CONNECTION.WALLET_CONNECT_CONNECTOR_ID) {
-      closeWalletModal()
-      openAppKit()
+  const handleWalletClick = async (connector: any) => {
+    if (!isAcceptedTerm) return
+
+    try {
+      if (connector.id === CONNECTION.WALLET_CONNECT_CONNECTOR_ID) {
+        closeWalletModal()
+        openAppKit()
+      } else {
+        await connect({ connector })
+        closeWalletModal()
+      }
+    } catch (error) {
+      console.error('Failed to connect:', error)
     }
   }
 
@@ -207,8 +216,8 @@ export default function WalletModal() {
         )}
         <ContentWrapper>
           <OptionGrid>
-            {connectors.map(c => (
-              <Option connector={c} key={c.uid} onClick={() => handleWalletClick(c)} />
+            {connectors.map((c, index) => (
+              <Option connector={c} key={`${c.uid}-${index}`} onClick={() => handleWalletClick(c)} />
             ))}
           </OptionGrid>
         </ContentWrapper>
