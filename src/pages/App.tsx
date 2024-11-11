@@ -31,6 +31,9 @@ import { isSupportLimitOrder } from 'utils'
 
 import VerifyAuth from './Verify/VerifyAuth'
 
+// Import your new components
+import RebelKanga from './Rebel-Kanga'
+
 const Login = lazy(() => import('./Oauth/Login'))
 const Logout = lazy(() => import('./Oauth/Logout'))
 const Consent = lazy(() => import('./Oauth/Consent'))
@@ -38,11 +41,9 @@ const Consent = lazy(() => import('./Oauth/Consent'))
 const ElasticSnapshot = lazy(() => import('./ElasticSnapshot'))
 const MarketOverview = lazy(() => import('./MarketOverview'))
 
-// test page for swap only through elastic
 const ElasticSwap = lazy(() => import('./ElasticSwap'))
 const SwapV3 = lazy(() => import('./SwapV3'))
 const PartnerSwap = lazy(() => import('./PartnerSwap'))
-// const Bridge = lazy(() => import('./Bridge'))
 const MyPool = lazy(() => import('./MyPool'))
 
 const PoolFinder = lazy(() => import('./PoolFinder'))
@@ -53,7 +54,7 @@ const RemoveLiquidity = lazy(() => import('pages/RemoveLiquidity'))
 const KyberDAOStakeKNC = lazy(() => import('pages/KyberDAO/StakeKNC'))
 const KyberDAOVote = lazy(() => import('pages/KyberDAO/Vote'))
 const KNCUtility = lazy(() => import('pages/KyberDAO/KNCUtility'))
-const AboutKyberSwap = lazy(() => import('pages//About/AboutKyberSwap'))
+const AboutRooswap = lazy(() => import('pages/About/AboutRooswap'))
 const AboutKNC = lazy(() => import('pages/About/AboutKNC'))
 const BuyCrypto = lazy(() => import('pages/BuyCrypto'))
 
@@ -169,7 +170,7 @@ const RoutesWithNetworkPrefix = () => {
   )
 }
 
-export default function App() {
+function App() {
   const { account, chainId, networkInfo } = useActiveWeb3React()
   const { pathname } = useLocation()
   useAutoLogin()
@@ -235,7 +236,6 @@ export default function App() {
           <BodyWrapper>
             <Popups />
             <Routes>
-              {/* From react-router-dom@6.5.0, :fromCurrency-to-:toCurrency no long works, need to manually parse the params */}
               <Route path={`${APP_PATHS.SWAP}/:network/:currency?`} element={<SwapPage />} />
               <Route path={`${APP_PATHS.PARTNER_SWAP}`} element={<PartnerSwap />} />
               {CHAINS_SUPPORT_CROSS_CHAIN.includes(chainId) && (
@@ -248,7 +248,6 @@ export default function App() {
 
               <Route path={`${APP_PATHS.FIND_POOL}`} element={<PoolFinder />} />
               <>
-                {/* My Pools Routes */}
                 <Route path={`${APP_PATHS.MY_POOLS}`} element={<RedirectWithNetworkSuffix />} />
                 <Route path={`${APP_PATHS.MY_POOLS}/:network`} element={<MyPool />} />
               </>
@@ -258,17 +257,17 @@ export default function App() {
                 {/*
                   <Route path={`${APP_PATHS.ELASTIC_CREATE_POOL}/*`} element={<RedirectWithNetworkPrefix />} />
                   <Route path={`${APP_PATHS.ELASTIC_INCREASE_LIQ}/*`} element={<RedirectWithNetworkPrefix />} />
-                  */}
+                */}
 
                 <Route path={`${APP_PATHS.ELASTIC_REMOVE_POOL}/*`} element={<RedirectWithNetworkPrefix />} />
-
                 <Route path={`${APP_PATHS.CLASSIC_REMOVE_POOL}/*`} element={<RedirectWithNetworkPrefix />} />
               </>
 
               <Route path={`${APP_PATHS.KYBERDAO_STAKE}`} element={<KyberDAOStakeKNC />} />
               <Route path={`${APP_PATHS.KYBERDAO_VOTE}`} element={<KyberDAOVote />} />
               <Route path={`${APP_PATHS.KYBERDAO_KNC_UTILITY}`} element={<KNCUtility />} />
-              <Route path={`${APP_PATHS.ABOUT}/kyberswap`} element={<AboutKyberSwap />} />
+              <Route path={`${APP_PATHS.ABOUT}/rooswap`} element={<AboutRooswap />} />
+              <Route path="/learn" element={<Navigate to={`${APP_PATHS.ABOUT}/rooswap`} replace />} />
               <Route path={`${APP_PATHS.ABOUT}/knc`} element={<AboutKNC />} />
               <Route path={`${APP_PATHS.BUY_CRYPTO}`} element={<BuyCrypto />} />
               {/* <Route path={`${APP_PATHS.BRIDGE}`} element={<Bridge />} /> */}
@@ -298,6 +297,7 @@ export default function App() {
               />
 
               <Route path={`elastic-swap`} element={<ElasticSwap />} />
+              <Route path="/rebel-kanga" element={<RebelKanga />} />
 
               <Route path={`/:network/*`} element={<RoutesWithNetworkPrefix />} />
 
@@ -324,3 +324,5 @@ export default function App() {
     </ErrorBoundary>
   )
 }
+
+export default App
