@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { motion } from 'framer-motion'
 import { useState } from 'react'

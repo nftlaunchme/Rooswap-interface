@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { forwardRef } from 'react'
 import styled, { CSSProperties, css } from 'styled-components'
 

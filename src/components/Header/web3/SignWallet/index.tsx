@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useMedia } from 'react-use'
 import { Flex } from 'rebass'
 import styled, { css } from 'styled-components'

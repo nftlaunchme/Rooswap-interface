@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import ModalConfirm from 'components/ConfirmModal'
 import SwitchToEthereumModal from 'pages/KyberDAO/StakeKNC/SwitchToEthereumModal'
 

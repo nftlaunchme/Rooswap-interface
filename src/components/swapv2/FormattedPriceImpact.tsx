@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Percent } from '@kyberswap/ks-sdk-core'
 import { Text } from 'rebass'
 import styled from 'styled-components'

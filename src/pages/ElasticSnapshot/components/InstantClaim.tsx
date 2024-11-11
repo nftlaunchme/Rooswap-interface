@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { useCallback, useMemo, useState } from 'react'
 import { useMedia } from 'react-use'

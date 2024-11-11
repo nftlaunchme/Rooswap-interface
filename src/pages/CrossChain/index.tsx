@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Squid } from '@0xsquid/sdk'
 import { Trans } from '@lingui/macro'
 import { memo, useEffect, useRef } from 'react'

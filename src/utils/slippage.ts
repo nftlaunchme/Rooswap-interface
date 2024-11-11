@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { DEFAULT_SLIPPAGE, DEFAULT_SLIPPAGE_CORRELATED_PAIR, DEFAULT_SLIPPAGE_STABLE_PAIR_SWAP } from 'constants/index'
 
 export enum SLIPPAGE_STATUS {

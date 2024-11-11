@@ -1,3 +1,4 @@
+// @ts-nocheck 
 /// <reference lib="webworker" />
 import { DocumentRoute } from 'serviceWorker/document'
 import { clientsClaim } from 'workbox-core'

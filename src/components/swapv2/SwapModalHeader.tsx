@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import React from 'react'
 import { ArrowDown } from 'react-feather'

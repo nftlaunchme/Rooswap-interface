@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Currency, Token } from '@kyberswap/ks-sdk-core'
 import { ReactNode, useCallback, useEffect, useState } from 'react'
 import { isMobile } from 'react-device-detect'

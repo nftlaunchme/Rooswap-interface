@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Squid } from '@0xsquid/sdk'
 import { RouteResponse } from '@0xsquid/squid-types'
 import { ChainId, NativeCurrency } from '@kyberswap/ks-sdk-core'

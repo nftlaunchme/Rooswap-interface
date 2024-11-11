@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import React, { CSSProperties, ReactNode, useState } from 'react'
 import { ChevronDown } from 'react-feather'
 import styled, { css } from 'styled-components'

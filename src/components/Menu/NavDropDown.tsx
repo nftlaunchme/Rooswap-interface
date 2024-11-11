@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ReactNode, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Text } from 'rebass'

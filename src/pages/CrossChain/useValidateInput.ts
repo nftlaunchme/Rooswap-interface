@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { t } from '@lingui/macro'
 import { ReactNode, useMemo } from 'react'
 

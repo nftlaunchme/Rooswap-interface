@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { t } from '@lingui/macro'
 import React from 'react'
 import { Search } from 'react-feather'

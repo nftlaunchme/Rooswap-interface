@@ -1,0 +1,22 @@
+declare module 'react-feather' {
+  export const X: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const Repeat: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const Bell: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const MoreHorizontal: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const Trash: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const ChevronLeft: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const ChevronRight: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const ArrowDown: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const ArrowUp: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const XCircle: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const AlertTriangle: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const Check: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const Plus: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const Minus: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const ExternalLink: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const Archive: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const Clock: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const HelpCircle: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const Star: React.FC<React.SVGProps<SVGSVGElement>>;
+  export const Download: React.FC<React.SVGProps<SVGSVGElement>>;
+}

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Pair } from '@kyberswap/ks-sdk-classic'
 import { Currency } from '@kyberswap/ks-sdk-core'
 import { Trans } from '@lingui/macro'

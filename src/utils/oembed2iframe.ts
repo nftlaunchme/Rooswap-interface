@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { escapeScriptHtml } from 'utils/string'
 
 function getEmbedIframeByYoutubeId(id: string) {

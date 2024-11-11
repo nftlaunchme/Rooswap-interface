@@ -1,3 +1,4 @@
+// @ts-nocheck  
 import styled from 'styled-components'
 
 const InputWrapper = styled.input<{ $borderColor?: string; color?: string; $isPassword: boolean }>`

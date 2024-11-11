@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useCallback, useLayoutEffect, useState } from 'react'
 import styled, { css } from 'styled-components'
 

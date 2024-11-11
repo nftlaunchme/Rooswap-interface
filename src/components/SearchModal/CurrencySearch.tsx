@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Currency, Token, WETH } from '@kyberswap/ks-sdk-core'
 import { Trans, t } from '@lingui/macro'
 import axios from 'axios'

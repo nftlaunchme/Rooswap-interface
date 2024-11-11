@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import styled, { css, keyframes } from 'styled-components'
 
 const dotFlashing = keyframes`

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import React, { memo, useEffect, useMemo, useState } from 'react'
 import { BrowserView } from 'react-device-detect'

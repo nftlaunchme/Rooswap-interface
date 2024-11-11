@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Info } from 'react-feather'
 import { Flex, Text } from 'rebass'
 

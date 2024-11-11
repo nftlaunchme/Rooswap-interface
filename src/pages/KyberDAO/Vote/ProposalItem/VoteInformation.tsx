@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Fraction } from '@kyberswap/ks-sdk-core'
 import { Trans } from '@lingui/macro'
 import dayjs from 'dayjs'

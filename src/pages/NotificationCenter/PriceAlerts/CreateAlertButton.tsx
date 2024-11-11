@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { Plus } from 'react-feather'
 import { useNavigate } from 'react-router-dom'

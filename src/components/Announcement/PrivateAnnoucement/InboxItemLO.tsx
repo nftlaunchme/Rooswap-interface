@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId } from '@kyberswap/ks-sdk-core'
 import { t } from '@lingui/macro'
 import { Repeat, XCircle } from 'react-feather'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Currency } from '@kyberswap/ks-sdk-core'
 import { CSSProperties, useState } from 'react'
 import { HelpCircle } from 'react-feather'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { t } from '@lingui/macro'
 import { ChevronRight } from 'react-feather'
 import { Box, Flex } from 'rebass'

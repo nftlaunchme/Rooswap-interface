@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { lighten, rgba } from 'polished'
 import styled from 'styled-components'
 

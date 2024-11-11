@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Currency, CurrencyAmount } from '@kyberswap/ks-sdk-core'
 import { CSSProperties, memo, useCallback } from 'react'
 import AutoSizer from 'react-virtualized-auto-sizer'

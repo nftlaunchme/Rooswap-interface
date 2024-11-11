@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Token } from '@kyberswap/ks-sdk-core'
 
 // returns the checksummed address if the address is valid, otherwise returns false

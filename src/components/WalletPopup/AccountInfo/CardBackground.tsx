@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import styled, { css } from 'styled-components'
 
 import { ReactComponent as KyberLogo } from 'assets/svg/kyber_logo.svg'

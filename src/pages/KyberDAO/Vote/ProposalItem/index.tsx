@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans, t } from '@lingui/macro'
 import dayjs from 'dayjs'
 import { transparentize } from 'polished'

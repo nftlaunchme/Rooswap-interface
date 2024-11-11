@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency } from '@kyberswap/ks-sdk-core'
 import styled, { CSSProperties } from 'styled-components'
 

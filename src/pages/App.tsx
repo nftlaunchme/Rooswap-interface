@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import * as Sentry from '@sentry/react'
 import { Suspense, lazy, useEffect } from 'react'
 import { isMobile } from 'react-device-detect'

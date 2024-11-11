@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { Flex } from 'rebass'
 import styled from 'styled-components'

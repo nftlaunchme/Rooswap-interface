@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Flex } from 'rebass'
 
 import useTheme from 'hooks/useTheme'

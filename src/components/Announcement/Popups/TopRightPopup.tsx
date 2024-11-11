@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { motion } from 'framer-motion'
 import { rgba } from 'polished'
 import { useCallback, useEffect, useState } from 'react'

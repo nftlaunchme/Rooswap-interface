@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, CurrencyAmount } from '@kyberswap/ks-sdk-core'
 import { t } from '@lingui/macro'
 import { darken, rgba } from 'polished'

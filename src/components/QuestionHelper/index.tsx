@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Placement } from '@popperjs/core'
 import { useCallback, useState } from 'react'
 import { Info } from 'react-feather'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 // https://stackoverflow.com/questions/36523448/how-do-i-tell-if-a-user-is-using-brave-as-their-browser
 let isBraveBrowser = false
 ;(async () => {

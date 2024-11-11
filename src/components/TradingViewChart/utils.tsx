@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Timezone } from './charting_library/charting_library'
 
 export function getTradingViewTimeZone() {

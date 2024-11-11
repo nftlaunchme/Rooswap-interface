@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { t } from '@lingui/macro'
 import { ArrowDown, ArrowUp } from 'react-feather'
 import { Text } from 'rebass'

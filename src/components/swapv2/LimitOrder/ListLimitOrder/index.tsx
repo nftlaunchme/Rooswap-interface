@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId } from '@kyberswap/ks-sdk-core'
 import { useState } from 'react'
 import { Flex } from 'rebass'

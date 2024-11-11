@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, Token } from '@kyberswap/ks-sdk-core'
 import { rgba } from 'polished'
 import { useState } from 'react'

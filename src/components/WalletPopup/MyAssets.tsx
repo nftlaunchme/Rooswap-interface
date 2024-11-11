@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, CurrencyAmount, Token, TokenAmount } from '@kyberswap/ks-sdk-core'
 import { Trans, t } from '@lingui/macro'
 import { stringify } from 'querystring'

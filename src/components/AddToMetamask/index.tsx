@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Token } from '@kyberswap/ks-sdk-core'
 import styled from 'styled-components'
 

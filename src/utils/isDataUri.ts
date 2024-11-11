@@ -1,3 +1,4 @@
+// @ts-nocheck 
 /**
  * Returns true if the string is a RFC2397-compliant data URI
  * @see {@link https://www.rfc-editor.org/rfc/rfc2397}

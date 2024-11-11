@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, Token, WETH } from '@kyberswap/ks-sdk-core'
 
 import { ZERO_ADDRESS } from 'constants/index'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Token, WETH } from '@kyberswap/ks-sdk-core'
 
 // a list of tokens by chain

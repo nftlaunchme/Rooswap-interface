@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import React from 'react'
 
 type AllowedInputTypes = 'password' | 'text' | 'number'

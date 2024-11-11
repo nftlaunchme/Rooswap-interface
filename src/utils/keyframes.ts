@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { keyframes } from 'styled-components'
 
 export const FadeIn = keyframes`

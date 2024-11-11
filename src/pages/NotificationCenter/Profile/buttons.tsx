@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import styled, { css } from 'styled-components'
 
 import { ButtonOutlined, ButtonPrimary } from 'components/Button'

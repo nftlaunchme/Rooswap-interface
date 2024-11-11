@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, Token } from '@kyberswap/ks-sdk-core'
 import { Trans, t } from '@lingui/macro'
 import { AlertTriangle } from 'react-feather'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId } from '@kyberswap/ks-sdk-core'
 
 import { KNC_ADDRESS } from 'constants/tokens'

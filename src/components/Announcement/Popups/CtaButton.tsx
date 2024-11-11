@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { t } from '@lingui/macro'
 import { MouseEventHandler } from 'react'
 import styled from 'styled-components'

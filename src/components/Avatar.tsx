@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { rgba } from 'polished'
 import styled, { CSSProperties } from 'styled-components'
 

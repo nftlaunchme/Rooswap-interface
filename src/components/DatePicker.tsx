@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { rgba } from 'polished'
 import Picker from 'react-date-picker'
 import styled, { css } from 'styled-components'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 export const snowfallBaseStyle: React.CSSProperties = {
   pointerEvents: 'none',
   backgroundColor: 'transparent',

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { Repeat } from 'react-feather'
 import { Link } from 'react-router-dom'

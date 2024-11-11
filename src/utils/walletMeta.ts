@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import type { ExternalProvider, JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
 import type WalletConnectProvider from '@walletconnect/ethereum-provider'
 

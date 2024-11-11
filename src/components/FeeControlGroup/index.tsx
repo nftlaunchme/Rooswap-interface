@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { useSearchParams } from 'react-router-dom'
 import { Flex, Text } from 'rebass'

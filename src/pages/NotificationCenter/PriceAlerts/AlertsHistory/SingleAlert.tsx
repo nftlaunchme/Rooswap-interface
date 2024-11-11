@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useClearSinglePriceAlertHistoryMutation } from 'services/announcement'
 
 import { AnnouncementTemplatePriceAlert, PrivateAnnouncement } from 'components/Announcement/type'

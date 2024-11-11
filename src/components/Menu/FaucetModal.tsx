@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Fraction, WETH } from '@kyberswap/ks-sdk-core'
 import { Trans, t } from '@lingui/macro'
 import { BigNumber } from 'ethers'

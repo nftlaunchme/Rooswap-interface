@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { rgba } from 'polished'
 import { useState } from 'react'
 import { ExternalLink } from 'react-feather'

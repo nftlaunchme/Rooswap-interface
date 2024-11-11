@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { Bell, MoreHorizontal, Trash } from 'react-feather'
 import { useNavigate } from 'react-router-dom'

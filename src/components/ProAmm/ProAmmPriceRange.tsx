@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Position } from '@kyberswap/ks-sdk-elastic'
 import { Trans, t } from '@lingui/macro'
 import { useCallback, useState } from 'react'

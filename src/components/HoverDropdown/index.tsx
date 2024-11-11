@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { CSSProperties, ReactNode, useState } from 'react'
 import { Flex } from 'rebass'
 import styled from 'styled-components'

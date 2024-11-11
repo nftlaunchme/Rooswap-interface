@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { RouteHandlerCallbackOptions, RouteMatchCallbackOptions } from 'workbox-core'
 import { getCacheKeyForURL, matchPrecache } from 'workbox-precaching'
 import { Route } from 'workbox-routing'

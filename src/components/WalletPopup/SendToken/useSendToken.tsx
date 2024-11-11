@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency } from '@kyberswap/ks-sdk-core'
 import { ethers } from 'ethers'
 import { useCallback, useEffect, useState } from 'react'

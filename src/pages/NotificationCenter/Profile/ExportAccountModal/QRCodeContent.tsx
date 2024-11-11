@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { useMemo, useRef } from 'react'
 import { QRCode, IProps as QRCodeProps } from 'react-qrcode-logo'

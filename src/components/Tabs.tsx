@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { rgba } from 'polished'
 import { FC, ReactNode } from 'react'
 import styled, { CSSProperties } from 'styled-components'

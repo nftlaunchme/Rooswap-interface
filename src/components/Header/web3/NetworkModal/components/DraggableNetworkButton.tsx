@@ -51,6 +51,8 @@ interface NetworkButtonProps {
   customToggleModal?: () => void
   onChangedNetwork?: () => void
   isDraggable?: boolean // Added for backward compatibility
+  dragConstraints?: React.RefObject<HTMLDivElement>; // New property
+  onDrag?: (x: number, y: number) => void; // New property
 }
 
 export default function NetworkButton({

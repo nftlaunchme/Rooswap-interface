@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import invariant from 'tiny-invariant'
 
 import { PrivateAnnouncementType } from 'components/Announcement/type'

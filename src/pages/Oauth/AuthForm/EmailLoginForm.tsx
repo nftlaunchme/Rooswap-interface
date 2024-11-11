@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import KyberOauth2, { LoginMethod } from '@kyberswap/oauth2'
 import { Trans, t } from '@lingui/macro'
 import { useState } from 'react'

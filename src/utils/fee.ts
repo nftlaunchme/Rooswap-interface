@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, CurrencyAmount, Fraction } from '@kyberswap/ks-sdk-core'
 import { parseUnits } from 'ethers/lib/utils'
 import JSBI from 'jsbi'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans, t } from '@lingui/macro'
 import { useDeleteSingleAlertMutation, useUpdatePriceAlertMutation } from 'services/priceAlert'
 

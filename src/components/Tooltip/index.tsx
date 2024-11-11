@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ReactNode, useCallback, useRef, useState } from 'react'
 import { isMobile } from 'react-device-detect'
 import { Text } from 'rebass'

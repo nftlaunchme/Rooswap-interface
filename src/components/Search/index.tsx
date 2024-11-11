@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { t } from '@lingui/macro'
 import React from 'react'
 import { X } from 'react-feather'

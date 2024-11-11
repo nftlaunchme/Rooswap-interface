@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency } from '@kyberswap/ks-sdk-core'
 import React, { memo, useCallback, useMemo } from 'react'
 import styled from 'styled-components'

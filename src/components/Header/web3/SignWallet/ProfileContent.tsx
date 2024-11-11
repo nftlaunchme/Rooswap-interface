@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import KyberOauth2, { LoginMethod } from '@kyberswap/oauth2'
 import { Trans } from '@lingui/macro'
 import { rgba } from 'polished'

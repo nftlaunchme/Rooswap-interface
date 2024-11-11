@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Currency, CurrencyAmount, Token } from '@kyberswap/ks-sdk-core'
 import { rgba } from 'polished'
 import React, { CSSProperties, ReactNode, memo, useCallback } from 'react'

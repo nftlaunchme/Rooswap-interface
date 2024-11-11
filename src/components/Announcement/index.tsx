@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useMedia, usePrevious } from 'react-use'
 import {

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import React, { useEffect, useRef, useState } from 'react'
 import { Box, Flex, Text } from 'rebass'

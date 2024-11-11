@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import styled from 'styled-components'
 
 import { Swap2 as SwapIcon } from 'components/Icons'

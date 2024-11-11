@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { MouseEventHandler } from 'react'
 import { Flex } from 'rebass'

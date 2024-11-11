@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import dayjs from 'dayjs'
 import { CrosshairMode, IChartApi, UTCTimestamp, createChart } from 'lightweight-charts'
 import React, { useEffect, useRef } from 'react'

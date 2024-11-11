@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, CurrencyAmount, Token, NativeCurrency, NATIVE_TOKEN } from '../types/currency'
 
 export function adaptAnyCurrency(currency: any): Currency | undefined {

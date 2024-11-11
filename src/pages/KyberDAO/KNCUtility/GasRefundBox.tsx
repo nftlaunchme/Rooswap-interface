@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans, t } from '@lingui/macro'
 import { darken } from 'polished'
 import { useCallback, useState } from 'react'

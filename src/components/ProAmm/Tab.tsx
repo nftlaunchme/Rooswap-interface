@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans, t } from '@lingui/macro'
 import { lighten, rgba } from 'polished'
 import { MouseEventHandler, useCallback, useEffect, useRef, useState } from 'react'

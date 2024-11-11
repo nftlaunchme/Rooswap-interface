@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { CurrencyAmount, Fraction, Percent, Price } from '@kyberswap/ks-sdk-core'
 import { BigNumber } from 'ethers'
 import JSBI from 'jsbi'

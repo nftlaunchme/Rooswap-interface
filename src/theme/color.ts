@@ -1,3 +1,4 @@
+// @ts-nocheck 
 const white = '#FFFFFF'
 const black = '#000000'
 

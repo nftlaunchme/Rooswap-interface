@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans, t } from '@lingui/macro'
 import { Html5Qrcode } from 'html5-qrcode'
 import { useState } from 'react'

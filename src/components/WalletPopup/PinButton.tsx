@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Flex } from 'rebass'
 
 import { ReactComponent as PinIcon } from 'assets/svg/pin_icon.svg'

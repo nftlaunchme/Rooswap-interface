@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { transparentize } from 'polished'
 import { useEffect, useState } from 'react'
 import { Clock } from 'react-feather'

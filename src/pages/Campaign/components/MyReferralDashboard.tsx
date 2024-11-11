@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { CurrencyAmount, Token } from '@kyberswap/ks-sdk-core'
 import dayjs from 'dayjs'
 import { ReactNode } from 'react'

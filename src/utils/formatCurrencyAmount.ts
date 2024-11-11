@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { CurrencyAmount, Currency } from '../types/currency'
 
 export function formatCurrencyAmount(

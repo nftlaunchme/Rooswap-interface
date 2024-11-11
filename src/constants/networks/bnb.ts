@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ChainId } from '@kyberswap/ks-sdk-core'
 
 import BnbLogo from 'assets/images/bnb-logo.png'

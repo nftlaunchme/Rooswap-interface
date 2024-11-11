@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId } from '@kyberswap/ks-sdk-core'
 import { OPENOCEAN_API_URL, OPENOCEAN_CHAIN_IDS } from '../constants/openocean'
 

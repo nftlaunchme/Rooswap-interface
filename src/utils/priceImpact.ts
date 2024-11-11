@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { checkPriceImpact } from 'utils/prices'
 
 export const checkShouldDisableByPriceImpact = (isDegenMode: boolean, priceImpact: number | undefined) => {

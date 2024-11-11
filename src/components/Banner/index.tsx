@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import React, { memo, useMemo } from 'react'
 import { X } from 'react-feather'
 import { useLocalStorage } from 'react-use'

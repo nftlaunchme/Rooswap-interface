@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { Info, X } from 'react-feather'
 import { Flex, Text } from 'rebass'

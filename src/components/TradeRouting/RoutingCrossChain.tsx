@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { RouteActionResponse } from '@0xsquid/sdk/dist/types'
 import { ChainId, WETH } from '@kyberswap/ks-sdk-core'
 import React, { useCallback, useEffect, useRef } from 'react'

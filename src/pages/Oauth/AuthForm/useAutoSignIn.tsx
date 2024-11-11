@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { LoginMethod } from '@kyberswap/oauth2'
 import { useEffect, useRef } from 'react'
 

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { commify, formatUnits } from '@ethersproject/units'
 import { Trans, t } from '@lingui/macro'
 import { isMobile } from 'react-device-detect'

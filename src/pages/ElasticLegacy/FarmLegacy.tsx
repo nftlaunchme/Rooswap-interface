@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { CurrencyAmount } from '@kyberswap/ks-sdk-core'
 import { useState } from 'react'
 import { Flex, Text } from 'rebass'

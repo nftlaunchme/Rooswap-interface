@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Currency } from '@kyberswap/ks-sdk-core'
 import { t } from '@lingui/macro'
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'

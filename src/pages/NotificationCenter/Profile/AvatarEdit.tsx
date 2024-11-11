@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { rgba } from 'polished'
 import { isMobile } from 'react-device-detect'

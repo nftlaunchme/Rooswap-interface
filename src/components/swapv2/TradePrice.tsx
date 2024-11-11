@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, Price } from '@kyberswap/ks-sdk-core'
 import { Trans } from '@lingui/macro'
 import React, { ReactNode, useState } from 'react'

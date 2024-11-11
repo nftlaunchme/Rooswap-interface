@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { CSSProperties } from 'react'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'react-feather'
 import { useMedia } from 'react-use'

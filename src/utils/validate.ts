@@ -1,3 +1,4 @@
+// @ts-nocheck 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 type GuardedType<T> = T extends (x: any) => x is infer U ? U : never

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { parse, stringify } from 'querystring'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'

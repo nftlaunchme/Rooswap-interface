@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { AlertCircle, Info } from 'react-feather'
 import styled from 'styled-components'

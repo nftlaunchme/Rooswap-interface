@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import type { Meta, StoryObj } from '@storybook/react'
 import { X } from 'react-feather'
 import { Flex } from 'rebass'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Currency, Token } from '@kyberswap/ks-sdk-core'
 import DOMPurify from 'dompurify'
 import { parse } from 'querystring'

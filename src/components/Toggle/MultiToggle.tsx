@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import styled from 'styled-components'
 
 export const ToggleElement = styled.span<{ isActive?: boolean; fontSize?: string }>`

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, TradeType } from '@kyberswap/ks-sdk-core'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'

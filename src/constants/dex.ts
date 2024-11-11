@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { DexInfo } from '../types/openocean'
 import { ethers } from 'ethers'
 

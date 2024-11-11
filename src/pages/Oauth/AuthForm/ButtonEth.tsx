@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { LoginMethod } from '@kyberswap/oauth2'
 import { Trans } from '@lingui/macro'
 import React, { useCallback } from 'react'

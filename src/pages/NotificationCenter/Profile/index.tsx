@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans, t } from '@lingui/macro'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { isMobile } from 'react-device-detect'

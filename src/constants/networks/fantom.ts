@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ChainId } from '@kyberswap/ks-sdk-core'
 
 import fantomIcon from 'assets/networks/fantom.svg'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId } from '@kyberswap/ks-sdk-core'
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'

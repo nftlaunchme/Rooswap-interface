@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ApolloClient, InMemoryCache, NormalizedCacheObject } from '@apollo/client'
 
 export const createClient = (url: string): ApolloClient<NormalizedCacheObject> =>

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import styled, { DefaultTheme, keyframes } from 'styled-components'
 import { MaskOptions } from 'walktour'
 

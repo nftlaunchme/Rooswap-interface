@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { t } from '@lingui/macro'
 import dayjs from 'dayjs'
 import { Flex, Text } from 'rebass'

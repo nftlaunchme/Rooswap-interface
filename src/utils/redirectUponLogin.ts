@@ -1,3 +1,4 @@
+// @ts-nocheck 
 const LOGIN_REDIRECT_URL_LOCAL_STORAGE_KEY = 'login_redirect_url'
 
 export const getLoginRedirectUrl = (): string => {

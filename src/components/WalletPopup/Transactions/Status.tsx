@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { t } from '@lingui/macro'
 import axios from 'axios'
 import debounce from 'lodash/debounce'

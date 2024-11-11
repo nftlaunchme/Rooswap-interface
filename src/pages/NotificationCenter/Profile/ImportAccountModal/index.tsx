@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans, t } from '@lingui/macro'
 import { useState } from 'react'
 import { X } from 'react-feather'

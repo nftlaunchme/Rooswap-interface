@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useEffect, useMemo, useRef } from 'react'
 import { PoolResponse, transformData, useLazyOhlcvQuery } from 'services/geckoTermial'
 

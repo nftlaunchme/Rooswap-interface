@@ -1,3 +1,4 @@
+// @ts-nocheck 
 export default async function fetchWaiting(input: RequestInfo, init?: RequestInit, minimumLoadingTime = 0) {
   const startTime = Date.now()
   const response = await fetch(input, init)

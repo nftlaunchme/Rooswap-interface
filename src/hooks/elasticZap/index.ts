@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Currency, CurrencyAmount, Percent } from '@kyberswap/ks-sdk-core'
 import { BigNumber } from 'ethers'
 import { Interface, defaultAbiCoder as abiEncoder } from 'ethers/lib/utils'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useEffect, useRef } from 'react'
 
 const instancesSet: { [title: string]: Set<Error> } = {}

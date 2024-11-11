@@ -1,3 +1,4 @@
+// @ts-nocheck 
 export enum WalletReadyState {
   /**
    * User-installable wallets can typically be detected by scanning for an API

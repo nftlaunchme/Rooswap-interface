@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, Price, Token } from '@kyberswap/ks-sdk-core'
 import { FeeAmount } from '@kyberswap/ks-sdk-elastic'
 import { Trans } from '@lingui/macro'

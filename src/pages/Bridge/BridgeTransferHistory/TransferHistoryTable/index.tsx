@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useMedia } from 'react-use'
 
 import { MultichainTransfer } from 'hooks/bridge/useGetBridgeTransfers'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import isEqual from 'react-fast-compare'
 

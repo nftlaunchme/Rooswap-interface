@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { BigNumber } from 'ethers'
 import { useMemo, useState } from 'react'

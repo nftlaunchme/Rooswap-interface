@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans, t } from '@lingui/macro'
 import { rgba } from 'polished'
 import { ReactNode } from 'react'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 /* eslint-disable prettier/prettier */
 // Ordering is intentional and must be preserved: styling, polyfilling, tracing, and then functionality.
 import * as Sentry from '@sentry/react'

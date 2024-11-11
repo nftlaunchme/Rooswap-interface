@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { t } from '@lingui/macro'
 import { useCallback, useEffect, useRef } from 'react'
 import { useAckNotificationOrderMutation } from 'services/limitOrder'

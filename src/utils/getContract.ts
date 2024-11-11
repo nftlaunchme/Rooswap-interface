@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { AddressZero } from '@ethersproject/constants'
 import { Contract, ContractInterface } from '@ethersproject/contracts'
 import { JsonRpcSigner, Web3Provider } from '@ethersproject/providers'

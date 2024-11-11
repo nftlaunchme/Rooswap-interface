@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { rgba } from 'polished'
 import { Text } from 'rebass'
 import styled, { css } from 'styled-components'

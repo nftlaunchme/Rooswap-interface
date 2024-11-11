@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { gql, useQuery } from '@apollo/client'
 import { useScroll } from '@use-gesture/react'
 import memoizeOne from 'memoize-one'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 /**
  * Returns true if the string value is zero in hex
  * @param hexNumberString

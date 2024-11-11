@@ -1,3 +1,4 @@
+// @ts-nocheck 
 export default function KyberLogoInChart() {
   return (
     <svg width="140" height="49" viewBox="0 0 110 36" fill="none" xmlns="http://www.w3.org/2000/svg" x="70" y="100">

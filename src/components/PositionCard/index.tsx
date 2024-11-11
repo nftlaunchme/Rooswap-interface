@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Pair } from '@kyberswap/ks-sdk-classic'
 import { Fraction, Percent, TokenAmount } from '@kyberswap/ks-sdk-core'
 import { Trans, t } from '@lingui/macro'

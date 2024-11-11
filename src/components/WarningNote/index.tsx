@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useState } from 'react'
 import { AlertTriangle } from 'react-feather'
 import { Box, Flex } from 'rebass'

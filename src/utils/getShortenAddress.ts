@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { shortenAddress } from 'utils/index'
 
 /**

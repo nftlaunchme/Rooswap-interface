@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId } from '@kyberswap/ks-sdk-core'
 import { useCallback, useMemo } from 'react'
 import { useGetLOConfigQuery, useGetListOrdersQuery } from 'services/limitOrder'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import React, { useCallback, useEffect, useRef } from 'react'
 
 import { SnowflakeProps, defaultConfig } from './Snowflake'

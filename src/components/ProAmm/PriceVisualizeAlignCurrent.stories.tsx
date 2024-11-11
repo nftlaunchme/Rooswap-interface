@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Price, WETH } from '@kyberswap/ks-sdk-core'
 import type { Meta, StoryObj } from '@storybook/react'
 

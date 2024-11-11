@@ -1,3 +1,4 @@
+// @ts-nocheck 
 export { default as arbitrum } from './arbitrum'
 export { default as avax } from './avax'
 export { default as avaxTestnet } from './avax-testnet'

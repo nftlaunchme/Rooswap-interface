@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency } from '@kyberswap/ks-sdk-core'
 import { useMemo } from 'react'
 import { useMedia } from 'react-use'

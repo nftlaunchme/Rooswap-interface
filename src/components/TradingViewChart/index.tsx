@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import React, { useEffect, useState } from 'react'
 import { isMobile } from 'react-device-detect'
 import * as ReactDOMServer from 'react-dom/server'

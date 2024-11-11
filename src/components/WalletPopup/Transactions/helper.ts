@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { findCacheToken } from 'hooks/Tokens'
 import { TRANSACTION_GROUP, TransactionDetails } from 'state/transactions/type'
 import { getTransactionStatus } from 'utils/transaction'

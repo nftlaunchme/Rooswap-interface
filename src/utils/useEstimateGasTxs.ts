@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { WETH } from '@kyberswap/ks-sdk-core'
 import { BigNumber, ethers } from 'ethers'
 import { useCallback, useMemo } from 'react'

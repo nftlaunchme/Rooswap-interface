@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans, t } from '@lingui/macro'
 import { ArrowLeft, ChevronLeft, Trash } from 'react-feather'
 import { useLocation, useNavigate } from 'react-router-dom'

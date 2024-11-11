@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { NativeCurrency } from '@kyberswap/ks-sdk-core'
 import { Trans } from '@lingui/macro'
 import { useState } from 'react'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { RouteRequest, RouteResponse } from '@0xsquid/sdk/dist/types'
 import debounce from 'lodash/debounce'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'

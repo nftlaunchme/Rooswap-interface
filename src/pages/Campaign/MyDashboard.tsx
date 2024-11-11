@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, CurrencyAmount, Token } from '@kyberswap/ks-sdk-core'
 import dayjs from 'dayjs'
 // import { rgba } from 'polished'

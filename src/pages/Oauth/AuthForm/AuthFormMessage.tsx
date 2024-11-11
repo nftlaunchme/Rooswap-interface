@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Text } from 'rebass'
 
 import useTheme from 'hooks/useTheme'

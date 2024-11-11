@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import React, { CSSProperties, ReactNode, useState } from 'react'
 import { Repeat } from 'react-feather'

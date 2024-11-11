@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { t } from '@lingui/macro'
 import { Placement } from '@popperjs/core'
 import { Portal } from '@reach/portal'

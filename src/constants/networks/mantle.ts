@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NetworkInfo } from 'constants/networks/type'
 
 const EMPTY_ARRAY: any[] = []

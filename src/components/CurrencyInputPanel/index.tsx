@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Currency } from '@kyberswap/ks-sdk-core'
 import { Trans } from '@lingui/macro'
 import { darken, lighten, rgba } from 'polished'

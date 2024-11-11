@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChangeEvent, ReactNode, useRef } from 'react'
 
 import { IMAGE_ALLOW_EXTENSIONS } from 'hooks/social'

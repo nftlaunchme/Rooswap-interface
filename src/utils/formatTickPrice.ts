@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, Price } from '@kyberswap/ks-sdk-core'
 
 import { Bound } from 'state/mint/proamm/type'

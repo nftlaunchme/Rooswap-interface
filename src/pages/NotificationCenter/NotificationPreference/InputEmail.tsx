@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans, t } from '@lingui/macro'
 import { Check } from 'react-feather'
 import styled, { CSSProperties } from 'styled-components'

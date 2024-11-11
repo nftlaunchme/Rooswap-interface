@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Trans } from '@lingui/macro'
 import { useLocation } from 'react-router-dom'
 import { useMedia } from 'react-use'

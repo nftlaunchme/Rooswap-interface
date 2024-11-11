@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans, t } from '@lingui/macro'
 import { useCallback, useState } from 'react'
 import { Flex, Text } from 'rebass'

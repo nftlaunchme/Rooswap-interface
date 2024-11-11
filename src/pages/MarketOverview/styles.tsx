@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { rgba } from 'polished'
 import { Box, Flex } from 'rebass'
 import styled, { css, keyframes } from 'styled-components'

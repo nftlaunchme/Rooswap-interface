@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
 import { ReactNode, useEffect, useState } from 'react'

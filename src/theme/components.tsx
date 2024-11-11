@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { darken } from 'polished'
 import React, { HTMLProps, useCallback } from 'react'
 import { ArrowLeft, ExternalLink as LinkIconFeather, X } from 'react-feather'

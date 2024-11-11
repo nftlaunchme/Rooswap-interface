@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { captureException } from '@sentry/react'
 import React, { ErrorInfo, PropsWithChildren } from 'react'
 

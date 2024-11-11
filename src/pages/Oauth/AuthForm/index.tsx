@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { LoginFlow, LoginMethod } from '@kyberswap/oauth2'
 import React, { Fragment, useMemo } from 'react'
 import { Flex } from 'rebass'

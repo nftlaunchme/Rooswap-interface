@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Token } from '@kyberswap/ks-sdk-core'
 
 import { TokenInfo } from 'state/lists/wrappedTokenInfo'

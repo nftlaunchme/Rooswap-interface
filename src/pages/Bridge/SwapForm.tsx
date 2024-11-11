@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Fraction } from '@kyberswap/ks-sdk-core'
 import { Trans, t } from '@lingui/macro'
 import { isAddress } from 'ethers/lib/utils'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Fragment, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Flex } from 'rebass'

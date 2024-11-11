@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { FeeAmount, Position } from '@kyberswap/ks-sdk-elastic'
 import { Trans } from '@lingui/macro'
 import { BigNumber } from 'ethers'

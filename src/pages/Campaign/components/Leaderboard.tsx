@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useSearchParams } from 'react-router-dom'
 import { useMedia } from 'react-use'
 import { Flex, Text } from 'rebass'

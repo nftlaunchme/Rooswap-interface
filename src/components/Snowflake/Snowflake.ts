@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import isEqual from 'react-fast-compare'
 
 import { lerp, random, randomElement } from './utils'

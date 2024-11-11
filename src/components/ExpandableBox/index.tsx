@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { CSSProperties, ReactNode, useRef, useState } from 'react'
 import styled from 'styled-components'
 

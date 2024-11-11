@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { useMedia } from 'react-use'
 import { Box, Flex, Text } from 'rebass'

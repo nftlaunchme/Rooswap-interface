@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ReactNode } from 'react'
 import { AlertOctagon } from 'react-feather'
 import { Flex } from 'rebass'

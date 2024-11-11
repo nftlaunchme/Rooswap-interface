@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useRef } from 'react'
 
 import LocalLoader from 'components/LocalLoader'

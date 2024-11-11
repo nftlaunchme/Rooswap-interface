@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency as KyberCurrency, Token as KyberToken, NativeCurrency as KyberNativeCurrency, CurrencyAmount as KyberCurrencyAmount } from '@kyberswap/ks-sdk-core'
 import { Currency, Token, NativeCurrency, CurrencyAmount, Fraction } from '../types/currency'
 

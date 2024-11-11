@@ -156,6 +156,7 @@ export const APP_PATHS = {
   PROFILE_MANAGE: '/manage',
   ELASTIC_LEGACY: '/elastic-legacy',
   VERIFY_AUTH: '/auth',
+  REBEL_KANGA: '/rebel-kanga',
 
   IAM_LOGIN: '/login',
   IAM_LOGOUT: '/logout',

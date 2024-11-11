@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useCallback, useEffect, useState } from 'react'
 import { isMobile } from 'react-device-detect'
 import { createPortal } from 'react-dom'

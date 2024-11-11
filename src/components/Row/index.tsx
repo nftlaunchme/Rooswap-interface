@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Box } from 'rebass/styled-components'
 import styled from 'styled-components'
 

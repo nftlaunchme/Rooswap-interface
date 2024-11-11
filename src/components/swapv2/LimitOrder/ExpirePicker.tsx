@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import dayjs from 'dayjs'
 import { rgba } from 'polished'

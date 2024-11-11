@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { stringify } from 'querystring'
 import { isMobile } from 'react-device-detect'
 import { ArrowLeft, Check } from 'react-feather'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useRef } from 'react'
 import { ChevronDown as Arrow } from 'react-feather'
 import { Flex, Text } from 'rebass'

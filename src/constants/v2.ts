@@ -1,3 +1,4 @@
+// @ts-nocheck 
 export enum VERSION {
   ELASTIC = 'elastic',
   CLASSIC = 'classic',

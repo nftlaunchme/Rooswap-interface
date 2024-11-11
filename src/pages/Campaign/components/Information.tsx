@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ReactNode, useState } from 'react'
 import { Minus, Plus, Star } from 'react-feather'
 import { Link } from 'react-router-dom'

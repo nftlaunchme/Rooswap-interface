@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'

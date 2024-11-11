@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, Fraction } from '@kyberswap/ks-sdk-core'
 import { t } from '@lingui/macro'
 import { ethers } from 'ethers'

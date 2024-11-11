@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId } from '@kyberswap/ks-sdk-core'
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'react-feather'

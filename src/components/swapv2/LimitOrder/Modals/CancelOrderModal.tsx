@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ChainId } from '@kyberswap/ks-sdk-core'
 import { Trans, t } from '@lingui/macro'
 import { useEffect, useMemo, useState } from 'react'

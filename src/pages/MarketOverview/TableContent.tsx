@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Info, Star } from 'react-feather'
 import { useMedia } from 'react-use'

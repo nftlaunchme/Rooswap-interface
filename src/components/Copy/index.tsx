@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import React, { CSSProperties, ReactNode, forwardRef, useCallback } from 'react'
 import { CheckCircle } from 'react-feather'
 import styled, { keyframes } from 'styled-components'

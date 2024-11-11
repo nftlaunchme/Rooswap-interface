@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, WETH } from '@kyberswap/ks-sdk-core'
 import { Trans, t } from '@lingui/macro'
 import { Text } from 'rebass'

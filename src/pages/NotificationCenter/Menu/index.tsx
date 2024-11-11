@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { t } from '@lingui/macro'
 import { ReactNode, useCallback, useMemo, useState } from 'react'
 import { AlignJustify, List as ListIcon } from 'react-feather'

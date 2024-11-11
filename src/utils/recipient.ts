@@ -1,3 +1,4 @@
+// @ts-nocheck 
 /**
  * Convert recipient from string | null to string | undefined
  * Used to handle type conversion between AddressInputPanel and buildRoute

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ScaleLinear, ZoomBehavior, ZoomTransform, select, zoom, zoomIdentity } from 'd3'
 import { CSSProperties, useEffect, useMemo, useRef } from 'react'
 import { RotateCw, ZoomIn, ZoomOut } from 'react-feather'

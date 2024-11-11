@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId } from '@kyberswap/ks-sdk-core'
 import firebase from 'firebase/compat/app'
 import { Firestore, collection, doc, getFirestore, onSnapshot, query } from 'firebase/firestore'

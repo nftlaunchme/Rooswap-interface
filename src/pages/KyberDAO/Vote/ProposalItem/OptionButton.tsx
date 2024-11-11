@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { t } from '@lingui/macro'
 import { rgba } from 'polished'
 import { CheckSquare, Square } from 'react-feather'

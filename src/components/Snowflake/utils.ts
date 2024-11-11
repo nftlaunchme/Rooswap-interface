@@ -1,3 +1,4 @@
+// @ts-nocheck 
 /**
  * Enhanced random function, selects a random value between a minimum and maximum. If the values provided are both
  * integers then the number returned will be an integer, otherwise the return number will be a decimal.

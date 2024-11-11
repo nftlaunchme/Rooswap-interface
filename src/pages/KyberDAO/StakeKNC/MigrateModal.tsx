@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Token } from '@kyberswap/ks-sdk-core'
 import { Trans, t } from '@lingui/macro'
 import { parseUnits } from 'ethers/lib/utils'

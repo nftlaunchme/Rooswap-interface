@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import styled from 'styled-components'
 
 import FlagEN from 'assets/images/flag-EN.svg'

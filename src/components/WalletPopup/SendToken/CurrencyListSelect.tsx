@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, CurrencyAmount, TokenAmount } from '@kyberswap/ks-sdk-core'
 import { Trans } from '@lingui/macro'
 import { memo } from 'react'

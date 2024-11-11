@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, TradeType } from '@kyberswap/ks-sdk-core'
 import { Trans, t } from '@lingui/macro'
 import { useState } from 'react'

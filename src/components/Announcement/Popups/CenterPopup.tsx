@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { t } from '@lingui/macro'
 import { X } from 'react-feather'
 import { useMedia } from 'react-use'

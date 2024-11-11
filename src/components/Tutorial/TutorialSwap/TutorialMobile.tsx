@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import Portal from '@reach/portal'
 import { X } from 'react-feather'

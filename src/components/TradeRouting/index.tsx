@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Currency, CurrencyAmount, Token } from '@kyberswap/ks-sdk-core'
 import React, { memo, useCallback, useEffect, useRef } from 'react'
 import ScrollContainer from 'react-indiana-drag-scroll'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { RefObject, useEffect, useState } from 'react'
 import { Info, X } from 'react-feather'

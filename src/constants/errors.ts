@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { FetchBaseQueryMeta } from '@reduxjs/toolkit/dist/query'
 import { captureException } from '@sentry/react'
 

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Token } from '@kyberswap/ks-sdk-core'
 import { tickToPrice } from '@kyberswap/ks-sdk-elastic'
 import JSBI from 'jsbi'

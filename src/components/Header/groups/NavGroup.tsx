@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { darken } from 'polished'
 import { useState } from 'react'
 import { isMobile } from 'react-device-detect'

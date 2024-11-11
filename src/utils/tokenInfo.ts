@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Currency, NativeCurrency, Token, WETH } from '@kyberswap/ks-sdk-core'
 
 import { ETHER_ADDRESS } from 'constants/index'

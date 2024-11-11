@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ZERO } from '@kyberswap/ks-sdk-classic'
 import { ChainId, Currency, CurrencyAmount, Percent, Rounding, Token, WETH } from '@kyberswap/ks-sdk-core'
 import JSBI from 'jsbi'

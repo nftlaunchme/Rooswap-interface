@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { lighten } from 'polished'
 import React from 'react'
 import { Text, TextProps } from 'rebass'

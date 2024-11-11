@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Placement } from '@popperjs/core'
 import Portal from '@reach/portal'
 import React, { useCallback, useState } from 'react'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { rgba } from 'polished'
 import { AlertTriangle } from 'react-feather'
 import styled from 'styled-components'

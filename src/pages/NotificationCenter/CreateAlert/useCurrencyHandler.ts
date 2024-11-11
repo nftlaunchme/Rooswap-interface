@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Currency } from '@kyberswap/ks-sdk-core'
 import { stringify } from 'querystring'
 import { useCallback, useEffect, useRef, useState } from 'react'

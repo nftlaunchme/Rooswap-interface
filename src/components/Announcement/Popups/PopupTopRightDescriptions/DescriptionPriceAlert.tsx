@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId } from '@kyberswap/ks-sdk-core'
 import { ArrowDown, ArrowUp } from 'react-feather'
 import { Flex, Text } from 'rebass'

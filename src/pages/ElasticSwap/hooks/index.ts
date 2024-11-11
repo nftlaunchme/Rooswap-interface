@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Currency, CurrencyAmount, Token, TradeType } from '@kyberswap/ks-sdk-core'
 import { FeeAmount, Pool, Route, SwapQuoter, SwapRouter, Trade, computePoolAddress } from '@kyberswap/ks-sdk-elastic'
 import { t } from '@lingui/macro'

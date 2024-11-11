@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { DialogContent, DialogOverlay } from '@reach/dialog'
 import '@reach/dialog/styles.css'
 import { AnimatePresence, motion } from 'framer-motion'

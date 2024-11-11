@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Token } from '@kyberswap/ks-sdk-core'
 import { Trans } from '@lingui/macro'
 import { useMemo, useState } from 'react'

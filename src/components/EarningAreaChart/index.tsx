@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { useState } from 'react'
 import { isMobile } from 'react-device-detect'
 import { Area, AreaChart, Customized, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'

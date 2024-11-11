@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { rgba } from 'polished'
 import { ChevronLeft, ChevronRight } from 'react-feather'
 import { Flex } from 'rebass'

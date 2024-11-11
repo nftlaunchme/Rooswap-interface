@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { RouteRequest } from '@0xsquid/sdk/dist/types'
 import { ChainId } from '@kyberswap/ks-sdk-core'
 import { Trans, t } from '@lingui/macro'

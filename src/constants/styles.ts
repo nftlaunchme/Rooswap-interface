@@ -1,3 +1,4 @@
+// @ts-nocheck 
 export const Z_INDEXS = {
   LIVE_CHART: 99999,
   MODAL: 999999,

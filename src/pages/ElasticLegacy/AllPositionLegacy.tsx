@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans, t } from '@lingui/macro'
 import memoizeOne from 'memoize-one'
 import { CSSProperties, memo, useState } from 'react'

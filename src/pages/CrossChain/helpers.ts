@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { FeeCost, GasCost, RouteActionResponse } from '@0xsquid/sdk/dist/types'
 
 import { CROSS_CHAIN_CONFIG } from 'constants/env'

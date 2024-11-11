@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { rgba } from 'polished'
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'react-feather'

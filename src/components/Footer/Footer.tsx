@@ -4,9 +4,7 @@ import { useMedia } from 'react-use'
 import { Flex, Text } from 'rebass'
 import styled from 'styled-components'
 
-import ChainSecurity from 'assets/svg/chainsecurity.svg'
 import Discord from 'components/Icons/Discord'
-import PoweredByIconDark from 'components/Icons/PoweredByIconDark'
 import TwitterIcon from 'components/Icons/TwitterIcon'
 import InfoHelper from 'components/InfoHelper'
 import { ExternalLink, ExternalLinkNoLineHeight } from 'theme'
@@ -72,7 +70,7 @@ const Item = styled.div`
 `
 
 const CopyrightText = styled(Text)`
-  color: ${colors.text}; // Change this to make copyright text white
+  color: ${colors.text};
   font-size: 14px;
   margin-top: 16px;
 `
@@ -85,10 +83,10 @@ export const FooterSocialLink = () => {
   return (
     <SocialLinks>
       <ExternalLinkNoLineHeight href="https://twitter.com/RooFinance">
-        <TwitterIcon color={colors.text} width={20} height={20} />  {/* Make icon color white */}
+        <TwitterIcon color={colors.text} width={20} height={20} />
       </ExternalLinkNoLineHeight>
       <ExternalLinkNoLineHeight href="https://discord.gg/AMQB6ZWKfa">
-        <Discord width={20} height={20} color={colors.text} />  {/* Make icon color white */}
+        <Discord width={20} height={20} color={colors.text} />
       </ExternalLinkNoLineHeight>
     </SocialLinks>
   )
@@ -103,32 +101,22 @@ function Footer() {
         <InfoWrapper>
           <Item>
             <Text marginRight="6px" color={colors.text}>
-              <Trans>Powered By Kyber</Trans>
+              <Trans>Powered By</Trans>
             </Text>
-            <ExternalLink href="https://kyber.network" style={{ display: 'flex' }}>
-              <PoweredByIconDark width={48} />
-            </ExternalLink>
-          </Item>
-          <Separator />
-          <Item>
-            <Text marginRight="6px" color={colors.text}>
-              <Trans>Powered By Rubic</Trans>
-            </Text>
-            <ExternalLink href="https://rubic.exchange" style={{ display: 'flex' }}>
-              {/* Replace with actual Rubic logo or text */}
-              <Text color={colors.primary}>Rubic</Text>
+            <ExternalLink href="https://Roo.Finance" style={{ display: 'flex' }}>
+              <Text color={colors.text}>Roo</Text>
             </ExternalLink>
           </Item>
           <Separator />
           <Item>
             <Text marginRight="6px" display="flex" color={colors.text}>
               <Trans>Audited By</Trans>
-              {!above768 && <InfoHelper size={14} text={t`Covers smart-contracts`} placement="top" />}
+              {!above768 && <InfoHelper size={14} text={t`Covers frontend only`} placement="top" />}
             </Text>
-            <ExternalLink href="https://chainsecurity.com/security-audit/kyberswap-elastic" style={{ display: 'flex' }}>
-              <img src={ChainSecurity} alt="" width="98px" />
+            <ExternalLink href="https://clubcro.com" style={{ display: 'flex' }}>
+              <Text color={colors.text}>TrollCoin</Text>
             </ExternalLink>
-            {above768 && <InfoHelper size={14} text={t`Covers smart-contracts`} placement="top" />}
+            {above768 && <InfoHelper size={14} text={t`Covers frontend only`} placement="top" />}
           </Item>
         </InfoWrapper>
         <Flex flexDirection="column" alignItems="flex-end">

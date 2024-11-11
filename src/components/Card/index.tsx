@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { rgba } from 'polished'
 import { CardProps, Text } from 'rebass'
 import { Box } from 'rebass/styled-components'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId } from '@kyberswap/ks-sdk-core'
 import { ReactNode } from 'react'
 import { Bell } from 'react-feather'

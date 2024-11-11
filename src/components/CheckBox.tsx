@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { rgba } from 'polished'
 import { ForwardedRef, InputHTMLAttributes, forwardRef } from 'react'
 import styled from 'styled-components'

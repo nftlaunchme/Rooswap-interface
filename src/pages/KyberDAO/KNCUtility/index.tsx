@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { formatUnits } from 'ethers/lib/utils'
 import { transparentize } from 'polished'

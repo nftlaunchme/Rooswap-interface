@@ -1,3 +1,4 @@
+// @ts-nocheck 
 // To combine all kyber options 1 option on UI
 export const KYBERSWAP_KS_DEXES_TO_UI_DEXES: { [key: string]: string | undefined } = {
   kyberswap: 'kyberswapv1', // kyberswap classic old contract

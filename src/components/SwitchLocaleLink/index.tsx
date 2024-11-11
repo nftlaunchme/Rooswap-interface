@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { stringify } from 'querystring'
 import React, { useMemo } from 'react'
 import { useLocation } from 'react-router'

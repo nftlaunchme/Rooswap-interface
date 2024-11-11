@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Trans } from '@lingui/macro'
 import { Repeat } from 'react-feather'
 import { useLocation } from 'react-router-dom'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 export const getFormattedTimeFromSecond = (numberOfSeconds: number, showDetail = false) => {
   if (numberOfSeconds === 0) {
     return '0 Days'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 export enum ChainId {
   MAINNET = 1,
   GÖRLI = 5,

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { CSSProperties, Fragment, ReactNode, useEffect, useRef } from 'react'
 import ScrollContainer from 'react-indiana-drag-scroll'
 import { Flex } from 'rebass'

@@ -65,6 +65,10 @@ msgstr ""
 msgid "Updated"
 msgstr ""
 
+#: src/pages/About/AboutRooswap/index.tsx
+msgid "NFTLAUNCH.ME"
+msgstr ""
+
 #: src/pages/Farm/ElasticFarmv2/components/FarmCard.tsx
 #: src/pages/Farm/ElasticFarmv2/components/ListView.tsx
 #~ msgid "ENDED"
@@ -119,6 +123,10 @@ msgstr ""
 
 #: src/pages/CrossChain/SwapForm/TradeTypeSelection.tsx
 msgid "Will cost more gas fees."
+msgstr ""
+
+#: src/pages/About/AboutRooswap/index.tsx
+msgid "We're building NFTLaunch.me to meet all your NFT needs. Deploy NFTs and ERC404s, get NFT data, aggregate across marketplaces, and more."
 msgstr ""
 
 #: src/components/NavigationTabs/index.tsx
@@ -1144,6 +1152,11 @@ msgstr ""
 msgid "Your selected price is {styledPercent} better than the current market price."
 msgstr ""
 
+#: src/components/Footer/Footer.tsx
+#: src/components/Footer/Footer.tsx
+msgid "Covers frontend only"
+msgstr ""
+
 #: src/components/YieldPools/index.tsx
 #: src/pages/Farm/ElasticFarmCombination.tsx
 #~ msgid "Currently there are no Farms."
@@ -1430,8 +1443,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/pages/About/AboutKyberSwap/index.tsx
-msgid "Tokens"
-msgstr ""
+#~ msgid "Tokens"
+#~ msgstr ""
 
 #: src/components/YieldPools/FarmPoolSort.tsx
 #~ msgid "TVL ↑"
@@ -1552,7 +1565,6 @@ msgid "How can I vote on KIPs with my staked KNC to earn voting rewards?"
 msgstr ""
 
 #: src/pages/About/AboutKNC.tsx
-#: src/pages/About/AboutKyberSwap/index.tsx
 #: src/pages/KyberDAO/Vote/ProposalListComponent.tsx
 msgid "Forum"
 msgstr ""
@@ -2248,6 +2260,10 @@ msgstr ""
 msgid "Total Balance"
 msgstr ""
 
+#: src/pages/About/AboutRooswap/index.tsx
+msgid "Let's build <0>Web3</0> together"
+msgstr ""
+
 #: src/pages/TrueSightV2/pages/TechnicalAnalysis.tsx
 #~ msgid "Funding Rate on Centralized Exchanges."
 #~ msgstr ""
@@ -2709,6 +2725,10 @@ msgstr ""
 #~ msgid "Top CEX Outflow"
 #~ msgstr ""
 
+#: src/pages/About/AboutRooswap/index.tsx
+msgid "Your Complete NFT Solution"
+msgstr ""
+
 #: src/components/Tutorial/TutorialSwap/CustomPopup.tsx
 #: src/pages/CrossChain/TransfersHistory/HistoryTable/DetailTransaction.tsx
 msgid "Done"
@@ -2716,8 +2736,8 @@ msgstr ""
 
 #: src/components/Footer/Footer.tsx
 #: src/components/Footer/Footer.tsx
-msgid "Covers smart-contracts"
-msgstr ""
+#~ msgid "Covers smart-contracts"
+#~ msgstr ""
 
 #: src/components/YieldPools/ElasticFarmSummary/SummaryContent.tsx
 #~ msgid "If the <0>Target Volume</0> column for a farm displays a <1>progress bar</1>, the farm is setup with this 2nd mechanism."
@@ -2854,8 +2874,8 @@ msgid "Est. Market Price:"
 msgstr ""
 
 #: src/pages/About/AboutKyberSwap/index.tsx
-msgid "Total Trading Volume"
-msgstr ""
+#~ msgid "Total Trading Volume"
+#~ msgstr ""
 
 #: src/pages/NotificationCenter/Profile/ImportAccountModal/UserEnterPasscodeContent.tsx
 msgid "Enter your Code"
@@ -3293,6 +3313,7 @@ msgstr ""
 
 #: src/components/WalletPopup/type.ts
 #: src/components/WalletPopup/WalletView.tsx
+#: src/pages/About/AboutRooswap/index.tsx
 msgid "Assets"
 msgstr ""
 
@@ -3515,7 +3536,7 @@ msgstr ""
 msgid "We overestimate gas by 50% to guarantee your trade. Any gas we don't use will be refunded by Axelar."
 msgstr ""
 
-#: src/pages/About/AboutKyberSwap/index.tsx
+#: src/pages/About/AboutRooswap/index.tsx
 msgid "Superior price guaranteed"
 msgstr ""
 
@@ -3596,8 +3617,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/pages/About/AboutKyberSwap/MeetTheTeam.tsx
-msgid "Meet the team"
-msgstr ""
+#~ msgid "Meet the team"
+#~ msgstr ""
 
 #: src/pages/KyberDAO/StakeKNC/index.tsx
 msgid "Kyber Network and its products like KyberSwap are governed by the community through KyberDAO, a Decentralized Autonomous Organization. KNC holders stake KNC tokens to vote on governance proposals that shape Kyber‘s future and earn KNC rewards from trading fees."
@@ -4065,8 +4086,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/pages/About/AboutKyberSwap/index.tsx
-msgid "24H Trading Volume"
-msgstr ""
+#~ msgid "24H Trading Volume"
+#~ msgstr ""
 
 #: src/pages/NotificationCenter/const.ts
 msgid "Above"
@@ -4603,11 +4624,9 @@ msgstr ""
 #~ msgid "Top CEX Negative Netflow"
 #~ msgstr ""
 
-#: src/pages/About/AboutKyberSwap/index.tsx
-#: src/pages/About/AboutKyberSwap/index.tsx
-#: src/pages/About/AboutKyberSwap/index.tsx
-#~ msgid "Learn More"
-#~ msgstr ""
+#: src/pages/About/AboutRooswap/index.tsx
+msgid "Learn More"
+msgstr ""
 
 #: src/pages/Farm/index.tsx
 #: src/pages/Pools/index.tsx
@@ -4673,8 +4692,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/pages/About/AboutKyberSwap/index.tsx
-msgid "Find out more"
-msgstr ""
+#~ msgid "Find out more"
+#~ msgstr ""
 
 #: src/pages/ProAmmPools/index.tsx
 #~ msgid "Share this list of pools with your friends"
@@ -5197,8 +5216,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/Footer/Footer.tsx
-#~ msgid "Powered By"
-#~ msgstr ""
+msgid "Powered By"
+msgstr ""
 
 #: src/pages/KyberDAO/Vote/ProposalItem/OptionButton.tsx
 msgid "Cannot vote at this moment"
@@ -5235,8 +5254,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/Footer/Footer.tsx
-msgid "Powered By Kyber"
-msgstr ""
+#~ msgid "Powered By Kyber"
+#~ msgstr ""
 
 #: src/components/YieldPools/ElasticFarmGroup/FarmCard.tsx
 #: src/pages/MyEarnings/ElasticPools/SinglePosition/CommonView.tsx
@@ -5260,6 +5279,10 @@ msgstr ""
 
 #: src/pages/NotificationCenter/Profile/ImportAccountModal/UserEnterPasscodeContent.tsx
 msgid "You can keep your information synced across all of your devices by importing your profile. Learn more about profiles <0>here</0>."
+msgstr ""
+
+#: src/pages/About/AboutRooswap/index.tsx
+msgid "ROO SWAP"
 msgstr ""
 
 #: src/components/ClassicElasticTab.tsx
@@ -5541,7 +5564,7 @@ msgstr ""
 msgid "Price Impact"
 msgstr ""
 
-#: src/pages/About/AboutKyberSwap/index.tsx
+#: src/pages/About/AboutRooswap/index.tsx
 msgid "DEXs"
 msgstr ""
 
@@ -5654,7 +5677,7 @@ msgstr ""
 
 #: src/components/Menu/index.tsx
 #: src/pages/About/AboutKNC.tsx
-#: src/pages/About/AboutKyberSwap/index.tsx
+#: src/pages/About/AboutRooswap/index.tsx
 msgid "Docs"
 msgstr ""
 
@@ -5825,8 +5848,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/pages/About/AboutKyberSwap/index.tsx
-msgid "With our Dynamic Trade Routing technology, we aggregate liquidity from multiple DEXs and identify superior trade routes for you."
-msgstr ""
+#~ msgid "With our Dynamic Trade Routing technology, we aggregate liquidity from multiple DEXs and identify superior trade routes for you."
+#~ msgstr ""
 
 #: src/components/YieldPools/ElasticFarmGroup/FeeTarget.tsx
 #~ msgid "Target Volume"
@@ -7004,8 +7027,8 @@ msgid "Off"
 msgstr ""
 
 #: src/components/Footer/Footer.tsx
-msgid "Powered By Rubic"
-msgstr ""
+#~ msgid "Powered By Rubic"
+#~ msgstr ""
 
 #: src/pages/CreatePool/FeeTypeSelector.tsx
 #: src/pages/CreatePool/index.tsx
@@ -7048,6 +7071,10 @@ msgstr ""
 #~ msgid "KyberDAO can propose various KNC incentives like liquidity mining rewards on KyberSwap on top of standard trading fees to provide more value to liquidity providers."
 #~ msgstr ""
 
+#: src/pages/About/AboutRooswap/index.tsx
+msgid "Swap your tokens at superior rates"
+msgstr ""
+
 #: src/components/swapv2/SwapSettingsPanel/index.tsx
 msgid "Turn on to display trade route."
 msgstr ""
@@ -7086,8 +7113,8 @@ msgid "{0} is only available on Ethereum chain. Please switch network to continu
 msgstr ""
 
 #: src/pages/About/AboutKyberSwap/index.tsx
-msgid "Kyber Network Crystal (KNC)"
-msgstr ""
+#~ msgid "Kyber Network Crystal (KNC)"
+#~ msgstr ""
 
 #: src/components/Header/web3/NetworkModal/index.tsx
 msgid "Drag your favourite chain(s) here"
@@ -7541,8 +7568,8 @@ msgid "Price Alerts"
 msgstr ""
 
 #: src/pages/About/AboutKyberSwap/index.tsx
-msgid "Swap your tokens at superior rates. No limits"
-msgstr ""
+#~ msgid "Swap your tokens at superior rates. No limits"
+#~ msgstr ""
 
 #: src/components/SwapForm/PriceImpactNote.tsx
 #~ msgid "<0>Price Impact</0><1>is high</1>"
@@ -7979,7 +8006,6 @@ msgstr ""
 
 #: src/components/swapv2/TokenInfo/index.tsx
 #: src/components/swapv2/TokenInfo/index.tsx
-#: src/pages/About/AboutKyberSwap/index.tsx
 msgid "Powered by"
 msgstr ""
 
@@ -8068,7 +8094,7 @@ msgstr ""
 #~ msgid "My Share of Pool"
 #~ msgstr ""
 
-#: src/pages/About/AboutKyberSwap/index.tsx
+#: src/pages/About/AboutRooswap/index.tsx
 msgid "Chains"
 msgstr ""
 
@@ -8404,8 +8430,8 @@ msgid "Checking"
 msgstr ""
 
 #: src/pages/About/AboutKyberSwap/index.tsx
-msgid "TVL From DEXs"
-msgstr ""
+#~ msgid "TVL From DEXs"
+#~ msgstr ""
 
 #: src/components/swapv2/GasTokenSetting.tsx
 msgid "The PayMaster module & contracts are developed and operated by HoldStations, <0>details</0>"
@@ -8617,7 +8643,7 @@ msgstr ""
 #~ msgstr ""
 
 #: src/pages/About/AboutKNC.tsx
-#: src/pages/About/AboutKyberSwap/index.tsx
+#: src/pages/About/AboutRooswap/index.tsx
 #: src/pages/KyberDAO/Vote/ProposalItem/index.tsx
 msgid "Github"
 msgstr ""
@@ -8942,6 +8968,10 @@ msgstr ""
 #: src/pages/Farm/ElasticFarmv2/components/UpdateLiquidityModal.tsx
 #~ msgid "You still have {0} in liquidity to stake to earn even more farming rewards"
 #~ msgstr ""
+
+#: src/pages/Rebel-Kanga/components/NFTCard.tsx
+msgid "#{id} {name}"
+msgstr ""
 
 #: src/components/swapv2/LimitOrder/ListOrder/SummaryNotify.tsx
 msgid "Your order to pay {mainMsg} has expired{filledComponent}"
@@ -9454,7 +9484,7 @@ msgstr ""
 msgid "Ethereum Address"
 msgstr ""
 
-#: src/pages/About/AboutKyberSwap/index.tsx
+#: src/pages/About/AboutRooswap/index.tsx
 msgid "Lowest possible slippage"
 msgstr ""
 
@@ -9613,8 +9643,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/pages/About/AboutKyberSwap/index.tsx
-msgid "<0>Swap</0> Tokens at Superior Rates"
-msgstr ""
+#~ msgid "<0>Swap</0> Tokens at Superior Rates"
+#~ msgstr ""
 
 #: src/pages/ElasticSnapshot/components/ChooseGrantModal.tsx
 #: src/pages/ElasticSnapshot/components/ChooseGrantModal.tsx
@@ -10159,8 +10189,8 @@ msgid "Thank you. You have chosen to Opt Out."
 msgstr ""
 
 #: src/pages/About/AboutKyberSwap/index.tsx
-msgid "ABOUT KNC"
-msgstr ""
+#~ msgid "ABOUT KNC"
+#~ msgstr ""
 
 #: src/pages/NotificationCenter/CreateAlert/ConfirmModal.tsx
 msgid "Cooldown: <0>{0}</0>"
@@ -10273,7 +10303,7 @@ msgstr ""
 msgid "If your wallet is eligible, you will be able to request for some {tokenSymbol} tokens for free below. Each wallet can only request for the tokens once. You can claim:"
 msgstr ""
 
-#: src/pages/About/AboutKyberSwap/index.tsx
+#: src/pages/About/AboutRooswap/index.tsx
 msgid "Save time & effort"
 msgstr ""
 
@@ -11027,8 +11057,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/pages/About/AboutKyberSwap/index.tsx
-msgid "FOR TRADERS"
-msgstr ""
+#~ msgid "FOR TRADERS"
+#~ msgstr ""
 
 #: src/pages/AddLiquidity/TokenPair.tsx
 #: src/pages/AddLiquidity/ZapIn.tsx
@@ -11199,6 +11229,10 @@ msgstr ""
 #: src/components/Header/web3/WalletModal/WarningBox.tsx
 #~ msgid "Click on the Settings icon"
 #~ msgstr ""
+
+#: src/pages/About/AboutRooswap/index.tsx
+msgid "Effortlessly swap over 15,000+ assets with the best rates, highest liquidity, and lightning-fast transaction speeds—all in one click, powered by the integration of 220+ DEXs and bridges."
+msgstr ""
 
 #: src/components/Header/web3/WalletModal/WarningBox.tsx
 #~ msgid "Open C98 Browser Extension"
@@ -11595,8 +11629,8 @@ msgid "You dont have Voting power"
 msgstr ""
 
 #: src/pages/About/AboutKyberSwap/index.tsx
-msgid "KNC is a utility and governance token, and an integral part of Kyber Network and its flagship product KyberSwap. It is the glue that connects different stakeholders in Kyber's ecosystem."
-msgstr ""
+#~ msgid "KNC is a utility and governance token, and an integral part of Kyber Network and its flagship product KyberSwap. It is the glue that connects different stakeholders in Kyber's ecosystem."
+#~ msgstr ""
 
 #: src/components/YieldPools/ElasticFarmSummary/SummaryContent.tsx
 #~ msgid "<0>Option 2:</0> Remove your liquidity position from the pool, create a new liquidity position with an active price range, and stake in the farm again"
@@ -11624,8 +11658,7 @@ msgid "Filled"
 msgstr ""
 
 #: src/pages/About/AboutKNC.tsx
-#: src/pages/About/AboutKyberSwap/index.tsx
-#: src/pages/About/AboutKyberSwap/index.tsx
+#: src/pages/About/AboutRooswap/index.tsx
 #: src/pages/About/KyberSwapGeneralIntro.tsx
 #: src/pages/BuyCrypto/index.tsx
 msgid "Swap Now"

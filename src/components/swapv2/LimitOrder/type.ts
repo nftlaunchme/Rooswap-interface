@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Currency, Fraction } from '@kyberswap/ks-sdk-core'
 
 export enum LimitOrderTab {

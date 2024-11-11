@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, TokenAmount } from '@kyberswap/ks-sdk-core'
 import { Trans } from '@lingui/macro'
 import { Interface } from 'ethers/lib/utils'

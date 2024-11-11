@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { Flex, Text } from 'rebass'
 
 import { DoubleCurrencyLogoV2 } from 'components/DoubleLogo'

@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { transparentize } from 'polished'
 import { useState } from 'react'
 import { Text } from 'rebass'

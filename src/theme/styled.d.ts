@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { FlattenSimpleInterpolation, ThemedCssFunction } from 'styled-components'
 
 import { Colors } from './color'

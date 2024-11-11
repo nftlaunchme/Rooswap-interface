@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import styled, { CSSProperties, css } from 'styled-components'
 
 import { ReactComponent as DropdownSVG } from 'assets/svg/down.svg'

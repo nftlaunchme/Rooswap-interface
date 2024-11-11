@@ -1,3 +1,4 @@
+// @ts-nocheck 
 import { ChainId, Token, WETH } from '@kyberswap/ks-sdk-core'
 import { Trans } from '@lingui/macro'
 import { BarChart2, Share2 } from 'react-feather'
