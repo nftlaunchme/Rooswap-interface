@@ -1,89 +1,84 @@
 import { ChainId } from '@kyberswap/ks-sdk-core'
 
-import { EnvKeys } from 'constants/env'
-import { ChainState } from 'hooks/useChainsConfig'
+export interface NativeToken {
+  name: string
+  symbol: string
+  decimal: number
+  logo: string
+  minForGas: string
+}
+
+export interface ClassicConfig {
+  oldStatic?: {
+    factory: string
+    router: string
+    zap: string
+  }
+  static: {
+    factory: string
+    router: string
+    zap: string
+  }
+  dynamic?: {
+    factory: string
+    router: string
+    zap: string
+  }
+  claimReward?: string
+  defaultSubgraph: string
+  fairlaunchV2?: Record<string, any>
+}
+
+export interface ElasticConfig {
+  coreFactory: string
+  nonfungiblePositionManager: string
+  tickReader: string
+  initCodeHash: string
+  quoter: string
+  routers: string[]
+  defaultSubgraph: string
+  startBlock?: number
+  farmv2Quoter?: string
+  zap?: {
+    helper: string
+    router: string
+    validator: string
+    executor: string
+  }
+  farmV2S?: string[]
+  'farmV2.1S'?: string[]
+  farms: string[][]
+}
+
+export interface KyberDAOConfig {
+  staking?: string
+  dao?: string
+  rewardsDistributor?: string
+  KNCAddress?: string
+  KNCLAddress?: string
+}
 
 export interface NetworkInfo {
-  readonly chainId: ChainId
-
-  // route can be used to detect which chain is favored in query param, check out useActiveNetwork.ts
-  readonly route: string
-  readonly ksSettingRoute: string
-  readonly priceRoute: string
-  readonly aggregatorRoute: string
-  readonly name: string
-  readonly icon: string
-  readonly iconSelected: string | null
-  readonly etherscanUrl: string
-  readonly etherscanName: string
-  readonly bridgeURL: string
-  readonly nativeToken: {
-    readonly symbol: string
-    readonly name: string
-    readonly logo: string
-    readonly decimal: number
-    readonly minForGas: number
-  }
-  readonly coingeckoNetworkId: string | null //https://api.coingecko.com/api/v3/asset_platforms
-  readonly coingeckoNativeTokenId: string | null //https://api.coingecko.com/api/v3/coins/list
-  readonly dexToCompare: string | null
-  readonly limitOrder: null | '*' | EnvKeys[]
-  readonly defaultRpcUrl: string
-
-  readonly geckoTermialId: string | null
-  readonly state?: ChainState
-  readonly poolFarmRoute: string // use this to get data from our internal BE
-  readonly defaultBlockSubgraph: string
-  readonly multicall: string
-  readonly classic: {
-    readonly defaultSubgraph: string
-    readonly static: {
-      readonly zap: string
-      readonly router: string
-      readonly factory: string
-    }
-    readonly oldStatic: {
-      readonly zap: string
-      readonly router: string
-      readonly factory: string
-    } | null
-    readonly dynamic: {
-      readonly zap: string
-      readonly router: string
-      readonly factory: string
-    } | null
-    readonly claimReward: string | null
-    readonly fairlaunch: string[]
-    readonly fairlaunchV2: string[]
-    readonly fairlaunchV3?: string[]
-  }
-  readonly elastic: {
-    readonly defaultSubgraph: string
-    readonly startBlock: number
-    readonly coreFactory: string
-    readonly nonfungiblePositionManager: string
-    readonly tickReader: string
-    readonly initCodeHash: string
-    readonly quoter: string
-    readonly routers: string
-    readonly farms: string[]
-    readonly farmv2Quoter?: string
-    readonly farmV2S?: string[]
-    readonly zap?: {
-      helper: string
-      router: string
-      executor: string
-      validator: string
-    }
-    readonly 'farmV2.1S'?: string[]
-  }
-  readonly averageBlockTimeInSeconds: number
-  readonly kyberDAO?: {
-    readonly staking: string
-    readonly dao: string
-    readonly rewardsDistributor: string
-    readonly daoStatsApi: string
-    readonly KNCAddress: string
-    readonly KNCLAddress: string
-  }
+  chainId: ChainId
+  name: string
+  route: string
+  defaultRpcUrl: string
+  etherscanUrl: string
+  etherscanName?: string
+  nativeToken: NativeToken
+  icon: string
+  aggregatorRoute: string
+  geckoTermialId?: string
+  coingeckoNetworkId: string
+  coingeckoNativeTokenId: string
+  defaultBlockSubgraph: string
+  kyberDAO?: KyberDAOConfig
+  classic: ClassicConfig
+  elastic: ElasticConfig
+  multicall: string
+  limitOrder?: Record<string, any>
+  averageBlockTimeInSeconds?: number
+  priceRoute: string
+  state?: number
+  ksSettingRoute?: string
 }

@@ -1,85 +1,96 @@
-import { Currency } from './currency'
-import { BigNumber } from 'ethers'
+export interface DexInfo {
+  name: string
+  routerAddress: string
+  factory: string
+  gasEstimate: string
+  quoterAddress?: string
+}
 
 export interface TokenInfo {
-  id?: number
-  code?: string
+  symbol: string
   name: string
   address: string
   decimals: number
-  symbol: string
-  icon?: string
-  chainId?: number
+  chainId: number
   logoURI?: string
-  hasFeeOnTransfer?: boolean
 }
 
-export interface SplitRoute {
-  dex: string
-  percentage: number
-  inputAmount: string
-  outputAmount: string
+export interface SwapRoute {
+  dex: DexInfo
+  path: string[]
+  amounts: string[]
+}
+
+export interface OpenOceanQuote {
+  inToken: TokenInfo
+  outToken: TokenInfo
+  inAmount: string
+  outAmount: string
+  estimatedGas: string
+  routes: SwapRoute[]
+  gasPrice: string
+  price: string
+  priceImpact: string
   routerAddress: string
-  gasEstimate: string
-  priceImpact?: string
+  gasUsd: string
+  amountInUsd: string
+  amountOutUsd: string
+  route: string[]
 }
 
 export interface DexQuote {
   dex: string
-  outAmount: string
-  routerAddress: string
-  gasEstimate: string
-  priceImpact?: string
-  effectiveOutput?: string
-  splitRoutes?: SplitRoute[]
+  amountOut: string
+  amountIn: string
+  path: string[]
 }
 
-export interface DexError {
-  dex: string
-  error: {
-    code: string
-    message: string
-    data?: any
-  }
-  routerAddress: string
-}
-
-export interface DexInfo {
-  name: string
-  routerAddress: string
-  quoterAddress?: string
-  factory?: string
-  gasEstimate: string
-}
-
-export interface DexMap {
-  [key: string]: DexInfo
-}
-
-export interface RouteQuote {
-  route: string[]
-  inputAmount: string
-  outputAmount: string
-  gasEstimate: string
-  priceImpact: string
-  effectiveOutput: string
-}
-
-export interface SwapParams {
-  chainId: number
-  currencyIn: Currency
-  currencyOut: Currency
-  amount: string
-  slippage: number
-  recipient: string
-  deadline: number
-  splitRoutes?: SplitRoute[]
-}
-
-export interface SwapTransaction {
+export interface OpenOceanSwapResult {
   data: string
-  value: string
+  outAmount: string
+  inAmount: string
+  estimatedGas: string
   to: string
-  gasLimit?: BigNumber
-  gasPrice?: BigNumber
+  value: string
+  gasPrice: string
+}
+
+export interface OpenOceanDetailedRouteSummary {
+  parsedAmountIn: CurrencyAmount<Currency>
+  parsedAmountOut: CurrencyAmount<Currency>
+  priceImpact: string
+  executionPrice: {
+    price: string
+    baseSymbol: string
+    quoteSymbol: string
+  }
+  gasUsd: string
+  amountInUsd: string
+  amountOutUsd: string
+  route: string[]
+  routerAddress: string
+  openOceanQuote: OpenOceanQuote
+}
+
+export interface OpenOceanBuildRouteResult {
+  amountIn: string
+  amountInUsd: string
+  amountOut: string
+  amountOutUsd: string
+  priceImpact: string
+  executionPrice: {
+    price: string
+    baseSymbol: string
+    quoteSymbol: string
+  }
+  gas: string
+  gasUsd: string
+  extraFee: {
+    chargeFeeBy: string
+    feeAmount: string
+    feeAmountUsd: string
+    isInBps: boolean
+  }
+  route: string[]
+  routerAddress: string
 }

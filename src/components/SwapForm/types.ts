@@ -30,6 +30,7 @@ export interface OutputCurrencyPanelProps {
   parsedAmountOut: CurrencyAmount<Currency> | undefined
   currencyIn: Currency | undefined
   currencyOut: Currency | undefined
+  balanceOut: CurrencyAmount<Currency> | undefined
   amountOutUsd: string | undefined
   onChangeCurrencyOut: (currency: Currency) => void
   customChainId?: number

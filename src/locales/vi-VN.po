@@ -61,7 +61,6 @@ msgstr ""
 #~ msgid "Currently there are no campaigns"
 #~ msgstr ""
 
-#: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
 #: src/components/SwapForm/SwapModal/SwapDetails/UpdatedBadge.tsx
 msgid "Updated"
 msgstr ""
@@ -454,7 +453,6 @@ msgstr ""
 msgid "An error occurred. Invalid Permit Signature."
 msgstr ""
 
-#: src/components/SwapForm/SwapActionButton/index.tsx
 #: src/components/swapv2/LimitOrder/LimitOrderForm.tsx
 msgid "Switch to {0}"
 msgstr ""
@@ -497,8 +495,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
-msgid "L1 fee that pays for rolls up cost"
-msgstr ""
+#~ msgid "L1 fee that pays for rolls up cost"
+#~ msgstr ""
 
 #: src/pages/Campaign/CampaignItem.tsx
 #~ msgid "Point multiplier is in effect."
@@ -529,6 +527,7 @@ msgstr ""
 #~ msgid "{0}% Locked"
 #~ msgstr ""
 
+#: src/components/SwapForm/AddMEVProtectionModal.tsx
 #: src/components/SwapForm/SwapModal/ConfirmSwapModalContent.tsx
 #: src/components/TransactionConfirmationModal/index.tsx
 #: src/components/TransactionConfirmationModal/index.tsx
@@ -791,15 +790,13 @@ msgstr ""
 #~ msgid "Share your referral link and start earning commission instantly!"
 #~ msgstr ""
 
-#: src/components/ProAmm/ProAmmPriceRangeConfirm.tsx
 #: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
-#: src/components/SwapForm/TradeSummary.tsx
-#~ msgid "Est. Gas Fee"
-#~ msgstr ""
+msgid "Est. Gas Fee"
+msgstr ""
 
 #: src/components/SwapForm/OutputCurrencyPanel.tsx
-msgid "This is the estimated output amount. It is inclusive of any applicable swap fees. Do review the actual output amount at the confirmation stage."
-msgstr ""
+#~ msgid "This is the estimated output amount. It is inclusive of any applicable swap fees. Do review the actual output amount at the confirmation stage."
+#~ msgstr ""
 
 #: src/pages/Bridge/SwapForm.tsx
 #~ msgid "You Receive"
@@ -950,8 +947,8 @@ msgstr ""
 
 #: src/components/swapv2/LimitOrder/OrderBook/TableHeader.tsx
 #: src/components/swapv2/LimitOrder/OrderBook/TableHeader.tsx
-msgid "({0})"
-msgstr ""
+#~ msgid "({0})"
+#~ msgstr ""
 
 #: src/pages/NotificationCenter/NotificationPreference/index.tsx
 msgid "Before you can subscribe to this notification, sign-in to a profile first. Go the <0>Profile</0> tab to sign-in with your wallet"
@@ -970,8 +967,8 @@ msgid "The amount to bridge must be less than {amount} {symbol}."
 msgstr ""
 
 #: src/components/SwapForm/TradeSummary.tsx
-msgid "Read more about the fees {hereLink}"
-msgstr ""
+#~ msgid "Read more about the fees {hereLink}"
+#~ msgstr ""
 
 #: src/pages/Bridge/SwapForm.tsx
 #~ msgid "The amount to bridge must be more than {0} {1}"
@@ -1032,8 +1029,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/Menu/index.tsx
-msgid "Terms"
-msgstr "Điều khoản"
+#~ msgid "Terms"
+#~ msgstr "Điều khoản"
 
 #: src/pages/PoolFinder/index.tsx
 msgid "Connect to a wallet to find pools"
@@ -1180,8 +1177,8 @@ msgid "Subscribe to receive notifications on your cross-chain transaction."
 msgstr ""
 
 #: src/components/Menu/index.tsx
-msgid "Bridge Assets"
-msgstr ""
+#~ msgid "Bridge Assets"
+#~ msgstr ""
 
 #: src/pages/PoolFinder/index.tsx
 msgid "Manage your pools."
@@ -1308,7 +1305,6 @@ msgstr ""
 msgid "Trading Volume (24H)"
 msgstr ""
 
-#: src/components/SwapForm/hooks/useGetInputError.tsx
 #: src/pages/KyberDAO/StakeKNC/MigrateModal.tsx
 #: src/pages/KyberDAO/StakeKNC/MigrateModal.tsx
 #: src/pages/KyberDAO/StakeKNC/StakeKNCComponent.tsx
@@ -1386,8 +1382,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/Header/web3/NetworkModal/components/DraggableNetworkButton.tsx
-msgid "Maintenance"
-msgstr ""
+#~ msgid "Maintenance"
+#~ msgstr ""
 
 #: src/components/swapv2/AdvancedSwapDetails.tsx
 msgid "Current Price in the market."
@@ -1558,7 +1554,6 @@ msgstr ""
 msgid "How can I vote on KIPs with my staked KNC to earn voting rewards?"
 msgstr ""
 
-#: src/components/Menu/index.tsx
 #: src/pages/About/AboutKNC.tsx
 #: src/pages/About/AboutKyberSwap/index.tsx
 #: src/pages/KyberDAO/Vote/ProposalListComponent.tsx
@@ -1643,8 +1638,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/hooks/useBuildRoute.tsx
-msgid "Wallet is not connected"
-msgstr ""
+#~ msgid "Wallet is not connected"
+#~ msgstr ""
 
 #: src/components/ConfirmAddModalBottom/index.tsx
 #: src/components/ConfirmModal.tsx
@@ -1862,7 +1857,6 @@ msgid "GAS FEE"
 msgstr ""
 
 #: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
-#: src/components/SwapForm/TradeSummary.tsx
 #: src/components/swapv2/AdvancedSwapDetails.tsx
 #: src/components/swapv2/SwapModalFooter.tsx
 msgid "Estimated change in price due to the size of your transaction."
@@ -1937,7 +1931,6 @@ msgstr ""
 #~ msgid "Deposit your liquidity & then stake it to earn even more attractive rewards"
 #~ msgstr ""
 
-#: src/components/SwapForm/hooks/useGetInputError.tsx
 #: src/components/swapv2/LimitOrder/useValidateInputError.tsx
 #: src/pages/Bridge/SwapForm.tsx
 msgid "Insufficient {symbol} balance"
@@ -1982,8 +1975,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/OutputCurrencyPanel.tsx
-msgid "Est. Output"
-msgstr ""
+#~ msgid "Est. Output"
+#~ msgstr ""
 
 #: src/components/Menu/ClaimRewardModal.tsx
 msgid "Claim your rewards"
@@ -2014,8 +2007,8 @@ msgid "No liquidity found. Check out our <0>Pools.</0>"
 msgstr ""
 
 #: src/components/Menu/index.tsx
-msgid "KyberSwap Guide"
-msgstr ""
+#~ msgid "KyberSwap Guide"
+#~ msgstr ""
 
 #: src/pages/ElasticSnapshot/components/Vesting.tsx
 msgid "Total Amount (USDC)"
@@ -2028,6 +2021,10 @@ msgstr ""
 #: src/pages/TrueSightV2/pages/TokenAnalysisList.tsx
 #~ msgid "Top CEX Inflow"
 #~ msgstr ""
+
+#: src/components/Header/web3/NetworkModal/components/DraggableNetworkButton.tsx
+msgid "{disabledMsg}"
+msgstr ""
 
 #: src/pages/MyPool/index.tsx
 #: src/pages/ProAmmPool/index.tsx
@@ -2043,7 +2040,6 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
-#: src/components/SwapForm/TradeSummary.tsx
 #: src/components/swapv2/AdvancedSwapDetails.tsx
 #: src/components/swapv2/SwapModalFooter.tsx
 msgid "You will receive at least this amount or your transaction will revert."
@@ -2084,8 +2080,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/SwapActionButton/index.tsx
-msgid "You need to first give a temporary 24H approval to KyberSwap's smart contract to use your {0}. This doesn't require a gas fees. <0>Read more ↗</0>"
-msgstr ""
+#~ msgid "You need to first give a temporary 24H approval to KyberSwap's smart contract to use your {0}. This doesn't require a gas fees. <0>Read more ↗</0>"
+#~ msgstr ""
 
 #: src/pages/TrueSightV2/components/SearchWithDropDown.tsx
 #~ msgid "Search"
@@ -2100,8 +2096,8 @@ msgid "This chain is not supported gasless cancel. It's coming soon."
 msgstr ""
 
 #: src/components/SwapForm/hooks/useBuildRoute.tsx
-msgid "Route summary is missing"
-msgstr ""
+#~ msgid "Route summary is missing"
+#~ msgstr ""
 
 #: src/components/Header/web3/SignWallet/ConfirmModal.tsx
 msgid "profile <0> {0}</0>"
@@ -2380,7 +2376,6 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/Menu/FaucetModal.tsx
-#: src/components/Menu/index.tsx
 msgid "Faucet"
 msgstr ""
 
@@ -3228,8 +3223,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/AddMEVProtectionModal.tsx
-msgid "<0>MEV</0> Protection safeguards you from front-running attacks on Ethereum. We suggest you employing the <1>RPC endpoint</1> of reliable third-parties such as <2>Flashbots</2> or <3>MEVBlocker</3>.<4/><5/>Note that adding the RPC endpoint automatically is only available via the MetaMask wallet. If you would like to add the RPC endpoint to your wallet manually, please refer to this <6>guide</6>."
-msgstr ""
+#~ msgid "<0>MEV</0> Protection safeguards you from front-running attacks on Ethereum. We suggest you employing the <1>RPC endpoint</1> of reliable third-parties such as <2>Flashbots</2> or <3>MEVBlocker</3>.<4/><5/>Note that adding the RPC endpoint automatically is only available via the MetaMask wallet. If you would like to add the RPC endpoint to your wallet manually, please refer to this <6>guide</6>."
+#~ msgstr ""
 
 #: src/components/YieldPools/ElasticFarmModals/DepositModal.tsx
 #~ msgid "Deposit your liquidity positions (NFT tokens) first to enable farming. Only your in range liquidity positions (NFT tokens) will earn you farming rewards"
@@ -3616,8 +3611,8 @@ msgid "Kyber Network and its products like KyberSwap are governed by the communi
 msgstr ""
 
 #: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
-msgid "L2 execution fee"
-msgstr ""
+#~ msgid "L2 execution fee"
+#~ msgstr ""
 
 #: src/components/ElasticZap/QuickZap.tsx
 #~ msgid "Step 2. Choose Price Range"
@@ -3818,6 +3813,7 @@ msgstr ""
 #~ msgid "VOLUME ↓"
 #~ msgstr ""
 
+#: src/components/Menu/index.tsx
 #: src/pages/Bridge/index.tsx
 msgid "Bridge"
 msgstr ""
@@ -4169,8 +4165,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/TradeSummary.tsx
-msgid "A {feePercent} fee ({feeAmountText}) will incur on this swap. The Est. Output amount you see above is inclusive of this fee. Read more about the fees {hereLink}"
-msgstr ""
+#~ msgid "A {feePercent} fee ({feeAmountText}) will incur on this swap. The Est. Output amount you see above is inclusive of this fee. Read more about the fees {hereLink}"
+#~ msgstr ""
 
 #: src/components/Vesting/VestingCard.tsx
 #~ msgid "Rewards Breakdown"
@@ -4213,7 +4209,6 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/Header/web3/WalletModal/index.tsx
-#: src/components/Menu/index.tsx
 msgid "Privacy Policy"
 msgstr "Chính sách Bảo mật"
 
@@ -4321,6 +4316,10 @@ msgstr ""
 
 #: src/pages/KyberDAO/KNCUtility/FAQ.tsx
 msgid "Are limit orders and cross-chain swaps eligible for gas refunds?"
+msgstr ""
+
+#: src/components/Menu/index.tsx
+msgid "DAO"
 msgstr ""
 
 #: src/components/YieldPools/FarmStepGuide/index.tsx
@@ -4463,8 +4462,8 @@ msgid "Want to try our Limit Orders?"
 msgstr ""
 
 #: src/components/Menu/index.tsx
-msgid "Claiming..."
-msgstr ""
+#~ msgid "Claiming..."
+#~ msgstr ""
 
 #: src/pages/About/AboutKNC.tsx
 msgid "KNC token holders can benefit from our flagship product KyberSwap. Holders can stake their KNC & vote on initiatives to receive trading fees generated on KyberSwap! More trades on KyberSwap can generate more rewards for KNC holders!<0/><1/>KNC token is dynamic - it can be upgraded, minted or burned by KyberDAO to better support liquidity and growth."
@@ -4564,8 +4563,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/SwapActionButton/index.tsx
-msgid "Insufficient liquidity for this trade"
-msgstr ""
+#~ msgid "Insufficient liquidity for this trade"
+#~ msgstr ""
 
 #: src/pages/KyberDAO/Vote/index.tsx
 #~ msgid "You have to stake KNC to be able to vote and earn voting reward"
@@ -4673,8 +4672,8 @@ msgid "Add Liquidity"
 msgstr "Thêm thanh khoản"
 
 #: src/components/SwapForm/TradeSummary.tsx
-msgid "here"
-msgstr "ở đây"
+#~ msgid "here"
+#~ msgstr "ở đây"
 
 #: src/pages/About/AboutKyberSwap/index.tsx
 msgid "Find out more"
@@ -4773,8 +4772,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/PriceImpactNote.tsx
-msgid "<0>Price Impact</0> is very high. You will lose funds! {0}"
-msgstr ""
+#~ msgid "<0>Price Impact</0> is very high. You will lose funds! {0}"
+#~ msgstr ""
 
 #: src/components/WalletPopup/WalletView.tsx
 msgid "Open scan explorer"
@@ -4799,8 +4798,8 @@ msgstr ""
 
 #: src/components/SwapForm/SwapActionButton/index.tsx
 #: src/components/SwapForm/SwapActionButton/index.tsx
-msgid "Approve <0>{0}</0> requires to be more than <1>{1} {2}</1>, find out more <2>here</2>"
-msgstr ""
+#~ msgid "Approve <0>{0}</0> requires to be more than <1>{1} {2}</1>, find out more <2>here</2>"
+#~ msgstr ""
 
 #: src/components/YieldPools/ElasticFarmGroup/buttons.tsx
 msgid "Withdraw your liquidity positions (i.e. your NFT tokens) from the farming contract."
@@ -4856,16 +4855,14 @@ msgid "Safe"
 msgstr ""
 
 #: src/components/Menu/index.tsx
-msgid "Notification Center"
-msgstr ""
+#~ msgid "Notification Center"
+#~ msgstr ""
 
 #: src/pages/NotificationCenter/GeneralAnnouncement/index.tsx
 #: src/pages/NotificationCenter/PrivateAnnouncement.tsx
 msgid "No notification yet"
 msgstr ""
 
-#: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
-#: src/components/SwapForm/TradeSummary.tsx
 #: src/components/swapv2/SwapModalFooter.tsx
 msgid "Read more <0><1>here ↗</1></0>"
 msgstr ""
@@ -4926,8 +4923,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/OutputCurrencyPanel.tsx
-msgid "Est. Output (incl. fee)"
-msgstr ""
+#~ msgid "Est. Output (incl. fee)"
+#~ msgstr ""
 
 #: src/components/swapv2/AdvancedSwapDetails.tsx
 #: src/components/swapv2/AdvancedSwapDetails.tsx
@@ -5089,8 +5086,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/Menu/index.tsx
-msgid "Preferences"
-msgstr "Các tùy chọn"
+#~ msgid "Preferences"
+#~ msgstr "Các tùy chọn"
 
 #: src/pages/Campaign/CampaignButtonWithOptions.tsx
 #~ msgid "Claim on {0}"
@@ -5207,8 +5204,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/Footer/Footer.tsx
-msgid "Powered By"
-msgstr "Được cung cấp bởi"
+#~ msgid "Powered By"
+#~ msgstr "Được cung cấp bởi"
 
 #: src/pages/KyberDAO/Vote/ProposalItem/OptionButton.tsx
 msgid "Cannot vote at this moment"
@@ -5244,6 +5241,10 @@ msgstr ""
 #~ msgid "Total Value Locked is less than $1"
 #~ msgstr ""
 
+#: src/components/Footer/Footer.tsx
+msgid "Powered By Kyber"
+msgstr ""
+
 #: src/components/YieldPools/ElasticFarmGroup/FarmCard.tsx
 #: src/pages/MyEarnings/ElasticPools/SinglePosition/CommonView.tsx
 #: src/pages/MyEarnings/PoolFilteringBar/ViewEarningOrPositionButton.tsx
@@ -5252,8 +5253,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/SwapActionButton/index.tsx
-msgid "Unwrap"
-msgstr ""
+#~ msgid "Unwrap"
+#~ msgstr ""
 
 #: src/pages/ElasticSnapshot/index.tsx
 msgid "Total Amount (USD) = Total Liquidity Amount (USD) + Total Fees Amount (USD)"
@@ -5462,8 +5463,8 @@ msgid "Checking price"
 msgstr ""
 
 #: src/components/SwapForm/SwapActionButton/index.tsx
-msgid "Permit {0}"
-msgstr ""
+#~ msgid "Permit {0}"
+#~ msgstr ""
 
 #: src/pages/Bridge/SwapForm.tsx
 msgid "Review transfer"
@@ -5515,8 +5516,8 @@ msgid "Tier {userTier} - {0}% Gas Refund"
 msgstr ""
 
 #: src/components/Menu/index.tsx
-msgid "Legacy"
-msgstr ""
+#~ msgid "Legacy"
+#~ msgstr ""
 
 #: src/components/PoolList/ItemCard/TabDetailsItems.tsx
 #~ msgid "AMP Liquidity"
@@ -5552,7 +5553,6 @@ msgstr ""
 
 #: src/components/ConfirmAddModalBottom/index.tsx
 #: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
-#: src/components/SwapForm/TradeSummary.tsx
 #: src/components/swapv2/AdvancedSwapDetails.tsx
 #: src/components/swapv2/SwapModalFooter.tsx
 #: src/pages/RemoveLiquidity/ZapOut.tsx
@@ -5572,7 +5572,6 @@ msgstr ""
 #: src/components/CurrencyInputPanel/index.tsx
 #: src/components/SearchModal/bridge/CurrencySearchBridge.tsx
 #: src/components/SearchModal/CurrencySearch.tsx
-#: src/components/SwapForm/hooks/useGetInputError.tsx
 msgid "Select a token"
 msgstr "Chọn một token"
 
@@ -5589,8 +5588,8 @@ msgid "or switch to"
 msgstr ""
 
 #: src/components/SwapForm/PriceImpactNote.tsx
-msgid "Price Impact is high. Please consider placing a {0}{limitOrderLink} to soften the price impact."
-msgstr ""
+#~ msgid "Price Impact is high. Please consider placing a {0}{limitOrderLink} to soften the price impact."
+#~ msgstr ""
 
 #: src/components/Tutorial/index.tsx
 #: src/components/Tutorial/index.tsx
@@ -5948,6 +5947,10 @@ msgstr ""
 #~ msgid "{0}% Refund"
 #~ msgstr ""
 
+#: src/pages/ElasticSnapshot/components/SelectTreasuryGrant.tsx
+msgid "Phase 3"
+msgstr ""
+
 #: src/components/swap/AdvancedSwapDetails.tsx
 #~ msgid "Routing through these tokens resulted in the best price for your trade"
 #~ msgstr ""
@@ -6012,7 +6015,6 @@ msgstr ""
 msgid "Verify your email address."
 msgstr ""
 
-#: src/components/SwapForm/hooks/useGetInputError.tsx
 #: src/state/burn/hooks.ts
 #: src/state/burn/hooks.ts
 #: src/state/mint/hooks.ts
@@ -6057,9 +6059,13 @@ msgstr "Yếu tố AMP x Tính thanh khoản trong pool. Các pool khuếch đ�
 #~ msgid "KyberSwap is DeFi’s premier automated market maker, providing the best token prices for traders across multiple exchanges, and maximizing earnings for liquidity providers, in one decentralized platform."
 #~ msgstr ""
 
-#: src/components/Header/web3/NetworkModal/components/DraggableNetworkButton.tsx
-msgid "Coming Soon"
+#: src/components/SwapForm/AddMEVProtectionModal.tsx
+msgid "<0>MEV</0> Protection safeguards you from front-running attacks on Ethereum. We recommend using <1>KyberSwap's RPC endpoint</1> - powered by Blink to protect your transactions from front-running attacks and ensure a better trading experience.<2/><3/>Note that adding the RPC endpoint automatically is only available via the MetaMask wallet. If you are using another wallet or would like to add the RPC endpoint to your wallet manually, please refer to this <4>guide</4>. Please make sure you understand how it works and use at your own caution."
 msgstr ""
+
+#: src/components/Header/web3/NetworkModal/components/DraggableNetworkButton.tsx
+#~ msgid "Coming Soon"
+#~ msgstr ""
 
 #: src/state/farms/elastic/hooks.ts
 #~ msgid "Unstake Error"
@@ -6174,7 +6180,6 @@ msgstr ""
 #~ msgid "Timeframe"
 #~ msgstr ""
 
-#: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
 #: src/components/swapv2/TokenInfo/MarketInfo.tsx
 #: src/components/WalletPopup/SendToken/WarningBrave.tsx
 msgid "Contract Address"
@@ -6198,8 +6203,8 @@ msgid "Note: Staking KNC is only available on Ethereum chain."
 msgstr ""
 
 #: src/components/Menu/index.tsx
-msgid "Holiday Mode"
-msgstr ""
+#~ msgid "Holiday Mode"
+#~ msgstr ""
 
 #: src/pages/TrueSightV2/components/TutorialModal.tsx
 #~ msgid "<0>That's not all! Here are a few handy tips so you can get the most out of KyberAI:</0> <1><2>Use the search bar to <3>search</3> for any token you'd like to explore. KyberAI supports 4000+ tokens!</2><4><5>Subscribe</5> to receive daily emails on the top tokens as recommended by KyberAI!</4><6>Monitoring the price of a token? Set a <7>price alert</7>, sit back, and we'll notify you!</6><8>Create a <9>watchlist</9> of your favorite tokens, and access it quickly!</8></1> <10>If you wish to view this guide again, you can enable it from the settings. </10><11><12>Ape Smart with KyberAI.</12></11>"
@@ -6224,7 +6229,6 @@ msgid "KyberDAO"
 msgstr ""
 
 #: src/components/SwapForm/SlippageSetting.tsx
-#: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
 #: src/components/swapv2/SwapModalFooter.tsx
 #: src/pages/RemoveLiquidityProAmm/index.tsx
 msgid "During your swap if the price changes by more than this %, your transaction will revert. Read more <0>here ↗</0>"
@@ -6256,7 +6260,6 @@ msgstr ""
 #~ msgid "Warning: The price range for this liquidity position is not eligible for farming rewards. To become eligible for rewards, please match the farm’s active range(s)."
 #~ msgstr ""
 
-#: src/components/Announcement/AnnoucementView.tsx
 #: src/pages/NotificationCenter/Menu/index.tsx
 msgid "General"
 msgstr ""
@@ -6450,8 +6453,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/Menu/index.tsx
-msgid "Treasury Grant 2023"
-msgstr ""
+#~ msgid "Treasury Grant 2023"
+#~ msgstr ""
 
 #: src/pages/TrueSightV2/pages/LandingPage.tsx
 #~ msgid "Subscribe to receive daily emails on the top tokens as recommended by KyberAI"
@@ -6718,8 +6721,8 @@ msgid "Note: Your transfer amount ({amount} {tokenInSymbol}) is more than {r}% o
 msgstr ""
 
 #: src/components/SwapForm/OutputCurrencyPanel.tsx
-msgid "This is the estimated output amount. Do review the actual output amount at the confirmation stage."
-msgstr ""
+#~ msgid "This is the estimated output amount. Do review the actual output amount at the confirmation stage."
+#~ msgstr ""
 
 #: src/components/Announcement/AnnoucementView.tsx
 msgid "No notifications found"
@@ -6807,13 +6810,13 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/SwapActionButton/index.tsx
-msgid "You need to first allow KyberSwap's smart contract to use your {0}. <0>Read more ↗</0>"
-msgstr ""
+#~ msgid "You need to first allow KyberSwap's smart contract to use your {0}. <0>Read more ↗</0>"
+#~ msgstr ""
 
 #: src/components/Header/index.tsx
 #: src/components/Menu/index.tsx
-msgid "Analytics"
-msgstr "Phân tích"
+#~ msgid "Analytics"
+#~ msgstr "Phân tích"
 
 #: src/pages/KyberDAO/KNCUtility/FAQ.tsx
 msgid "No. Limit orders and cross-chain swaps are not eligible for gas refunds. Only standard swaps on KyberSwap are eligible."
@@ -6995,7 +6998,6 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/Header/groups/AboutNavGroup.tsx
-#: src/components/Menu/index.tsx
 msgid "Blog"
 msgstr ""
 
@@ -7015,6 +7017,10 @@ msgstr ""
 #: src/components/Toggle/LegacyToggle.tsx
 msgid "Off"
 msgstr "Off"
+
+#: src/components/Footer/Footer.tsx
+msgid "Powered By Rubic"
+msgstr ""
 
 #: src/pages/CreatePool/FeeTypeSelector.tsx
 #: src/pages/CreatePool/index.tsx
@@ -7554,8 +7560,8 @@ msgid "Swap your tokens at superior rates. No limits"
 msgstr ""
 
 #: src/components/SwapForm/PriceImpactNote.tsx
-msgid "<0>Price Impact</0><1>is high</1>"
-msgstr ""
+#~ msgid "<0>Price Impact</0><1>is high</1>"
+#~ msgstr ""
 
 #: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
 #: src/components/SwapForm/TradeSummary.tsx
@@ -7609,8 +7615,8 @@ msgid "Your currently existing order is {filledPercent}% filled."
 msgstr ""
 
 #: src/components/SwapForm/PriceImpactNote.tsx
-msgid "Unable to calculate <0>Price Impact.</0>{0}"
-msgstr ""
+#~ msgid "Unable to calculate <0>Price Impact.</0>{0}"
+#~ msgstr ""
 
 #: src/components/YieldPools/FarmStepGuide/index.tsx
 #: src/pages/Farm/index.tsx
@@ -7879,7 +7885,6 @@ msgid "Something went wrong. Please try again."
 msgstr ""
 
 #: src/components/Header/groups/EarnNavGroup.tsx
-#: src/components/Menu/index.tsx
 #: src/pages/MyPool/index.tsx
 msgid "My Pools"
 msgstr "Pool của Tôi"
@@ -7903,8 +7908,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/SwapActionButton/index.tsx
-msgid "Approve {0}"
-msgstr "Chấp nhận {0}"
+#~ msgid "Approve {0}"
+#~ msgstr "Chấp nhận {0}"
 
 #: src/components/SearchModal/bridge/CurrencySearchBridge.tsx
 #: src/components/SearchModal/CurrencySearch.tsx
@@ -7933,8 +7938,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/TradeSummary.tsx
-msgid "Rate"
-msgstr ""
+#~ msgid "Rate"
+#~ msgstr ""
 
 #: src/pages/NotificationCenter/Menu/index.tsx
 #~ msgid "My Elastic Pools"
@@ -8107,8 +8112,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/PriceImpactNote.tsx
-msgid "You have turned on <0>Degen Mode</0> from settings. Trades can still be executed when price impact cannot be calculated."
-msgstr ""
+#~ msgid "You have turned on <0>Degen Mode</0> from settings. Trades can still be executed when price impact cannot be calculated."
+#~ msgstr ""
 
 #: src/components/SearchModal/ImportList.tsx
 #~ msgid "If you purchase a token from this list, you may not be able to sell it back."
@@ -8171,8 +8176,8 @@ msgid "Error when changing network."
 msgstr ""
 
 #: src/components/SwapForm/PriceImpactNote.tsx
-msgid "Consider requesting a {limitOrderLink} instead, or click 'Swap Anyway' if you wish to continue by enabling Degen Mode."
-msgstr ""
+#~ msgid "Consider requesting a {limitOrderLink} instead, or click 'Swap Anyway' if you wish to continue by enabling Degen Mode."
+#~ msgstr ""
 
 #: src/pages/NotificationCenter/CreateAlert/ConfirmModal.tsx
 msgid "Active Alerts: {totalActiveAlerts}/{maxActiveAlerts}"
@@ -8249,8 +8254,8 @@ msgid "Amount"
 msgstr "Số Lượng"
 
 #: src/components/SwapForm/SwapActionButton/index.tsx
-msgid "Wrap"
-msgstr ""
+#~ msgid "Wrap"
+#~ msgstr ""
 
 #: src/pages/Campaign/CampaignItem.tsx
 #~ msgid "Qualified"
@@ -8336,8 +8341,8 @@ msgid "Save Error"
 msgstr ""
 
 #: src/components/SwapForm/hooks/useGetInputError.tsx
-msgid "Enter a recipient"
-msgstr "Nhập người nhận"
+#~ msgid "Enter a recipient"
+#~ msgstr "Nhập người nhận"
 
 #: src/pages/Pools/index.tsx
 #: src/pages/Pools/index.tsx
@@ -8458,7 +8463,6 @@ msgstr ""
 msgid "{0}% Transaction Fee"
 msgstr ""
 
-#: src/components/SwapForm/hooks/useGetInputError.tsx
 #: src/hooks/useWrapCallback.ts
 #: src/hooks/useWrapCallback.ts
 #: src/state/burn/hooks.ts
@@ -8477,7 +8481,6 @@ msgstr "Nhập số lượng"
 
 #: src/components/Header/web3/SelectWallet.tsx
 #: src/components/Menu/FaucetModal.tsx
-#: src/components/SwapForm/SwapActionButton/index.tsx
 #: src/components/swapv2/LimitOrder/ActionButtonLimitOrder.tsx
 #: src/components/YieldPools/ElasticFarmGroup/buttons.tsx
 #: src/pages/Bridge/SwapForm.tsx
@@ -8590,8 +8593,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/Header/web3/NetworkModal/components/DraggableNetworkButton.tsx
-msgid "New"
-msgstr "Mới"
+#~ msgid "New"
+#~ msgstr "Mới"
 
 #: src/pages/TrueSightV2/components/SmallKyberScoreMeter.tsx
 #: src/pages/TrueSightV2/components/table/index.tsx
@@ -8628,7 +8631,6 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/Button/index.tsx
-#: src/components/SwapForm/SwapActionButton/index.tsx
 #: src/pages/RemoveLiquidity/TokenPair.tsx
 #: src/pages/RemoveLiquidity/ZapOut.tsx
 msgid "Approving"
@@ -8768,6 +8770,10 @@ msgstr ""
 #~ msgid "Ape Smart with <0>KyberAI</0>"
 #~ msgstr ""
 
+#: src/components/Menu/index.tsx
+msgid "AI"
+msgstr ""
+
 #: src/components/SwapForm/GasPriceNote.tsx
 msgid "Gas fees is very high. You will lose your funds."
 msgstr ""
@@ -8778,6 +8784,10 @@ msgstr ""
 
 #: src/components/swapv2/LimitOrder/index.tsx
 msgid "Note: Once your order is filled, you will receive {name} ({symbol})"
+msgstr ""
+
+#: src/pages/MarketOverview/index.tsx
+msgid "Market Overview"
 msgstr ""
 
 #: src/components/swapv2/LimitOrder/ActionButtonLimitOrder.tsx
@@ -8935,8 +8945,8 @@ msgid "One token is close to 0% in the pool ratio. Pool might go inactive."
 msgstr "Một token gần bằng 0% trong pool. Pool có thể ngừng hoạt động."
 
 #: src/components/SwapForm/hooks/useGetInputError.tsx
-msgid "Invalid recipient"
-msgstr "Người nhận không hợp lệ"
+#~ msgid "Invalid recipient"
+#~ msgstr "Người nhận không hợp lệ"
 
 #: src/pages/KyberDAO/KNCUtility/GasRefundBox.tsx
 msgid "Total Gas Refund"
@@ -9020,6 +9030,10 @@ msgstr ""
 msgid "The more you stake and vote, the more KNC you will earn."
 msgstr ""
 
+#: src/components/Menu/index.tsx
+msgid "Rebel Kangas"
+msgstr ""
+
 #: src/components/SearchModal/ImportRow.tsx
 #: src/pages/NotificationCenter/Menu/index.tsx
 #: src/pages/NotificationCenter/Profile/ImportAccountModal/UserEnterPasscodeContent.tsx
@@ -9085,7 +9099,6 @@ msgstr "Pool"
 #~ msgstr ""
 
 #: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
-#: src/components/SwapForm/TradeSummary.tsx
 #: src/components/swapv2/AdvancedSwapDetails.tsx
 #: src/components/swapv2/AdvancedSwapDetails.tsx
 #: src/components/swapv2/SwapModalFooter.tsx
@@ -9123,8 +9136,8 @@ msgid "Here you can view all your liquidity and staked balances in the Classic P
 msgstr ""
 
 #: src/components/SwapForm/PriceImpactNote.tsx
-msgid "<0><1>Price Impact</1></0> is very high. You will lose funds!"
-msgstr ""
+#~ msgid "<0><1>Price Impact</1></0> is very high. You will lose funds!"
+#~ msgstr ""
 
 #: src/pages/Verify/index.tsx
 #~ msgid "Your verification link has expired!"
@@ -9180,8 +9193,8 @@ msgstr ""
 
 #: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
 #: src/components/SwapForm/TradeSummary.tsx
-msgid "Est. Swap Fee"
-msgstr ""
+#~ msgid "Est. Swap Fee"
+#~ msgstr ""
 
 #: src/hooks/usePermit.ts
 msgid "An error occurred while attempting to authorize this token. Please approve it normally instead."
@@ -9201,8 +9214,8 @@ msgid "Use this tool to find pairs that don't automatically appear in the interf
 msgstr ""
 
 #: src/pages/SwapV3/index.tsx
-msgid "Your trade route"
-msgstr "Trade Route của bạn"
+#~ msgid "Your trade route"
+#~ msgstr "Trade Route của bạn"
 
 #: src/components/Header/web3/SignWallet/ConfirmModal.tsx
 msgid "Alternatively, you can sign-into a new profile using your wallet <0>{0}</0>"
@@ -9387,8 +9400,8 @@ msgid "Available assets for claiming"
 msgstr ""
 
 #: src/components/Menu/index.tsx
-msgid "Icons"
-msgstr ""
+#~ msgid "Icons"
+#~ msgstr ""
 
 #: src/components/YieldPools/ElasticFarmGroup/index.tsx
 #: src/components/YieldPools/FairLaunchPools.tsx
@@ -9510,8 +9523,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/SwapModal/SwapBrief.tsx
-msgid "Output Amount (incl. fee)"
-msgstr ""
+#~ msgid "Output Amount (incl. fee)"
+#~ msgstr ""
 
 #: src/pages/Verify/VerifyCodeModal/index.tsx
 msgid "Email Verified"
@@ -9614,7 +9627,6 @@ msgstr ""
 msgid "<0>Swap</0> Tokens at Superior Rates"
 msgstr ""
 
-#: src/components/SwapForm/hooks/useBuildRoute.tsx
 #: src/pages/ElasticSnapshot/components/ChooseGrantModal.tsx
 #: src/pages/ElasticSnapshot/components/ChooseGrantModal.tsx
 #: src/pages/ElasticSnapshot/components/SelectTreasuryGrant.tsx
@@ -10067,8 +10079,8 @@ msgid "Value of each trade (calculated at the point of the trade) on KyberSwap h
 msgstr ""
 
 #: src/components/SwapForm/PriceImpactNote.tsx
-msgid "You have turned on Degen Mode from settings. Trades with very high price impact can be executed"
-msgstr ""
+#~ msgid "You have turned on Degen Mode from settings. Trades with very high price impact can be executed"
+#~ msgstr ""
 
 #: src/components/swapv2/TokenInfo/index.tsx
 msgid "Token security info provided by Goplus. Please conduct your own research before trading"
@@ -10286,6 +10298,10 @@ msgstr ""
 #: src/components/YieldPools/HarvestAll.tsx
 #~ msgid "My Total Rewards"
 #~ msgstr "Tổng các Phần thưởng của tôi"
+
+#: src/components/Menu/index.tsx
+msgid "Learn"
+msgstr ""
 
 #: src/components/FeeControlGroup/index.tsx
 msgid "Tip"
@@ -10805,8 +10821,8 @@ msgstr ""
 #~ msgstr "Thứ hạng của bạn"
 
 #: src/components/Header/web3/NetworkModal/components/DraggableNetworkButton.tsx
-msgid "Chain under maintenance. We will be back as soon as possible."
-msgstr ""
+#~ msgid "Chain under maintenance. We will be back as soon as possible."
+#~ msgstr ""
 
 #: src/components/ErrorBoundary/FallbackView.tsx
 msgid "Oops! Something went wrong"
@@ -10885,8 +10901,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/PriceImpactNote.tsx
-msgid "You can turn on Degen Mode from Settings to execute trades with very high price impact. This can result in bad rates and loss of funds"
-msgstr ""
+#~ msgid "You can turn on Degen Mode from Settings to execute trades with very high price impact. This can result in bad rates and loss of funds"
+#~ msgstr ""
 
 #: src/pages/NotificationCenter/Menu/index.tsx
 msgid "Profile"
@@ -10912,6 +10928,7 @@ msgid "My Farm APR"
 msgstr ""
 
 #: src/components/Header/groups/SwapNavGroup.tsx
+#: src/components/Menu/index.tsx
 #: src/components/SwapForm/SwapActionButton/SwapButtonWithPriceImpact.tsx
 #: src/components/SwapForm/SwapModal/ConfirmSwapModalContent.tsx
 #: src/pages/CrossChain/SwapForm/index.tsx
@@ -10936,8 +10953,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/PriceImpactNote.tsx
-msgid "You can turn on Degen Mode from Settings to execute trades with very high price impact or Place a {limitOrderLink}. This can result in bad rates and loss of funds"
-msgstr ""
+#~ msgid "You can turn on Degen Mode from Settings to execute trades with very high price impact or Place a {limitOrderLink}. This can result in bad rates and loss of funds"
+#~ msgstr ""
 
 #: src/pages/ElasticSnapshot/components/ChooseGrantModal.tsx
 msgid "KyberSwap Elastic Exploit Treasury Grant Program (“Program”) will support Affected Users who have lost Affected Assets to the KyberSwap Elastic Exploit. Under the Program, an Affected User who fulfils Eligibility Requirements can choose from one of the following options for the Treasury Grants in respect of each Affected Address of such Affected User."
@@ -10988,6 +11005,10 @@ msgstr ""
 #: src/components/Menu/index.tsx
 msgid "Language"
 msgstr "Ngôn ngữ"
+
+#: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
+msgid "Router Address"
+msgstr ""
 
 #: src/components/Header/groups/CampaignNavGroup.tsx
 msgid "Referral"
@@ -11075,6 +11096,10 @@ msgstr ""
 msgid "Import Profile"
 msgstr ""
 
+#: src/components/SwapForm/SwapModal/SwapDetails/index.tsx
+msgid "During your swap if the price changes by more than this %, your transaction will revert."
+msgstr ""
+
 #: src/components/swapv2/LimitOrder/LimitOrderForm.tsx
 msgid "Order Placed"
 msgstr ""
@@ -11147,6 +11172,10 @@ msgstr "Tác động giá cao"
 msgid "Insufficient amount"
 msgstr ""
 
+#: src/pages/SwapV3/index.tsx
+msgid "Your Trade Roo-te"
+msgstr ""
+
 #: src/components/YieldPools/FairLaunchPools.tsx
 #~ msgid "This pool require {0} LP Tokens. Get the LP Tokens <0>here ↗</0>"
 #~ msgstr ""
@@ -11193,8 +11222,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/SwapForm/TradeSummary.tsx
-msgid "Swap fees charged by {clientId}."
-msgstr ""
+#~ msgid "Swap fees charged by {clientId}."
+#~ msgstr ""
 
 #: src/pages/AddLiquidityV2/index.tsx
 #~ msgid "Select a Range"
@@ -11584,8 +11613,8 @@ msgstr ""
 #~ msgstr ""
 
 #: src/components/Menu/index.tsx
-msgid "Claim Rewards"
-msgstr "Nhận thưởng"
+#~ msgid "Claim Rewards"
+#~ msgstr "Nhận thưởng"
 
 #: src/components/swapv2/LimitOrder/ListOrder/OrderItem.tsx
 msgid "Filled"
@@ -11651,8 +11680,8 @@ msgid "Order Filled"
 msgstr ""
 
 #: src/components/Menu/index.tsx
-msgid "Menu"
-msgstr ""
+#~ msgid "Menu"
+#~ msgstr ""
 
 #: src/components/UpcomingFarms/ListItem.tsx
 #: src/components/UpcomingFarms/ListItem.tsx

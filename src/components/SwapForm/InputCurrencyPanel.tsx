@@ -27,6 +27,7 @@ const InputCurrencyPanel: React.FC<InputCurrencyPanelProps> = ({
       id="swap-currency-input"
       showCommonBases={true}
       customChainId={customChainId}
+      customBalanceText={balanceIn?.toSignificant(10)}
       onMax={() => {
         if (balanceIn) {
           setTypedValue(balanceIn.toExact())

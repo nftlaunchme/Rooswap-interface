@@ -10,6 +10,7 @@ import { useTransactionAdder } from 'state/transactions/hooks'
 import { TRANSACTION_TYPE, TransactionExtraInfo2Token } from 'state/transactions/type'
 import { usePaymentToken, useUserSlippageTolerance } from 'state/user/hooks'
 import { ChargeFeeBy } from 'types/route'
+import { CurrencyAmount } from 'types/currency'
 import { isAddress, shortenAddress } from 'utils'
 import { formatCurrencyAmount } from 'utils/formatCurrencyAmount'
 import { sendEVMTransaction } from 'utils/sendTransaction'
@@ -40,10 +41,10 @@ const useSwapCallbackV3 = (isPermitSwap?: boolean) => {
 
     const inputSymbol = inputAmount.currency.symbol
     const outputSymbol = outputAmount.currency.symbol
-    const inputAddress = inputAmount.currency.isNative ? ETHER_ADDRESS : inputAmount.currency.address
-    const outputAddress = outputAmount.currency.isNative ? ETHER_ADDRESS : outputAmount.currency.address
-    const inputAmountStr = formatCurrencyAmount(inputAmount, 6)
-    const outputAmountStr = formatCurrencyAmount(outputAmount, 6)
+    const inputAddress = inputAmount.currency.isNative ? ETHER_ADDRESS : inputAmount.currency.getAddress()
+    const outputAddress = outputAmount.currency.isNative ? ETHER_ADDRESS : outputAmount.currency.getAddress()
+    const inputAmountStr = inputAmount.toSignificant(6)
+    const outputAmountStr = outputAmount.toSignificant(6)
 
     const withRecipient =
       recipient === account
@@ -53,6 +54,10 @@ const useSwapCallbackV3 = (isPermitSwap?: boolean) => {
               ? shortenAddress(chainId, recipientAddressOrName)
               : recipientAddressOrName
           }`
+
+    const priceImpactStr = typeof priceImpact === 'string' 
+      ? (Number(priceImpact) > 0.01 ? Number(priceImpact).toFixed(2) : '<0.01')
+      : '<0.01'
 
     return {
       hash: '',
@@ -74,13 +79,13 @@ const useSwapCallbackV3 = (isPermitSwap?: boolean) => {
           withRecipient,
           inputAmount: inputAmount.toExact(),
           slippageSetting: allowedSlippage ? allowedSlippage / 100 : 0,
-          priceImpact: priceImpact && priceImpact > 0.01 ? priceImpact.toFixed(2) : '<0.01',
+          priceImpact: priceImpactStr,
           isPermitSwap,
           feeInfo: routeSummary?.fee
             ? {
-                chargeTokenIn: routeSummary.extraFee.chargeFeeBy === ChargeFeeBy.CURRENCY_IN,
+                chargeTokenIn: routeSummary.extraFee?.chargeFeeBy === ChargeFeeBy.CURRENCY_IN,
                 tokenSymbol: routeSummary.fee.currency.symbol || '',
-                feeUsd: routeSummary.extraFee.feeAmountUsd,
+                feeUsd: routeSummary.extraFee?.feeAmountUsd,
                 feeAmount: routeSummary.fee.currencyAmount.toExact(),
               }
             : undefined,
@@ -119,7 +124,10 @@ const useSwapCallbackV3 = (isPermitSwap?: boolean) => {
       if (!account || !inputAmount || !routerAddress || !encodedSwapData) {
         throw new Error('Missing dependencies')
       }
-      const value = BigNumber.from(inputAmount.currency.isNative ? inputAmount.quotient.toString() : 0)
+
+      // Convert bigint to string before creating BigNumber
+      const quotientStr = inputAmount.currency.isNative ? inputAmount.quotient.toString() : '0'
+      const value = BigNumber.from(quotientStr)
 
       const response = await sendEVMTransaction({
         account,
