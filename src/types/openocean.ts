@@ -1,3 +1,7 @@
+import { Currency } from './currency'
+import { ChargeFeeBy, ExtraFeeConfig } from './route'
+import { ExtendedCurrencyAmount } from '../utils/currencyConverter'
+
 export interface DexInfo {
   name: string
   routerAddress: string
@@ -26,6 +30,7 @@ export interface OpenOceanQuote {
   outToken: TokenInfo
   inAmount: string
   outAmount: string
+  amountOut: string
   estimatedGas: string
   routes: SwapRoute[]
   gasPrice: string
@@ -55,21 +60,28 @@ export interface OpenOceanSwapResult {
   gasPrice: string
 }
 
+export enum OpenOceanSwapCallbackState {
+  INVALID,
+  LOADING,
+  VALID,
+  ERROR
+}
+
 export interface OpenOceanDetailedRouteSummary {
-  parsedAmountIn: CurrencyAmount<Currency>
-  parsedAmountOut: CurrencyAmount<Currency>
+  parsedAmountIn: ExtendedCurrencyAmount<Currency>
+  parsedAmountOut: ExtendedCurrencyAmount<Currency>
   priceImpact: string
-  executionPrice: {
-    price: string
-    baseSymbol: string
-    quoteSymbol: string
-  }
+  executionPrice: string
   gasUsd: string
+  gasCostUSD: string
   amountInUsd: string
   amountOutUsd: string
   route: string[]
   routerAddress: string
   openOceanQuote: OpenOceanQuote
+  extraFee: ExtraFeeConfig
+  inputAmount: ExtendedCurrencyAmount<Currency>
+  outputAmount: ExtendedCurrencyAmount<Currency>
 }
 
 export interface OpenOceanBuildRouteResult {
@@ -78,19 +90,14 @@ export interface OpenOceanBuildRouteResult {
   amountOut: string
   amountOutUsd: string
   priceImpact: string
-  executionPrice: {
-    price: string
-    baseSymbol: string
-    quoteSymbol: string
-  }
+  executionPrice: string
   gas: string
   gasUsd: string
-  extraFee: {
-    chargeFeeBy: string
-    feeAmount: string
-    feeAmountUsd: string
-    isInBps: boolean
-  }
+  extraFee: ExtraFeeConfig
   route: string[]
   routerAddress: string
+  error: string
+  data: string
+  value: string
+  to: string
 }

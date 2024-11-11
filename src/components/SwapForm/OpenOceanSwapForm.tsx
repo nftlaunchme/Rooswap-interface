@@ -1,8 +1,7 @@
-import { Currency, CurrencyAmount, Token } from '@kyberswap/ks-sdk-core'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Box, Flex, Text } from 'rebass'
-import styled from 'styled-components'
 import { rgba } from 'polished'
+import { CurrencyAmount as KyberCurrencyAmount } from '@kyberswap/ks-sdk-core'
 
 import { NetworkSelector } from 'components/NetworkSelector'
 import InputCurrencyPanel from 'components/SwapForm/InputCurrencyPanel'
@@ -17,12 +16,15 @@ import { Field } from 'state/swap/actions'
 import { useAppDispatch } from 'state/hooks'
 import { useSwapActionHandlers, useSwapState } from 'state/swap/hooks'
 import { OPENOCEAN_PRICE_IMPACT_ERROR, OPENOCEAN_PRICE_IMPACT_WARNING } from 'constants/openocean'
-import { useOpenOceanQuote, useOpenOceanSwapCallback, OpenOceanSwapCallbackState } from 'hooks/useOpenOceanSwap'
+import { useOpenOceanQuote, useOpenOceanSwapCallback } from 'hooks/useOpenOceanSwap'
 import useParsedAmount from 'components/SwapForm/hooks/useParsedAmount'
 import WarningIcon from 'components/Icons/WarningIcon'
 import { useWalletModalToggle } from 'state/application/hooks'
-import { WrapType } from 'hooks/useWrapCallback'
-import { OpenOceanDetailedRouteSummary, OpenOceanBuildRouteResult } from 'types/openocean'
+import { WrapType } from 'state/swap/types'
+import { OpenOceanDetailedRouteSummary, OpenOceanBuildRouteResult, OpenOceanSwapCallbackState } from 'types/openocean'
+import { convertFromKyberCurrency, convertToKyberCurrency, ExtendedCurrencyAmount, convertFromKyberCurrencyAmount } from 'utils/currencyConverter'
+import { Currency, CurrencyAmount } from 'types/currency'
+import { ChargeFeeBy } from 'types/route'
 
 import ReverseTokenSelectionButton from './ReverseTokenSelectionButton'
 import SwapActionButton from './SwapActionButton'
@@ -73,18 +75,25 @@ const OpenOceanSwapForm: React.FC<OpenOceanSwapFormProps> = ({
   )
 
   const parsedAmount = useParsedAmount(currencyIn, typedValue)
+  const parsedAmountExtended = parsedAmount ? ExtendedCurrencyAmount.fromRaw(currencyIn!, parsedAmount.quotient.toString()) : undefined
+
+  const kyberCurrencyIn = convertToKyberCurrency(currencyIn)
+  const kyberCurrencyOut = convertToKyberCurrency(currencyOut)
+  const kyberParsedAmount = parsedAmountExtended && kyberCurrencyIn 
+    ? KyberCurrencyAmount.fromRawAmount(kyberCurrencyIn, parsedAmountExtended.quotient.toString()) 
+    : undefined
 
   const { loading: quoteLoading, quote, error: quoteError } = useOpenOceanQuote(
     currencyIn,
     currencyOut,
-    parsedAmount,
+    parsedAmountExtended,
     slippage,
   )
 
-  const { state: swapCallbackState, callback: swapCallback, error: swapCallbackError } = useOpenOceanSwapCallback(
+  const { swap: swapCallback, error: swapCallbackError } = useOpenOceanSwapCallback(
     currencyIn,
     currencyOut,
-    parsedAmount,
+    parsedAmountExtended,
     slippage,
     null, // No recipient for now
   )
@@ -97,8 +106,7 @@ const OpenOceanSwapForm: React.FC<OpenOceanSwapFormProps> = ({
     if (!swapCallback) return
     try {
       setProcessingSwap(true)
-      const txHash = await swapCallback()
-      return txHash
+      await swapCallback()
     } catch (error) {
       console.error('Failed to swap:', error)
       throw error
@@ -117,44 +125,63 @@ const OpenOceanSwapForm: React.FC<OpenOceanSwapFormProps> = ({
     return undefined
   }, [account, currencyIn, currencyOut, parsedAmount, quoteError, showPriceImpactError, swapCallbackError])
 
-  const isValid = !swapInputError && swapCallbackState === OpenOceanSwapCallbackState.VALID
+  const isValid = !swapInputError
 
   // Create a detailed route summary for context provider
   const routeSummary: OpenOceanDetailedRouteSummary | undefined = useMemo(() => {
     if (!quote || !currencyOut || !currencyIn) return undefined
+
+    const inputAmount = parsedAmountExtended || ExtendedCurrencyAmount.fromRaw(currencyIn, '0')
+    const outputAmount = ExtendedCurrencyAmount.fromRaw(currencyOut, quote.amountOut)
+    
     return {
-      tokenIn: currencyIn.wrapped as Token,
-      tokenOut: currencyOut.wrapped as Token,
-      amountIn: parsedAmount?.toExact() || '0',
-      amountOut: quote.amountOut,
-      amountInUsd: '0',
-      amountOutUsd: '0',
+      parsedAmountIn: inputAmount,
+      parsedAmountOut: outputAmount,
       priceImpact: quote.priceImpact,
-      parsedAmountIn: parsedAmount || CurrencyAmount.fromRawAmount(currencyIn, '0'),
-      parsedAmountOut: CurrencyAmount.fromRawAmount(currencyOut, quote.amountOut),
-      routerAddress: '',
-      gasUsd: '0',
-      gasAmount: quote.estimatedGas,
+      executionPrice: quote.price,
+      gasUsd: quote.gasUsd,
+      gasCostUSD: quote.gasUsd,
+      amountInUsd: quote.amountInUsd,
+      amountOutUsd: quote.amountOutUsd,
+      route: quote.route,
+      routerAddress: quote.routerAddress,
+      openOceanQuote: quote,
       extraFee: {
+        chargeFeeBy: ChargeFeeBy.CURRENCY_IN,
         feeAmount: '0',
         feeAmountUsd: '0',
-        chargeFeeBy: '',
-        isInBps: false,
-        feeReceiver: '',
+        isInBps: false
       },
+      inputAmount,
+      outputAmount
     }
-  }, [quote, currencyIn, currencyOut, parsedAmount])
+  }, [quote, currencyIn, currencyOut, parsedAmountExtended])
 
   const buildRoute = useCallback(async (): Promise<OpenOceanBuildRouteResult> => {
-    if (!swapCallback) throw new Error('Swap callback not ready')
-    const txHash = await swapCallback()
+    if (!swapCallback || !quote) throw new Error('Swap callback not ready')
     return {
+      amountIn: parsedAmount?.toExact() || '0',
+      amountInUsd: quote.amountInUsd,
+      amountOut: quote.amountOut,
+      amountOutUsd: quote.amountOutUsd,
+      priceImpact: quote.priceImpact,
+      executionPrice: quote.price,
+      gas: quote.estimatedGas,
+      gasUsd: quote.gasUsd,
+      extraFee: {
+        chargeFeeBy: ChargeFeeBy.CURRENCY_IN,
+        feeAmount: '0',
+        feeAmountUsd: '0',
+        isInBps: false
+      },
+      route: quote.route,
+      routerAddress: quote.routerAddress,
+      error: swapCallbackError || '',
       data: '',
       value: '0',
-      to: '',
-      gasLimit: quote?.estimatedGas || '0',
+      to: quote.routerAddress
     }
-  }, [swapCallback, quote])
+  }, [swapCallback, quote, parsedAmount, swapCallbackError])
 
   return (
     <SwapFormContextProvider
@@ -173,7 +200,6 @@ const OpenOceanSwapForm: React.FC<OpenOceanSwapFormProps> = ({
 
             <Flex flexDirection="column" sx={{ gap: '0.5rem' }}>
               <InputCurrencyPanel
-                wrapType={WrapType.NOT_APPLICABLE}
                 typedValue={typedValue}
                 setTypedValue={onUserInput}
                 currencyIn={currencyIn}
@@ -193,11 +219,11 @@ const OpenOceanSwapForm: React.FC<OpenOceanSwapFormProps> = ({
               />
 
               <OutputCurrencyPanel
-                wrapType={WrapType.NOT_APPLICABLE}
-                parsedAmountIn={parsedAmount}
-                parsedAmountOut={quote ? CurrencyAmount.fromRawAmount(currencyOut!, quote.amountOut) : undefined}
+                parsedAmountIn={parsedAmountExtended}
+                parsedAmountOut={quote ? ExtendedCurrencyAmount.fromRaw(currencyOut!, quote.amountOut) : undefined}
                 currencyIn={currencyIn}
                 currencyOut={currencyOut}
+                balanceOut={balanceOut}
                 amountOutUsd="0"
                 onChangeCurrencyOut={onChangeCurrencyOut}
                 customChainId={customChainId}
@@ -249,10 +275,9 @@ const OpenOceanSwapForm: React.FC<OpenOceanSwapFormProps> = ({
 
           <SwapActionButton
             isGettingRoute={quoteLoading}
-            parsedAmountFromTypedValue={parsedAmount}
+            parsedAmountFromTypedValue={parsedAmountExtended}
             balanceIn={balanceIn}
             balanceOut={balanceOut}
-            isDegenMode={isDegenMode}
             typedValue={typedValue}
             currencyIn={currencyIn}
             currencyOut={currencyOut}
@@ -263,7 +288,9 @@ const OpenOceanSwapForm: React.FC<OpenOceanSwapFormProps> = ({
             buildRoute={buildRoute}
             onWrap={handleSwap}
             swapInputError={swapInputError}
+            wrapInputError={undefined}
             customChainId={customChainId}
+            isDegenMode={isDegenMode}
           />
         </Flex>
       </Box>
