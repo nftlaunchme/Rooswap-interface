@@ -162,7 +162,7 @@ export default function Menu() {
             </MenuItem>
 
             <MenuItem onClick={toggle}>
-              <NavLink to="/rebel-kangas">
+              <NavLink to="/rebel-kanga">
                 <Icon id="star" size={16} />
                 <Trans>Rebel Kangas</Trans>
               </NavLink>

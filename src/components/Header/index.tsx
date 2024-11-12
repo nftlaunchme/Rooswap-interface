@@ -140,7 +140,7 @@ export default function Header() {
   const navLinks = [
     { to: `${APP_PATHS.SWAP}/${networkInfo.route}`, label: 'Swap' },
     { to: APP_PATHS.BRIDGE, label: 'Bridge' },
-    { to: '/rebel-kangas', label: "Rebel Kanga's" },
+    { to: '/rebel-kanga', label: "Rebel Kanga's" },
     { to: '/learn', label: 'Learn' },
     { to: '/ai', label: 'AI' },
   ]
