@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/react'
 import { Suspense, lazy, useEffect } from 'react'
 import { isMobile } from 'react-device-detect'
 import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
-import { useNetwork, usePrevious } from 'react-use'
+import { useNetworkState, usePrevious } from 'react-use'
 import styled from 'styled-components'
 
 import snow from 'assets/images/snow.png'
@@ -175,16 +175,16 @@ function App() {
   const { account, chainId, networkInfo } = useActiveWeb3React()
   const { pathname } = useLocation()
   useAutoLogin()
-  const { online } = useNetwork()
-  const prevOnline = usePrevious(online)
+  const networkState = useNetworkState()
+  const prevOnline = usePrevious(networkState.online)
   useSessionExpiredGlobal()
 
   useEffect(() => {
-    if (prevOnline === false && online && account) {
+    if (prevOnline === false && networkState.online && account) {
       // refresh page when network back to normal to prevent some issues: ex: stale data, ...
       window.location.reload()
     }
-  }, [online, prevOnline, account])
+  }, [networkState.online, prevOnline, account])
 
   useEffect(() => {
     preloadImages()
