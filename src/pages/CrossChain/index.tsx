@@ -5,6 +5,7 @@ import { memo, useEffect, useRef } from 'react'
 import { Flex, Text } from 'rebass'
 
 import WarningIcon from 'components/Icons/WarningIcon'
+import { PageWrapper, Container, SwapFormWrapper } from 'components/swapv2/styleds'
 import { CROSS_CHAIN_CONFIG } from 'constants/env'
 import { SUPPORTED_NETWORKS } from 'constants/networks'
 import { NativeCurrencies } from 'constants/tokens'
@@ -77,22 +78,37 @@ function CrossChain({ visible }: { visible: boolean }) {
   }, [squidInstance, setCrossChainState])
 
   if (!visible) return null
-  if (String(squidInstance?.isInMaintenanceMode) === 'true')
+
+  const renderContent = () => {
+    if (String(squidInstance?.isInMaintenanceMode) === 'true')
+      return (
+        <Flex style={{ gap: '8px' }} alignItems={'center'}>
+          <WarningIcon color={theme.warning} size={40} />
+          <Text color={theme.warning} fontSize={14}>
+            <Trans>
+              Service is not available because of maintenance activities. Please try again after a few minutes.
+            </Trans>
+          </Text>
+        </Flex>
+      )
+
     return (
-      <Flex style={{ gap: '8px' }} alignItems={'center'}>
-        <WarningIcon color={theme.warning} size={40} />
-        <Text color={theme.warning} fontSize={14}>
-          <Trans>
-            Service is not available because of maintenance activities. Please try again after a few minutes.
-          </Trans>
-        </Text>
-      </Flex>
+      <>
+        <DisclaimerCrossChain />
+        <SwapForm />
+      </>
     )
+  }
+
   return (
-    <>
-      <DisclaimerCrossChain />
-      <SwapForm />
-    </>
+    <PageWrapper>
+      <Container>
+        <SwapFormWrapper>
+          {renderContent()}
+        </SwapFormWrapper>
+      </Container>
+    </PageWrapper>
   )
 }
+
 export default memo(CrossChain)

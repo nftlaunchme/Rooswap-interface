@@ -1,4 +1,3 @@
-// @ts-nocheck 
 import * as Sentry from '@sentry/react'
 import { Suspense, lazy, useEffect } from 'react'
 import { isMobile } from 'react-device-detect'
@@ -31,8 +30,6 @@ import { useHolidayMode } from 'state/user/hooks'
 import { isSupportLimitOrder } from 'utils'
 
 import VerifyAuth from './Verify/VerifyAuth'
-
-// Import your new components
 import RebelKanga from './Rebel-Kanga'
 
 const Login = lazy(() => import('./Oauth/Login'))
@@ -44,6 +41,7 @@ const MarketOverview = lazy(() => import('./MarketOverview'))
 
 const ElasticSwap = lazy(() => import('./ElasticSwap'))
 const SwapV3 = lazy(() => import('./SwapV3'))
+const CrossChain = lazy(() => import('./CrossChain'))
 const PartnerSwap = lazy(() => import('./PartnerSwap'))
 const MyPool = lazy(() => import('./MyPool'))
 
@@ -239,9 +237,7 @@ function App() {
             <Routes>
               <Route path={`${APP_PATHS.SWAP}/:network/:currency?`} element={<SwapPage />} />
               <Route path={`${APP_PATHS.PARTNER_SWAP}`} element={<PartnerSwap />} />
-              {CHAINS_SUPPORT_CROSS_CHAIN.includes(chainId) && (
-                <Route path={`${APP_PATHS.CROSS_CHAIN}`} element={<SwapV3 />} />
-              )}
+              <Route path={`${APP_PATHS.CROSS_CHAIN}`} element={<CrossChain visible={true} />} />
 
               {isSupportLimitOrder(chainId) && (
                 <Route path={`${APP_PATHS.LIMIT}/:network/:currency?`} element={<SwapPage />} />
@@ -254,12 +250,6 @@ function App() {
               </>
 
               <>
-                {/* These are old routes and will soon be deprecated - Check: RoutesWithNetworkParam */}
-                {/*
-                  <Route path={`${APP_PATHS.ELASTIC_CREATE_POOL}/*`} element={<RedirectWithNetworkPrefix />} />
-                  <Route path={`${APP_PATHS.ELASTIC_INCREASE_LIQ}/*`} element={<RedirectWithNetworkPrefix />} />
-                */}
-
                 <Route path={`${APP_PATHS.ELASTIC_REMOVE_POOL}/*`} element={<RedirectWithNetworkPrefix />} />
                 <Route path={`${APP_PATHS.CLASSIC_REMOVE_POOL}/*`} element={<RedirectWithNetworkPrefix />} />
               </>
@@ -271,7 +261,6 @@ function App() {
               <Route path="/learn" element={<Navigate to={`${APP_PATHS.ABOUT}/rooswap`} replace />} />
               <Route path={`${APP_PATHS.ABOUT}/knc`} element={<AboutKNC />} />
               <Route path={`${APP_PATHS.BUY_CRYPTO}`} element={<BuyCrypto />} />
-              {/* <Route path={`${APP_PATHS.BRIDGE}`} element={<Bridge />} /> */}
               <Route
                 path={`${APP_PATHS.PROFILE_MANAGE}`}
                 element={

@@ -140,6 +140,7 @@ export default function Header() {
   const navLinks = [
     { to: `${APP_PATHS.SWAP}/${networkInfo.route}`, label: 'Swap' },
     { to: APP_PATHS.BRIDGE, label: 'Bridge' },
+    { to: APP_PATHS.CROSS_CHAIN, label: 'Cross Chain' },
     { to: '/rebel-kanga', label: "Rebel Kanga's" },
     { to: '/learn', label: 'Learn' },
     { to: '/ai', label: 'AI' },
@@ -156,7 +157,7 @@ export default function Header() {
             <HeaderLinks>
               {navLinks.map(link => (
                 <StyledNavLink key={link.to} to={link.to}>
-                  {link.label} {/* Remove <Trans> wrapper */}
+                  {link.label}
                 </StyledNavLink>
               ))}
             </HeaderLinks>
@@ -185,7 +186,7 @@ export default function Header() {
           <MobileMenu isOpen={isMobileMenuOpen}>
             {navLinks.map(link => (
               <MobileMenuItem key={link.to} to={link.to} onClick={() => setIsMobileMenuOpen(false)}>
-                {link.label} {/* Remove <Trans> wrapper */}
+                {link.label}
               </MobileMenuItem>
             ))}
           </MobileMenu>
